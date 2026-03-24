@@ -8,6 +8,9 @@ import ClientEditPage from "../modules/clients/pages/ClientEditPage"
 import PlansListPage from "../modules/plans/pages/PlansListPage"
 import PlanCreatePage from "../modules/plans/pages/PlanCreatePage"
 import PlanEditPage from "../modules/plans/pages/PlanEditPage"
+import PaymentsListPage from "../modules/payments/pages/PaymentsListPage"
+import PaymentCreatePage from "../modules/payments/pages/PaymentCreatePage"
+import AccountStatusPage from "../modules/payments/pages/AccountStatusPage"
 
 const AppRouter = () => {
   return (
@@ -67,6 +70,30 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <PlanEditPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/payments"
+          element={
+            <MainLayout>
+              <PaymentsListPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/payments/new"
+          element={
+            <MainLayout>
+              <PaymentCreatePage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/payments/account-status/:clientId"
+          element={
+            <MainLayout>
+              <AccountStatusPage />
             </MainLayout>
           }
         />
