@@ -1,79 +1,124 @@
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ClientsTable from "../components/ClientsTable"
-import type { Client } from "../types/client"
+import { deleteClient, getClients } from "../services/clientsApi"
+import type { Client, ClientStatus } from "../types/client"
 
-const mockClients: Client[] = [
-  {
-    id: "1",
-    name: "Maria Lopez",
-    document: "DNI 12345678",
-    address: "Av. Principal 123",
-    phone: "+51 999 123 456",
-    email: "maria@example.com",
-    plan: "Fiber 300",
-    ipAddress: "192.168.0.10",
-    status: "Active",
-    latitude: -12.0464,
-    longitude: -77.0428,
-  },
-  {
-    id: "2",
-    name: "Carlos Vega",
-    document: "DNI 87654321",
-    address: "Jr. Secundario 456",
-    phone: "+51 988 555 222",
-    email: "carlos@example.com",
-    plan: "Fiber 600",
-    ipAddress: "192.168.0.11",
-    status: "Suspended",
-    latitude: -12.05,
-    longitude: -77.03,
-  },
+const statusOptions: { label: string; value: ClientStatus }[] = [
+  { label: "Active", value: "active" },
+  { label: "Suspended", value: "suspended" },
+  { label: "Inactive", value: "inactive" },
 ]
 
 const ClientsListPage = () => {
   const navigate = useNavigate()
   const [search, setSearch] = useState("")
-  const [clients, setClients] = useState<Client[]>(mockClients)
+  const [statusFilter, setStatusFilter] = useState<ClientStatus | "">("")
+  const [planFilter, setPlanFilter] = useState("")
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const loadClients = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await getClients()
+      setClients(data)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadClients()
+  }, [loadClients])
+
+  const plans = useMemo(() => {
+    const uniquePlans = new Set(clients.map((client) => client.plan).filter(Boolean))
+    return Array.from(uniquePlans)
+  }, [clients])
 
   const filteredClients = useMemo(() => {
     const term = search.toLowerCase()
-    return clients.filter((client) =>
-      [client.name, client.document, client.phone, client.plan, client.status]
+    return clients.filter((client) => {
+      const matchesSearch = [client.name, client.document, client.ipAddress]
         .join(" ")
         .toLowerCase()
-        .includes(term),
-    )
-  }, [clients, search])
+        .includes(term)
+      const matchesStatus = statusFilter ? client.status === statusFilter : true
+      const matchesPlan = planFilter ? client.plan === planFilter : true
+      return matchesSearch && matchesStatus && matchesPlan
+    })
+  }, [clients, planFilter, search, statusFilter])
 
-  const handleDelete = (id: string) => {
-    setClients((current) => current.filter((client) => client.id !== id))
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this client?")
+    if (!confirmed) return
+    await deleteClient(id)
+    await loadClients()
+  }
+
+  const clearFilters = () => {
+    setSearch("")
+    setStatusFilter("")
+    setPlanFilter("")
   }
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
         <div>
           <h1>Clients</h1>
           <p style={{ color: "#6b7280", marginTop: 4 }}>Manage your ISP clients and plans.</p>
         </div>
         <button type="button" onClick={() => navigate("/clients/new")}>Create Client</button>
       </header>
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+
+      <div style={{ display: "grid", gap: 12 }}>
         <input
           type="search"
-          placeholder="Search clients..."
+          placeholder="Search by name, document or IP..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          style={{ flex: 1 }}
+          style={{ maxWidth: 420 }}
         />
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
+            Status
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ClientStatus | "")}>
+              <option value="">All</option>
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
+            Plan
+            <select value={planFilter} onChange={(event) => setPlanFilter(event.target.value)}>
+              <option value="">All</option>
+              {plans.map((plan) => (
+                <option key={plan} value={plan}>
+                  {plan}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" onClick={clearFilters}>Clear Filters</button>
+        </div>
       </div>
-      <ClientsTable
-        clients={filteredClients}
-        onEdit={(id) => navigate(`/clients/${id}/edit`)}
-        onDelete={handleDelete}
-      />
+
+      {loading ? (
+        <p>Loading clients...</p>
+      ) : filteredClients.length === 0 ? (
+        <p>No clients found.</p>
+      ) : (
+        <ClientsTable
+          clients={filteredClients}
+          onEdit={(id) => navigate(`/clients/${id}/edit`)}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   )
 }

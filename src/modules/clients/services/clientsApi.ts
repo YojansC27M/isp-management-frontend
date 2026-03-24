@@ -1,7 +1,5 @@
 import api from "@/api/axios"
-import type { Client } from "../types/client"
-
-export type ClientPayload = Omit<Client, "id">
+import type { Client, ClientFormValues } from "../types/client"
 
 export const getClients = async () => {
   const { data } = await api.get<Client[]>("/clients")
@@ -13,13 +11,13 @@ export const getClientById = async (id: string) => {
   return data
 }
 
-export const createClient = async (payload: ClientPayload) => {
+export const createClient = async (payload: ClientFormValues) => {
   const { data } = await api.post<Client>("/clients", payload)
   return data
 }
 
-export const updateClient = async (id: string, payload: ClientPayload) => {
-  const { data } = await api.put<Client>(`/clients/${id}`, payload)
+export const updateClient = async (id: string, payload: ClientFormValues) => {
+  const { data } = await api.put<Client>(`/clients/${id}`)
   return data
 }
 
