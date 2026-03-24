@@ -5,6 +5,9 @@ import MainLayout from "../layouts/MainLayout"
 import ClientsListPage from "../modules/clients/pages/ClientsListPage"
 import ClientCreatePage from "../modules/clients/pages/ClientCreatePage"
 import ClientEditPage from "../modules/clients/pages/ClientEditPage"
+import PlansListPage from "../modules/plans/pages/PlansListPage"
+import PlanCreatePage from "../modules/plans/pages/PlanCreatePage"
+import PlanEditPage from "../modules/plans/pages/PlanEditPage"
 
 const AppRouter = () => {
   return (
@@ -40,6 +43,30 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <ClientEditPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/plans"
+          element={
+            <MainLayout>
+              <PlansListPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/plans/new"
+          element={
+            <MainLayout>
+              <PlanCreatePage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/plans/:id/edit"
+          element={
+            <MainLayout>
+              <PlanEditPage />
             </MainLayout>
           }
         />
