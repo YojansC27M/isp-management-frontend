@@ -21,6 +21,7 @@ import MonitoringDashboardPage from "../modules/monitoring/pages/MonitoringDashb
 import ClientsMapPage from "../modules/clients-map/pages/ClientsMapPage"
 import InvoicesListPage from "../modules/invoices/pages/InvoicesListPage"
 import InvoiceDetailPage from "../modules/invoices/pages/InvoiceDetailPage"
+import ReportsDashboardPage from "../modules/reports/pages/ReportsDashboardPage"
 
 const AppRouter = () => {
   return (
@@ -184,6 +185,14 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <InvoiceDetailPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <MainLayout>
+              <ReportsDashboardPage />
             </MainLayout>
           }
         />
