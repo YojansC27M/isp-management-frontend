@@ -19,6 +19,8 @@ import VisitCreatePage from "../modules/visits/pages/VisitCreatePage"
 import VisitDetailPage from "../modules/visits/pages/VisitDetailPage"
 import MonitoringDashboardPage from "../modules/monitoring/pages/MonitoringDashboardPage"
 import ClientsMapPage from "../modules/clients-map/pages/ClientsMapPage"
+import InvoicesListPage from "../modules/invoices/pages/InvoicesListPage"
+import InvoiceDetailPage from "../modules/invoices/pages/InvoiceDetailPage"
 
 const AppRouter = () => {
   return (
@@ -166,6 +168,22 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <ClientsMapPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/invoices"
+          element={
+            <MainLayout>
+              <InvoicesListPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/invoices/:id"
+          element={
+            <MainLayout>
+              <InvoiceDetailPage />
             </MainLayout>
           }
         />
