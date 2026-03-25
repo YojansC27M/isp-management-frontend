@@ -1,7 +1,8 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import LoginPage from "../pages/LoginPage"
 import DashboardPage from "../pages/DashboardPage"
 import MainLayout from "../layouts/MainLayout"
+import { useAuthStore } from "@/store/authStore"
 import ClientsListPage from "../modules/clients/pages/ClientsListPage"
 import ClientCreatePage from "../modules/clients/pages/ClientCreatePage"
 import ClientEditPage from "../modules/clients/pages/ClientEditPage"
@@ -22,6 +23,22 @@ import ClientsMapPage from "../modules/clients-map/pages/ClientsMapPage"
 import InvoicesListPage from "../modules/invoices/pages/InvoicesListPage"
 import InvoiceDetailPage from "../modules/invoices/pages/InvoiceDetailPage"
 import ReportsDashboardPage from "../modules/reports/pages/ReportsDashboardPage"
+import ClientLoginPage from "../modules/client-portal/pages/ClientLoginPage"
+import ClientDashboardPage from "../modules/client-portal/pages/ClientDashboardPage"
+import ClientPaymentsPage from "../modules/client-portal/pages/ClientPaymentsPage"
+import ClientTicketsPage from "../modules/client-portal/pages/ClientTicketsPage"
+
+interface ClientProtectedRouteProps {
+  children: JSX.Element
+}
+
+const ClientProtectedRoute = ({ children }: ClientProtectedRouteProps) => {
+  const token = useAuthStore((state) => state.token) ?? localStorage.getItem("client_token")
+  if (!token) {
+    return <Navigate to="/client/login" replace />
+  }
+  return children
+}
 
 const AppRouter = () => {
   return (
@@ -194,6 +211,31 @@ const AppRouter = () => {
             <MainLayout>
               <ReportsDashboardPage />
             </MainLayout>
+          }
+        />
+        <Route path="/client/login" element={<ClientLoginPage />} />
+        <Route
+          path="/client/dashboard"
+          element={
+            <ClientProtectedRoute>
+              <ClientDashboardPage />
+            </ClientProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/payments"
+          element={
+            <ClientProtectedRoute>
+              <ClientPaymentsPage />
+            </ClientProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/tickets"
+          element={
+            <ClientProtectedRoute>
+              <ClientTicketsPage />
+            </ClientProtectedRoute>
           }
         />
       </Routes>
