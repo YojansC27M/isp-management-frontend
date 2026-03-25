@@ -18,6 +18,7 @@ import VisitsCalendarPage from "../modules/visits/pages/VisitsCalendarPage"
 import VisitCreatePage from "../modules/visits/pages/VisitCreatePage"
 import VisitDetailPage from "../modules/visits/pages/VisitDetailPage"
 import MonitoringDashboardPage from "../modules/monitoring/pages/MonitoringDashboardPage"
+import ClientsMapPage from "../modules/clients-map/pages/ClientsMapPage"
 
 const AppRouter = () => {
   return (
@@ -157,6 +158,14 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <MonitoringDashboardPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/clients-map"
+          element={
+            <MainLayout>
+              <ClientsMapPage />
             </MainLayout>
           }
         />
