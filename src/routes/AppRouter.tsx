@@ -11,6 +11,9 @@ import PlanEditPage from "../modules/plans/pages/PlanEditPage"
 import PaymentsListPage from "../modules/payments/pages/PaymentsListPage"
 import PaymentCreatePage from "../modules/payments/pages/PaymentCreatePage"
 import AccountStatusPage from "../modules/payments/pages/AccountStatusPage"
+import TicketsListPage from "../modules/tickets/pages/TicketsListPage"
+import TicketCreatePage from "../modules/tickets/pages/TicketCreatePage"
+import TicketDetailPage from "../modules/tickets/pages/TicketDetailPage"
 
 const AppRouter = () => {
   return (
@@ -94,6 +97,30 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <AccountStatusPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/tickets"
+          element={
+            <MainLayout>
+              <TicketsListPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/tickets/new"
+          element={
+            <MainLayout>
+              <TicketCreatePage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/tickets/:id"
+          element={
+            <MainLayout>
+              <TicketDetailPage />
             </MainLayout>
           }
         />
