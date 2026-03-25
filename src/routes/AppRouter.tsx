@@ -17,6 +17,7 @@ import TicketDetailPage from "../modules/tickets/pages/TicketDetailPage"
 import VisitsCalendarPage from "../modules/visits/pages/VisitsCalendarPage"
 import VisitCreatePage from "../modules/visits/pages/VisitCreatePage"
 import VisitDetailPage from "../modules/visits/pages/VisitDetailPage"
+import MonitoringDashboardPage from "../modules/monitoring/pages/MonitoringDashboardPage"
 
 const AppRouter = () => {
   return (
@@ -148,6 +149,14 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <VisitDetailPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/monitoring"
+          element={
+            <MainLayout>
+              <MonitoringDashboardPage />
             </MainLayout>
           }
         />
