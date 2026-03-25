@@ -14,6 +14,9 @@ import AccountStatusPage from "../modules/payments/pages/AccountStatusPage"
 import TicketsListPage from "../modules/tickets/pages/TicketsListPage"
 import TicketCreatePage from "../modules/tickets/pages/TicketCreatePage"
 import TicketDetailPage from "../modules/tickets/pages/TicketDetailPage"
+import VisitsCalendarPage from "../modules/visits/pages/VisitsCalendarPage"
+import VisitCreatePage from "../modules/visits/pages/VisitCreatePage"
+import VisitDetailPage from "../modules/visits/pages/VisitDetailPage"
 
 const AppRouter = () => {
   return (
@@ -121,6 +124,30 @@ const AppRouter = () => {
           element={
             <MainLayout>
               <TicketDetailPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/visits"
+          element={
+            <MainLayout>
+              <VisitsCalendarPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/visits/new"
+          element={
+            <MainLayout>
+              <VisitCreatePage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/visits/:id"
+          element={
+            <MainLayout>
+              <VisitDetailPage />
             </MainLayout>
           }
         />
