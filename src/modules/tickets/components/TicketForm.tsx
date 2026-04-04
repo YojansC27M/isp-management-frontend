@@ -20,22 +20,22 @@ type TicketFormState = {
 type FormErrors = Partial<Record<keyof TicketFormState, string>>
 
 const categoryOptions: { label: string; value: TicketCategory }[] = [
-  { label: "Technical", value: "technical" },
-  { label: "Billing", value: "billing" },
-  { label: "Installation", value: "installation" },
+  { label: "Técnico", value: "technical" },
+  { label: "Facturación", value: "billing" },
+  { label: "Instalación", value: "installation" },
 ]
 
 const priorityOptions: { label: string; value: TicketPriority }[] = [
-  { label: "Low", value: "low" },
-  { label: "Medium", value: "medium" },
-  { label: "High", value: "high" },
+  { label: "Baja", value: "low" },
+  { label: "Media", value: "medium" },
+  { label: "Alta", value: "high" },
 ]
 
 const statusOptions: { label: string; value: TicketStatus }[] = [
-  { label: "Open", value: "open" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Resolved", value: "resolved" },
-  { label: "Closed", value: "closed" },
+  { label: "Abierto", value: "open" },
+  { label: "En progreso", value: "in_progress" },
+  { label: "Resuelto", value: "resolved" },
+  { label: "Cerrado", value: "closed" },
 ]
 
 const inputStyle: CSSProperties = {
@@ -57,7 +57,7 @@ const errorStyle: CSSProperties = {
   fontSize: 12,
 }
 
-const TicketForm = ({ initialValues, onSubmit, submitLabel = "Save" }: TicketFormProps) => {
+const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: TicketFormProps) => {
   const [values, setValues] = useState<TicketFormState>({
     clientId: initialValues.clientId,
     title: initialValues.title,
@@ -98,12 +98,12 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Save" }: TicketFor
   const validate = () => {
     const nextErrors: FormErrors = {}
 
-    if (!values.clientId.trim()) nextErrors.clientId = "Client ID is required"
-    if (!values.title.trim()) nextErrors.title = "Title is required"
-    if (!values.description.trim()) nextErrors.description = "Description is required"
-    if (!values.category) nextErrors.category = "Category is required"
-    if (!values.priority) nextErrors.priority = "Priority is required"
-    if (!values.status) nextErrors.status = "Status is required"
+    if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
+    if (!values.title.trim()) nextErrors.title = "El título es obligatorio"
+    if (!values.description.trim()) nextErrors.description = "La descripción es obligatoria"
+    if (!values.category) nextErrors.category = "La categoría es obligatoria"
+    if (!values.priority) nextErrors.priority = "La prioridad es obligatoria"
+    if (!values.status) nextErrors.status = "El estado es obligatorio"
 
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -126,17 +126,17 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Save" }: TicketFor
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 560 }}>
       <label style={labelStyle}>
-        Client ID
+        ID de cliente
         <input name="clientId" value={values.clientId} onChange={handleChange("clientId")} style={inputStyle} />
         {errors.clientId && <span style={errorStyle}>{errors.clientId}</span>}
       </label>
       <label style={labelStyle}>
-        Title
+        Título
         <input name="title" value={values.title} onChange={handleChange("title")} style={inputStyle} />
         {errors.title && <span style={errorStyle}>{errors.title}</span>}
       </label>
       <label style={labelStyle}>
-        Description
+        Descripción
         <textarea
           name="description"
           rows={4}
@@ -147,9 +147,9 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Save" }: TicketFor
         {errors.description && <span style={errorStyle}>{errors.description}</span>}
       </label>
       <label style={labelStyle}>
-        Category
+        Categoría
         <select name="category" value={values.category} onChange={handleSelectChange("category")} style={inputStyle}>
-          <option value="">Select category</option>
+          <option value="">Selecciona una categoría</option>
           {categoryOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -159,9 +159,9 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Save" }: TicketFor
         {errors.category && <span style={errorStyle}>{errors.category}</span>}
       </label>
       <label style={labelStyle}>
-        Priority
+        Prioridad
         <select name="priority" value={values.priority} onChange={handleSelectChange("priority")} style={inputStyle}>
-          <option value="">Select priority</option>
+          <option value="">Selecciona una prioridad</option>
           {priorityOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -171,9 +171,9 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Save" }: TicketFor
         {errors.priority && <span style={errorStyle}>{errors.priority}</span>}
       </label>
       <label style={labelStyle}>
-        Status
+        Estado
         <select name="status" value={values.status} onChange={handleSelectChange("status")} style={inputStyle}>
-          <option value="">Select status</option>
+          <option value="">Selecciona un estado</option>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

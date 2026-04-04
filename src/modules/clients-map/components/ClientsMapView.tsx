@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+﻿import { useMemo, useState } from "react"
 import ClientMapPopup from "./ClientMapPopup"
 import type { ClientMapItem, ClientMapStatus } from "../types/clientMap"
 
@@ -33,7 +33,7 @@ const ClientsMapView = ({ clients }: ClientsMapViewProps) => {
         }}
       >
         <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#94a3b8" }}>
-          Map placeholder (Leaflet not installed)
+          Mapa de ejemplo (Leaflet no instalado)
         </div>
       </div>
 
@@ -75,3 +75,4 @@ const ClientsMapView = ({ clients }: ClientsMapViewProps) => {
 }
 
 export default ClientsMapView
+

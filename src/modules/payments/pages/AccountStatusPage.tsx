@@ -58,22 +58,22 @@ const AccountStatusPage = () => {
     )
   }, [items])
 
-  const clientLabel = state?.clientName ? state.clientName : clientId ? `Client ${clientId}` : "Client"
+  const clientLabel = state?.clientName ? state.clientName : clientId ? `Cliente ${clientId}` : "Cliente"
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Account Status</h1>
+        <h1>Estado de cuenta</h1>
         <p style={{ color: "#6b7280" }}>{clientLabel}</p>
         <button type="button" onClick={() => navigate("/payments")} style={{ width: "fit-content" }}>
-          Back to Payments
+          Volver a Pagos
         </button>
       </header>
 
       {loading ? (
-        <p>Loading account status...</p>
+        <p>Cargando estado de cuenta...</p>
       ) : items.length === 0 ? (
-        <p>No invoices found.</p>
+        <p>No se encontraron facturas.</p>
       ) : (
         <>
           <AccountStatusSummary
@@ -85,10 +85,10 @@ const AccountStatusPage = () => {
             <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-                  <th>Invoice Number</th>
-                  <th>Due Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
+                  <th>Número de factura</th>
+                  <th>Fecha de vencimiento</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody>

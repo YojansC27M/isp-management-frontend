@@ -16,17 +16,17 @@ const PlanCreatePage = () => {
 
   const handleSubmit = async (values: PlanFormValues) => {
     await createPlan(values)
-    window.alert("Plan created successfully.")
+    window.alert("Plan creado correctamente.")
     navigate("/plans")
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Create Plan</h1>
-        <p style={{ color: "#6b7280" }}>Add a new service plan.</p>
+        <h1>Crear plan</h1>
+        <p style={{ color: "#6b7280" }}>Agrega un nuevo plan de servicio.</p>
       </header>
-      <PlanForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Create" />
+      <PlanForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Crear" />
     </div>
   )
 }

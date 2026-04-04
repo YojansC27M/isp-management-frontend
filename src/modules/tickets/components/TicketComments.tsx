@@ -1,10 +1,10 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import type { CSSProperties, FormEvent } from "react"
 import type { TicketComment } from "../types/ticket"
 
-interface TicketCommentsProps {
+interface TicketComentariosProps {
   ticketId: string
-  comments: TicketComment[]
+  Comentarios: TicketComment[]
   onAddComment: (ticketId: string, message: string) => Promise<void>
 }
 
@@ -15,7 +15,7 @@ const inputStyle: CSSProperties = {
   fontSize: 14,
 }
 
-const TicketComments = ({ ticketId, comments, onAddComment }: TicketCommentsProps) => {
+const TicketComentarios = ({ ticketId, Comentarios, onAddComment }: TicketComentariosProps) => {
   const [message, setMessage] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -34,16 +34,16 @@ const TicketComments = ({ ticketId, comments, onAddComment }: TicketCommentsProp
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <div>
-        <h3 style={{ marginBottom: 8 }}>Comments</h3>
-        {comments.length === 0 ? (
-          <p>No comments yet.</p>
+        <h3 style={{ marginBottom: 8 }}>Comentarios</h3>
+        {Comentarios.length === 0 ? (
+          <p>No Comentarios yet.</p>
         ) : (
           <ul style={{ display: "grid", gap: 12, listStyle: "none", padding: 0, margin: 0 }}>
-            {comments.map((comment) => (
+            {Comentarios.map((comment) => (
               <li key={comment.id} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12 }}>
                 <p style={{ margin: 0, fontSize: 14 }}>{comment.message}</p>
                 <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
-                  {comment.author} � {comment.createdAt}
+                  {comment.author} • {comment.createdAt}
                 </div>
               </li>
             ))}
@@ -51,7 +51,7 @@ const TicketComments = ({ ticketId, comments, onAddComment }: TicketCommentsProp
         )}
       </div>
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 8, maxWidth: 520 }}>
-        <label style={{ fontSize: 13 }}>Add a comment</label>
+        <label style={{ fontSize: 13 }}>Agregar comentario</label>
         <textarea
           rows={3}
           value={message}
@@ -59,11 +59,12 @@ const TicketComments = ({ ticketId, comments, onAddComment }: TicketCommentsProp
           style={inputStyle}
         />
         <button type="submit" disabled={submitting}>
-          {submitting ? "Saving..." : "Submit Comment"}
+          {submitting ? "Guardando..." : "Enviar comentario"}
         </button>
       </form>
     </div>
   )
 }
 
-export default TicketComments
+export default TicketComentarios
+

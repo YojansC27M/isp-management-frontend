@@ -37,36 +37,36 @@ const InvoiceDetailPage = () => {
       link.download = `${invoice.invoiceNumber}.pdf`
       link.click()
       window.URL.revokeObjectURL(url)
-      window.alert("Invoice PDF downloaded.")
+      window.alert("PDF de factura descargado.")
     } catch {
-      window.alert("Failed to download invoice PDF.")
+      window.alert("No se pudo descargar el PDF de la factura.")
     } finally {
       setDownloading(false)
     }
   }
 
   if (loading) {
-    return <p>Loading invoice...</p>
+    return <p>Cargando factura...</p>
   }
 
   if (!invoice) {
-    return <p>Invoice not found.</p>
+    return <p>Factura no encontrada.</p>
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Invoice Detail</h1>
+        <h1>Detalle de factura</h1>
         <p style={{ color: "#6b7280" }}>{invoice.clientName}</p>
         <button type="button" onClick={() => navigate("/invoices")} style={{ width: "fit-content" }}>
-          Back to Invoices
+          Volver a Facturas
         </button>
       </header>
 
       <InvoiceSummaryCard invoice={invoice} />
 
       <button type="button" onClick={handleDownload} disabled={downloading} style={{ width: "fit-content" }}>
-        {downloading ? "Downloading..." : "Download PDF"}
+        {downloading ? "Descargando..." : "Descargar PDF"}
       </button>
     </div>
   )

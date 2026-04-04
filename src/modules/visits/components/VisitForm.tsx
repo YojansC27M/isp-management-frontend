@@ -22,16 +22,16 @@ type VisitFormState = {
 type FormErrors = Partial<Record<keyof VisitFormState, string>>
 
 const typeOptions: { label: string; value: VisitType }[] = [
-  { label: "Installation", value: "installation" },
-  { label: "Maintenance", value: "maintenance" },
-  { label: "Support", value: "support" },
+  { label: "Instalación", value: "installation" },
+  { label: "Mantenimiento", value: "maintenance" },
+  { label: "Soporte", value: "support" },
 ]
 
 const statusOptions: { label: string; value: VisitStatus }[] = [
-  { label: "Scheduled", value: "scheduled" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Completed", value: "completed" },
-  { label: "Canceled", value: "canceled" },
+  { label: "Programada", value: "scheduled" },
+  { label: "En progreso", value: "in_progress" },
+  { label: "Completada", value: "completed" },
+  { label: "Cancelada", value: "canceled" },
 ]
 
 const inputStyle: CSSProperties = {
@@ -53,7 +53,7 @@ const errorStyle: CSSProperties = {
   fontSize: 12,
 }
 
-const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormProps) => {
+const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFormProps) => {
   const [values, setValues] = useState<VisitFormState>({
     clientId: initialValues.clientId,
     technicianId: initialValues.technicianId,
@@ -98,13 +98,13 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormP
   const validate = () => {
     const nextErrors: FormErrors = {}
 
-    if (!values.clientId.trim()) nextErrors.clientId = "Client ID is required"
-    if (!values.technicianId.trim()) nextErrors.technicianId = "Technician ID is required"
-    if (!values.zone.trim()) nextErrors.zone = "Zone is required"
-    if (!values.type) nextErrors.type = "Type is required"
-    if (!values.scheduledDate) nextErrors.scheduledDate = "Scheduled date is required"
-    if (!values.scheduledTime) nextErrors.scheduledTime = "Scheduled time is required"
-    if (!values.status) nextErrors.status = "Status is required"
+    if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
+    if (!values.technicianId.trim()) nextErrors.technicianId = "El ID del técnico es obligatorio"
+    if (!values.zone.trim()) nextErrors.zone = "La zona es obligatoria"
+    if (!values.type) nextErrors.type = "El tipo es obligatorio"
+    if (!values.scheduledDate) nextErrors.scheduledDate = "La fecha programada es obligatoria"
+    if (!values.scheduledTime) nextErrors.scheduledTime = "La hora programada es obligatoria"
+    if (!values.status) nextErrors.status = "El estado es obligatorio"
 
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -129,24 +129,24 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormP
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 560 }}>
       <label style={labelStyle}>
-        Client ID
+        ID de cliente
         <input name="clientId" value={values.clientId} onChange={handleChange("clientId")} style={inputStyle} />
         {errors.clientId && <span style={errorStyle}>{errors.clientId}</span>}
       </label>
       <label style={labelStyle}>
-        Technician ID
+        ID de técnico
         <input name="technicianId" value={values.technicianId} onChange={handleChange("technicianId")} style={inputStyle} />
         {errors.technicianId && <span style={errorStyle}>{errors.technicianId}</span>}
       </label>
       <label style={labelStyle}>
-        Zone
+        Zona
         <input name="zone" value={values.zone} onChange={handleChange("zone")} style={inputStyle} />
         {errors.zone && <span style={errorStyle}>{errors.zone}</span>}
       </label>
       <label style={labelStyle}>
-        Type
+        Tipo
         <select name="type" value={values.type} onChange={handleSelectChange("type")} style={inputStyle}>
-          <option value="">Select type</option>
+          <option value="">Selecciona un tipo</option>
           {typeOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -156,7 +156,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormP
         {errors.type && <span style={errorStyle}>{errors.type}</span>}
       </label>
       <label style={labelStyle}>
-        Scheduled Date
+        Fecha programada
         <input
           name="scheduledDate"
           type="date"
@@ -167,7 +167,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormP
         {errors.scheduledDate && <span style={errorStyle}>{errors.scheduledDate}</span>}
       </label>
       <label style={labelStyle}>
-        Scheduled Time
+        Hora programada
         <input
           name="scheduledTime"
           type="time"
@@ -178,9 +178,9 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormP
         {errors.scheduledTime && <span style={errorStyle}>{errors.scheduledTime}</span>}
       </label>
       <label style={labelStyle}>
-        Status
+        Estado
         <select name="status" value={values.status} onChange={handleSelectChange("status")} style={inputStyle}>
-          <option value="">Select status</option>
+          <option value="">Selecciona un estado</option>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -190,7 +190,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Save" }: VisitFormP
         {errors.status && <span style={errorStyle}>{errors.status}</span>}
       </label>
       <label style={labelStyle}>
-        Notes
+        Notas
         <textarea
           name="notes"
           rows={4}

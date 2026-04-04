@@ -19,8 +19,8 @@ type PlanFormState = {
 type FormErrors = Partial<Record<keyof PlanFormState, string>>
 
 const typeOptions: { label: string; value: PlanType }[] = [
-  { label: "Residential", value: "residential" },
-  { label: "Business", value: "business" },
+  { label: "Residencial", value: "residential" },
+  { label: "Empresarial", value: "business" },
 ]
 
 const inputStyle: CSSProperties = {
@@ -42,7 +42,7 @@ const errorStyle: CSSProperties = {
   fontSize: 12,
 }
 
-const PlanForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PlanFormProps) => {
+const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanFormProps) => {
   const [values, setValues] = useState<PlanFormState>({
     name: initialValues.name,
     downloadSpeed: initialValues.downloadSpeed ? String(initialValues.downloadSpeed) : "",
@@ -79,24 +79,24 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PlanFormPro
   const validate = () => {
     const nextErrors: FormErrors = {}
 
-    if (!values.name.trim()) nextErrors.name = "Name is required"
+    if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio"
 
     const download = Number(values.downloadSpeed)
     if (!values.downloadSpeed || Number.isNaN(download) || download <= 0) {
-      nextErrors.downloadSpeed = "Download speed must be greater than 0"
+      nextErrors.downloadSpeed = "La velocidad de descarga debe ser mayor a 0"
     }
 
     const upload = Number(values.uploadSpeed)
     if (!values.uploadSpeed || Number.isNaN(upload) || upload <= 0) {
-      nextErrors.uploadSpeed = "Upload speed must be greater than 0"
+      nextErrors.uploadSpeed = "La velocidad de subida debe ser mayor a 0"
     }
 
     const price = Number(values.price)
     if (!values.price || Number.isNaN(price) || price <= 0) {
-      nextErrors.price = "Price must be greater than 0"
+      nextErrors.price = "El precio debe ser mayor a 0"
     }
 
-    if (!values.type) nextErrors.type = "Type is required"
+    if (!values.type) nextErrors.type = "El tipo es obligatorio"
 
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -118,12 +118,12 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PlanFormPro
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 520 }}>
       <label style={labelStyle}>
-        Name
+        Nombre
         <input name="name" value={values.name} onChange={handleChange("name")} style={inputStyle} />
         {errors.name && <span style={errorStyle}>{errors.name}</span>}
       </label>
       <label style={labelStyle}>
-        Download Speed (Mbps)
+        Velocidad de descarga (Mbps)
         <input
           name="downloadSpeed"
           type="number"
@@ -136,7 +136,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PlanFormPro
         {errors.downloadSpeed && <span style={errorStyle}>{errors.downloadSpeed}</span>}
       </label>
       <label style={labelStyle}>
-        Upload Speed (Mbps)
+        Velocidad de subida (Mbps)
         <input
           name="uploadSpeed"
           type="number"
@@ -149,7 +149,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PlanFormPro
         {errors.uploadSpeed && <span style={errorStyle}>{errors.uploadSpeed}</span>}
       </label>
       <label style={labelStyle}>
-        Price
+        Precio
         <input
           name="price"
           type="number"
@@ -162,9 +162,9 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PlanFormPro
         {errors.price && <span style={errorStyle}>{errors.price}</span>}
       </label>
       <label style={labelStyle}>
-        Type
+        Tipo
         <select name="type" value={values.type} onChange={handleSelectChange} style={inputStyle}>
-          <option value="">Select type</option>
+          <option value="">Selecciona un tipo</option>
           {typeOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

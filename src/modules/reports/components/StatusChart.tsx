@@ -6,12 +6,12 @@ interface StatusChartProps {
 
 const StatusChart = ({ data }: StatusChartProps) => {
   if (data.length === 0) {
-    return <p>No status distribution available.</p>
+    return <p>No hay distribución de estados.</p>
   }
 
   return (
     <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-      <h3 style={{ marginTop: 0 }}>Invoice Status Distribution</h3>
+      <h3 style={{ marginTop: 0 }}>Distribución de estados de facturas</h3>
       <div style={{ display: "grid", gap: 10 }}>
         {data.map((item) => (
           <div key={item.status} style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 12 }}>

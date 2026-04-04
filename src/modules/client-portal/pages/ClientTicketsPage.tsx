@@ -35,20 +35,20 @@ const ClientTicketsPage = () => {
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1>Support Tickets</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Your recent support requests.</p>
+          <h1>Tickets de soporte</h1>
+          <p style={{ color: "#6b7280", marginTop: 4 }}>Tus solicitudes de soporte recientes.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" onClick={() => navigate("/client/dashboard")}>
-            Back to Dashboard
+            Volver al Panel
           </button>
           <button type="button" onClick={handleLogout}>
-            Logout
+            Cerrar sesión
           </button>
         </div>
       </header>
 
-      {loading ? <p>Loading tickets...</p> : <ClientTicketsList tickets={tickets} />}
+      {loading ? <p>Cargando tickets...</p> : <ClientTicketsList tickets={tickets} />}
     </div>
   )
 }

@@ -33,23 +33,23 @@ const ClientEditPage = () => {
   }
 
   if (loading) {
-    return <p>Loading client...</p>
+    return <p>Cargando cliente...</p>
   }
 
   if (!initialValues) {
-    return <p>Client not found.</p>
+    return <p>Cliente no encontrado.</p>
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Edit Client</h1>
-        <p style={{ color: "#6b7280" }}>Update client information.</p>
+        <h1>Editar cliente</h1>
+        <p style={{ color: "#6b7280" }}>Actualiza la información del cliente.</p>
         <button type="button" onClick={() => navigate("/clients")} style={{ width: "fit-content" }}>
-          Back to Clients
+          Volver a Clientes
         </button>
       </header>
-      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Update" />
+      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Actualizar" />
     </div>
   )
 }

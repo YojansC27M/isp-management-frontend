@@ -6,7 +6,7 @@ interface ClientPaymentsTableProps {
 
 const ClientPaymentsTable = ({ payments }: ClientPaymentsTableProps) => {
   if (payments.length === 0) {
-    return <p>No payments found.</p>
+    return <p>No se encontraron pagos.</p>
   }
 
   return (
@@ -14,9 +14,9 @@ const ClientPaymentsTable = ({ payments }: ClientPaymentsTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Method</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Método</th>
           </tr>
         </thead>
         <tbody>

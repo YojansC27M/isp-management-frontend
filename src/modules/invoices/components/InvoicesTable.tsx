@@ -19,13 +19,13 @@ const InvoicesTable = ({ invoices, onView, onDownload }: InvoicesTableProps) => 
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Invoice Number</th>
-            <th>Client</th>
-            <th>Amount</th>
-            <th>Issue Date</th>
-            <th>Due Date</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>Número de factura</th>
+            <th>Cliente</th>
+            <th>Monto</th>
+            <th>Fecha de emisión</th>
+            <th>Fecha de vencimiento</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -54,10 +54,10 @@ const InvoicesTable = ({ invoices, onView, onDownload }: InvoicesTableProps) => 
               </td>
               <td style={{ display: "flex", gap: 8 }}>
                 <button type="button" onClick={() => onView(invoice.id)}>
-                  View
+                  Ver
                 </button>
                 <button type="button" onClick={() => onDownload(invoice)}>
-                  Download PDF
+                  Descargar PDF
                 </button>
               </td>
             </tr>

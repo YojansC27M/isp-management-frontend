@@ -8,11 +8,11 @@ const ClientSummaryCard = ({ profile }: ClientSummaryCardProps) => {
   return (
     <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16, display: "grid", gap: 8 }}>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Client</strong>
+        <strong>Cliente</strong>
         <span>{profile.name}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Email</strong>
+        <strong>Correo</strong>
         <span>{profile.email}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
@@ -20,11 +20,11 @@ const ClientSummaryCard = ({ profile }: ClientSummaryCardProps) => {
         <span>{profile.plan}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Status</strong>
+        <strong>Estado</strong>
         <span style={{ textTransform: "capitalize" }}>{profile.status}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>IP Address</strong>
+        <strong>Dirección IP</strong>
         <span>{profile.ipAddress}</span>
       </div>
     </div>

@@ -17,20 +17,20 @@ const PaymentCreatePage = () => {
 
   const handleSubmit = async (values: PaymentFormValues) => {
     await createPayment(values)
-    window.alert("Payment registered successfully.")
+    window.alert("Pago registrado correctamente.")
     navigate("/payments")
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Register Payment</h1>
-        <p style={{ color: "#6b7280" }}>Record a new payment.</p>
+        <h1>Registrar pago</h1>
+        <p style={{ color: "#6b7280" }}>Registra un nuevo pago.</p>
         <button type="button" onClick={() => navigate("/payments")} style={{ width: "fit-content" }}>
-          Back to Payments
+          Volver a Pagos
         </button>
       </header>
-      <PaymentForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Register" />
+      <PaymentForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Registrar" />
     </div>
   )
 }

@@ -27,13 +27,13 @@ const PaymentsTable = ({ payments, onViewStatus }: PaymentsTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Client</th>
-            <th>Invoice Number</th>
-            <th>Amount</th>
-            <th>Payment Method</th>
-            <th>Payment Date</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>Cliente</th>
+            <th>Número de factura</th>
+            <th>Monto</th>
+            <th>Método de pago</th>
+            <th>Fecha de pago</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -62,7 +62,7 @@ const PaymentsTable = ({ payments, onViewStatus }: PaymentsTableProps) => {
               </td>
               <td>
                 <button type="button" onClick={() => onViewStatus(payment.clientId, payment.clientName)}>
-                  View Account Status
+                  Ver estado de cuenta
                 </button>
               </td>
             </tr>

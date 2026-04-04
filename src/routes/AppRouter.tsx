@@ -3,6 +3,9 @@ import LoginPage from "../pages/LoginPage"
 import DashboardPage from "../pages/DashboardPage"
 import MainLayout from "../layouts/MainLayout"
 import { useAuthStore } from "@/store/authStore"
+import ProtectedRoute from "@/auth/ProtectedRoute"
+import PermissionRoute from "@/auth/PermissionRoute"
+import UnauthorizedPage from "@/auth/UnauthorizedPage"
 import ClientsListPage from "../modules/clients/pages/ClientsListPage"
 import ClientCreatePage from "../modules/clients/pages/ClientCreatePage"
 import ClientEditPage from "../modules/clients/pages/ClientEditPage"
@@ -48,171 +51,214 @@ const AppRouter = () => {
         <Route
           path="/dashboard"
           element={
-            <MainLayout>
-              <DashboardPage />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout>
+                <DashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/clients"
           element={
-            <MainLayout>
-              <ClientsListPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["clients.read"]}>
+              <MainLayout>
+                <ClientsListPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/clients/new"
           element={
-            <MainLayout>
-              <ClientCreatePage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["clients.write"]}>
+              <MainLayout>
+                <ClientCreatePage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/clients/:id/edit"
           element={
-            <MainLayout>
-              <ClientEditPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["clients.write"]}>
+              <MainLayout>
+                <ClientEditPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/plans"
           element={
-            <MainLayout>
-              <PlansListPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["plans.read"]}>
+              <MainLayout>
+                <PlansListPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/plans/new"
           element={
-            <MainLayout>
-              <PlanCreatePage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["plans.write"]}>
+              <MainLayout>
+                <PlanCreatePage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/plans/:id/edit"
           element={
-            <MainLayout>
-              <PlanEditPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["plans.write"]}>
+              <MainLayout>
+                <PlanEditPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/payments"
           element={
-            <MainLayout>
-              <PaymentsListPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["payments.read"]}>
+              <MainLayout>
+                <PaymentsListPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/payments/new"
           element={
-            <MainLayout>
-              <PaymentCreatePage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["payments.write"]}>
+              <MainLayout>
+                <PaymentCreatePage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/payments/account-status/:clientId"
           element={
-            <MainLayout>
-              <AccountStatusPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["payments.read"]}>
+              <MainLayout>
+                <AccountStatusPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/tickets"
           element={
-            <MainLayout>
-              <TicketsListPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["tickets.read"]}>
+              <MainLayout>
+                <TicketsListPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/tickets/new"
           element={
-            <MainLayout>
-              <TicketCreatePage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["tickets.write"]}>
+              <MainLayout>
+                <TicketCreatePage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/tickets/:id"
           element={
-            <MainLayout>
-              <TicketDetailPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["tickets.read"]}>
+              <MainLayout>
+                <TicketDetailPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/visits"
           element={
-            <MainLayout>
-              <VisitsCalendarPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["visits.read"]}>
+              <MainLayout>
+                <VisitsCalendarPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/visits/new"
           element={
-            <MainLayout>
-              <VisitCreatePage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["visits.write"]}>
+              <MainLayout>
+                <VisitCreatePage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/visits/:id"
           element={
-            <MainLayout>
-              <VisitDetailPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["visits.read"]}>
+              <MainLayout>
+                <VisitDetailPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/monitoring"
           element={
-            <MainLayout>
-              <MonitoringDashboardPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["monitoring.read"]}>
+              <MainLayout>
+                <MonitoringDashboardPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/clients-map"
           element={
-            <MainLayout>
-              <ClientsMapPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["clients_map.read"]}>
+              <MainLayout>
+                <ClientsMapPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/invoices"
           element={
-            <MainLayout>
-              <InvoicesListPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["invoices.read"]}>
+              <MainLayout>
+                <InvoicesListPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/invoices/:id"
           element={
-            <MainLayout>
-              <InvoiceDetailPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["invoices.read"]}>
+              <MainLayout>
+                <InvoiceDetailPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/reports"
           element={
-            <MainLayout>
-              <ReportsDashboardPage />
-            </MainLayout>
+            <PermissionRoute requiredPermissions={["reports.read"]}>
+              <MainLayout>
+                <ReportsDashboardPage />
+              </MainLayout>
+            </PermissionRoute>
           }
         />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/client/login" element={<ClientLoginPage />} />
         <Route
           path="/client/dashboard"

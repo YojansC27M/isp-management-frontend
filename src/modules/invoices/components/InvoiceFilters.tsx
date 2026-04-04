@@ -9,9 +9,9 @@ interface InvoiceFiltersProps {
 }
 
 const statusOptions: { label: string; value: InvoiceStatus }[] = [
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
+  { label: "Pendiente", value: "pending" },
+  { label: "Pagado", value: "paid" },
+  { label: "Vencido", value: "overdue" },
 ]
 
 const InvoiceFilters = ({ values, onChange, onApply, onClear }: InvoiceFiltersProps) => {
@@ -32,13 +32,13 @@ const InvoiceFilters = ({ values, onChange, onApply, onClear }: InvoiceFiltersPr
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Client
-        <input value={values.clientName} onChange={handleInputChange("clientName")} placeholder="Client name" />
+        Cliente
+        <input value={values.clientName} onChange={handleInputChange("clientName")} placeholder="Nombre del cliente" />
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Status
+        Estado
         <select value={values.status} onChange={handleStatusChange}>
-          <option value="">All</option>
+          <option value="">Todos</option>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -47,18 +47,18 @@ const InvoiceFilters = ({ values, onChange, onApply, onClear }: InvoiceFiltersPr
         </select>
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Date From
+        Desde
         <input type="date" value={values.dateFrom} onChange={handleInputChange("dateFrom")} />
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Date To
+        Hasta
         <input type="date" value={values.dateTo} onChange={handleInputChange("dateTo")} />
       </label>
       <button type="button" onClick={onApply}>
-        Apply Filters
+        Aplicar filtros
       </button>
       <button type="button" onClick={onClear}>
-        Clear
+        Limpiar
       </button>
     </div>
   )

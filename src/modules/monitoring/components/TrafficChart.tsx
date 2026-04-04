@@ -27,7 +27,7 @@ const TrafficChart = () => {
 
   return (
     <div style={chartContainer}>
-      <h3 style={{ marginTop: 0 }}>Traffic (RX vs TX)</h3>
+      <h3 style={{ marginTop: 0 }}>Tráfico (RX vs TX)</h3>
       <div style={barContainer}>
         {data.map((point) => (
           <div key={point.label} style={barRow}>

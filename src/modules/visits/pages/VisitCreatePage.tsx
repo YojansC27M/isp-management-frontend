@@ -19,20 +19,20 @@ const VisitCreatePage = () => {
 
   const handleSubmit = async (values: VisitFormValues) => {
     await createVisit(values)
-    window.alert("Visit scheduled successfully.")
+    window.alert("Visita programada correctamente.")
     navigate("/visits")
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Schedule Visit</h1>
-        <p style={{ color: "#6b7280" }}>Assign a technician and time.</p>
+        <h1>Programar visita</h1>
+        <p style={{ color: "#6b7280" }}>Asigna un técnico y un horario.</p>
         <button type="button" onClick={() => navigate("/visits")} style={{ width: "fit-content" }}>
-          Back to Visits
+          Volver a Visitas
         </button>
       </header>
-      <VisitForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Schedule" />
+      <VisitForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Programar" />
     </div>
   )
 }

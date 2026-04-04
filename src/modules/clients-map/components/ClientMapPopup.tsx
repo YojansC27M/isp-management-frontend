@@ -13,18 +13,18 @@ const ClientMapPopup = ({ client }: ClientMapPopupProps) => {
       <strong>{client.name}</strong>
       <p style={{ margin: "6px 0", fontSize: 13, color: "#6b7280" }}>{client.document}</p>
       <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-        <span>Phone: {client.phone}</span>
+        <span>Teléfono: {client.phone}</span>
         <span>Plan: {client.plan}</span>
-        <span>Status: {client.status}</span>
-        <span>Zone: {client.zone}</span>
-        <span>Technician: {client.technicianName}</span>
+        <span>Estado: {client.status}</span>
+        <span>Zona: {client.zone}</span>
+        <span>Técnico: {client.technicianName}</span>
       </div>
       <button
         type="button"
         style={{ marginTop: 10 }}
         onClick={() => navigate(`/clients/${client.id}/edit`)}
       >
-        View Client
+        Ver cliente
       </button>
     </div>
   )

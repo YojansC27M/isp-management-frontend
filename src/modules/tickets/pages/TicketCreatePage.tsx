@@ -17,20 +17,20 @@ const TicketCreatePage = () => {
 
   const handleSubmit = async (values: TicketFormValues) => {
     await createTicket(values)
-    window.alert("Ticket created successfully.")
+    window.alert("Ticket creado correctamente.")
     navigate("/tickets")
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Create Ticket</h1>
-        <p style={{ color: "#6b7280" }}>Log a new support ticket.</p>
+        <h1>Crear ticket</h1>
+        <p style={{ color: "#6b7280" }}>Registra un nuevo ticket de soporte.</p>
         <button type="button" onClick={() => navigate("/tickets")} style={{ width: "fit-content" }}>
-          Back to Tickets
+          Volver a Tickets
         </button>
       </header>
-      <TicketForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Create" />
+      <TicketForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Crear" />
     </div>
   )
 }

@@ -11,9 +11,9 @@ interface ClientFormProps {
 type FormErrors = Partial<Record<keyof ClientFormValues, string>>
 
 const statusOptions: { label: string; value: ClientStatus }[] = [
-  { label: "Active", value: "active" },
-  { label: "Suspended", value: "suspended" },
-  { label: "Inactive", value: "inactive" },
+  { label: "Activo", value: "active" },
+  { label: "Suspendido", value: "suspended" },
+  { label: "Inactivo", value: "inactive" },
 ]
 
 const inputStyle: CSSProperties = {
@@ -35,7 +35,7 @@ const errorStyle: CSSProperties = {
   fontSize: 12,
 }
 
-const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFormProps) => {
+const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: ClientFormProps) => {
   const [values, setValues] = useState<ClientFormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
 
@@ -66,16 +66,16 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
   const validate = () => {
     const nextErrors: FormErrors = {}
 
-    if (!values.name.trim()) nextErrors.name = "Name is required"
-    if (!values.document.trim()) nextErrors.document = "Document is required"
-    if (!values.phone.trim()) nextErrors.phone = "Phone is required"
+    if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio"
+    if (!values.document.trim()) nextErrors.document = "El documento es obligatorio"
+    if (!values.phone.trim()) nextErrors.phone = "El teléfono es obligatorio"
     if (!values.email.trim()) {
-      nextErrors.email = "Email is required"
+      nextErrors.email = "El correo es obligatorio"
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = "Email is invalid"
+      nextErrors.email = "El correo no es válido"
     }
-    if (!values.ipAddress.trim()) nextErrors.ipAddress = "IP Address is required"
-    if (!values.status) nextErrors.status = "Status is required"
+    if (!values.ipAddress.trim()) nextErrors.ipAddress = "La IP es obligatoria"
+    if (!values.status) nextErrors.status = "El estado es obligatorio"
 
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -90,12 +90,12 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 520 }}>
       <label style={labelStyle}>
-        Name
+        Nombre
         <input name="name" value={values.name} onChange={handleTextChange("name")} style={inputStyle} />
         {errors.name && <span style={errorStyle}>{errors.name}</span>}
       </label>
       <label style={labelStyle}>
-        Document
+        Documento
         <input
           name="document"
           value={values.document}
@@ -105,16 +105,16 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
         {errors.document && <span style={errorStyle}>{errors.document}</span>}
       </label>
       <label style={labelStyle}>
-        Address
+        Dirección
         <input name="address" value={values.address} onChange={handleTextChange("address")} style={inputStyle} />
       </label>
       <label style={labelStyle}>
-        Phone
+        Teléfono
         <input name="phone" value={values.phone} onChange={handleTextChange("phone")} style={inputStyle} />
         {errors.phone && <span style={errorStyle}>{errors.phone}</span>}
       </label>
       <label style={labelStyle}>
-        Email
+        Correo
         <input
           name="email"
           type="email"
@@ -129,7 +129,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
         <input name="plan" value={values.plan} onChange={handleTextChange("plan")} style={inputStyle} />
       </label>
       <label style={labelStyle}>
-        IP Address
+        Dirección IP
         <input
           name="ipAddress"
           value={values.ipAddress}
@@ -139,7 +139,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
         {errors.ipAddress && <span style={errorStyle}>{errors.ipAddress}</span>}
       </label>
       <label style={labelStyle}>
-        Status
+        Estado
         <select name="status" value={values.status} onChange={handleSelectChange("status")} style={inputStyle}>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -150,7 +150,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
         {errors.status && <span style={errorStyle}>{errors.status}</span>}
       </label>
       <label style={labelStyle}>
-        Latitude
+        Latitud
         <input
           name="latitude"
           type="number"
@@ -161,7 +161,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Save" }: ClientFor
         />
       </label>
       <label style={labelStyle}>
-        Longitude
+        Longitud
         <input
           name="longitude"
           type="number"

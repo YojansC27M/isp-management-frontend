@@ -6,12 +6,12 @@ interface RevenueChartProps {
 
 const RevenueChart = ({ data }: RevenueChartProps) => {
   if (data.length === 0) {
-    return <p>No revenue data available.</p>
+    return <p>No hay datos de ingresos.</p>
   }
 
   return (
     <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-      <h3 style={{ marginTop: 0 }}>Revenue Over Time</h3>
+      <h3 style={{ marginTop: 0 }}>Ingresos en el tiempo</h3>
       <div style={{ display: "grid", gap: 8 }}>
         {data.map((point) => (
           <div key={point.date} style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: 12 }}>

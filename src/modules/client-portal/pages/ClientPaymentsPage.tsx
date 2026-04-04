@@ -35,20 +35,20 @@ const ClientPaymentsPage = () => {
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1>Payments</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Your payment history.</p>
+          <h1>Pagos</h1>
+          <p style={{ color: "#6b7280", marginTop: 4 }}>Tu historial de pagos.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button type="button" onClick={() => navigate("/client/dashboard")}>
-            Back to Dashboard
+            Volver al Panel
           </button>
           <button type="button" onClick={handleLogout}>
-            Logout
+            Cerrar sesión
           </button>
         </div>
       </header>
 
-      {loading ? <p>Loading payments...</p> : <ClientPaymentsTable payments={payments} />}
+      {loading ? <p>Cargando pagos...</p> : <ClientPaymentsTable payments={payments} />}
     </div>
   )
 }

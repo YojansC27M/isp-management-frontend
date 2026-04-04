@@ -28,14 +28,14 @@ const ClientsTable = ({ clients, onEdit, onDelete }: ClientsTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Name</th>
-            <th>Document</th>
-            <th>Phone</th>
-            <th>Email</th>
+            <th>Nombre</th>
+            <th>Documento</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
             <th>Plan</th>
-            <th>IP Address</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>Dirección IP</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -65,10 +65,10 @@ const ClientsTable = ({ clients, onEdit, onDelete }: ClientsTableProps) => {
               </td>
               <td style={{ display: "flex", gap: 8 }}>
                 <button type="button" onClick={() => onEdit(client.id)}>
-                  Edit
+                  Editar
                 </button>
                 <button type="button" onClick={() => onDelete(client.id)}>
-                  Delete
+                  Eliminar
                 </button>
               </td>
             </tr>

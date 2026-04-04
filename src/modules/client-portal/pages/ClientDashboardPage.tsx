@@ -46,22 +46,22 @@ const ClientDashboardPage = () => {
   }, [invoices])
 
   if (loading) {
-    return <p>Loading dashboard...</p>
+    return <p>Cargando panel...</p>
   }
 
   if (!profile) {
-    return <p>No client profile found.</p>
+    return <p>No se encontró el perfil del cliente.</p>
   }
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <div>
-          <h1>Welcome, {profile.name}</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Client Portal Overview</p>
+          <h1>Bienvenido, {profile.name}</h1>
+          <p style={{ color: "#6b7280", marginTop: 4 }}>Resumen del portal de clientes</p>
         </div>
         <button type="button" onClick={handleLogout}>
-          Logout
+          Cerrar sesión
         </button>
       </header>
 
@@ -69,18 +69,18 @@ const ClientDashboardPage = () => {
 
       <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
         <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-          <strong>Invoices</strong>
-          <p style={{ marginTop: 6, color: "#6b7280" }}>Pending: {invoiceSummary.pending}</p>
-          <p style={{ marginTop: 4, color: "#6b7280" }}>Paid: {invoiceSummary.paid}</p>
+          <strong>Facturas</strong>
+          <p style={{ marginTop: 6, color: "#6b7280" }}>Pendientes: {invoiceSummary.pending}</p>
+          <p style={{ marginTop: 4, color: "#6b7280" }}>Pagadas: {invoiceSummary.paid}</p>
           <button type="button" onClick={() => navigate("/client/payments")}>
-            View Payments
+            Ver pagos
           </button>
         </div>
         <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
           <strong>Tickets</strong>
-          <p style={{ marginTop: 6, color: "#6b7280" }}>Open tickets: {tickets.length}</p>
+          <p style={{ marginTop: 6, color: "#6b7280" }}>Tickets abiertos: {tickets.length}</p>
           <button type="button" onClick={() => navigate("/client/tickets")}>
-            View Tickets
+            Ver tickets
           </button>
         </div>
       </div>

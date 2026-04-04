@@ -1,4 +1,4 @@
-import type { Visit } from "../types/visit"
+ï»¿import type { Visit } from "../types/visit"
 
 interface VisitsCalendarProps {
   visits: Visit[]
@@ -16,7 +16,7 @@ const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
   const dates = Object.keys(grouped).sort()
 
   if (dates.length === 0) {
-    return <p>No visits scheduled.</p>
+    return <p>No hay visitas programadas.</p>
   }
 
   return (
@@ -43,13 +43,13 @@ const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
                   <strong>{visit.clientName}</strong>
                   <span style={{ fontSize: 13, color: "#6b7280" }}>{visit.technicianName}</span>
                   <span style={{ fontSize: 13, color: "#6b7280" }}>
-                    {visit.type} • {visit.scheduledTime}
+                    {visit.type} - {visit.scheduledTime}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                   <span style={{ fontSize: 12, textTransform: "capitalize" }}>{visit.status.replace("_", " ")}</span>
                   <button type="button" onClick={() => onView(visit.id)}>
-                    View Details
+                    Ver detalles
                   </button>
                 </div>
               </div>
@@ -62,3 +62,5 @@ const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
 }
 
 export default VisitsCalendar
+
+

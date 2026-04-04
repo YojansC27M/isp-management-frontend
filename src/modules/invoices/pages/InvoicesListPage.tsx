@@ -65,9 +65,9 @@ const InvoicesListPage = () => {
       link.download = `${invoice.invoiceNumber}.pdf`
       link.click()
       window.URL.revokeObjectURL(url)
-      window.alert("Invoice PDF downloaded.")
+      window.alert("PDF de factura descargado.")
     } catch {
-      window.alert("Failed to download invoice PDF.")
+      window.alert("No se pudo descargar el PDF de la factura.")
     } finally {
       setDownloadingId(null)
     }
@@ -76,16 +76,16 @@ const InvoicesListPage = () => {
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header>
-        <h1>Invoices</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Track billing and payment status.</p>
+        <h1>Facturas</h1>
+        <p style={{ color: "#6b7280", marginTop: 4 }}>Controla facturación y estado de pagos.</p>
       </header>
 
       <InvoiceFilters values={filters} onChange={setFilters} onApply={handleApplyFilters} onClear={handleClearFilters} />
 
       {loading ? (
-        <p>Loading invoices...</p>
+        <p>Cargando facturas...</p>
       ) : filteredInvoices.length === 0 ? (
-        <p>No invoices found.</p>
+        <p>No se encontraron facturas.</p>
       ) : (
         <InvoicesTable
           invoices={filteredInvoices}
@@ -94,7 +94,7 @@ const InvoicesListPage = () => {
         />
       )}
 
-      {downloadingId && <p>Downloading invoice...</p>}
+      {downloadingId && <p>Descargando factura...</p>}
     </div>
   )
 }

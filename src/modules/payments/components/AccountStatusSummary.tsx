@@ -15,15 +15,15 @@ const AccountStatusSummary = ({ totalPending, totalPaid, totalOverdue }: Account
   return (
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
       <div style={cardStyle}>
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Total Pending</p>
+        <p style={{ fontSize: 12, color: "#6b7280" }}>Total pendiente</p>
         <p style={{ fontSize: 20, fontWeight: 600 }}>${totalPending.toFixed(2)}</p>
       </div>
       <div style={cardStyle}>
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Total Paid</p>
+        <p style={{ fontSize: 12, color: "#6b7280" }}>Total pagado</p>
         <p style={{ fontSize: 20, fontWeight: 600 }}>${totalPaid.toFixed(2)}</p>
       </div>
       <div style={cardStyle}>
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Total Overdue</p>
+        <p style={{ fontSize: 12, color: "#6b7280" }}>Total vencido</p>
         <p style={{ fontSize: 20, fontWeight: 600 }}>${totalOverdue.toFixed(2)}</p>
       </div>
     </div>

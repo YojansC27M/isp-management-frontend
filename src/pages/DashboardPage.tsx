@@ -11,7 +11,7 @@ const DashboardPage = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold text-foreground">ISP Dashboard</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Panel ISP</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Vista general de operaciones, soporte y rendimiento en tiempo real.
         </p>
@@ -35,7 +35,7 @@ const DashboardPage = () => {
           <CardTitle>Actividad reciente</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Aqui puedes integrar notificaciones, tickets recientes y estado de la red.
+          
         </CardContent>
       </Card>
     </div>

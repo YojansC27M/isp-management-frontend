@@ -47,16 +47,16 @@ const ClientsMapPage = () => {
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header>
-        <h1>Clients Map</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Visualize clients by location and status.</p>
+        <h1>Mapa de clientes</h1>
+        <p style={{ color: "#6b7280", marginTop: 4 }}>Visualiza clientes por ubicación y estado.</p>
       </header>
 
       <ClientMapFilters values={filters} onChange={setFilters} onApply={applyFilters} onClear={clearFilters} />
 
       {loading ? (
-        <p>Loading clients...</p>
+        <p>Cargando clientes...</p>
       ) : clients.length === 0 ? (
-        <p>No clients found.</p>
+        <p>No se encontraron clientes.</p>
       ) : (
         <ClientsMapView clients={clients} />
       )}

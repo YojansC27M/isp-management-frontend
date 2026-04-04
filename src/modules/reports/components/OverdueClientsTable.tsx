@@ -6,7 +6,7 @@ interface OverdueClientsTableProps {
 
 const OverdueClientsTable = ({ clients }: OverdueClientsTableProps) => {
   if (clients.length === 0) {
-    return <p>No overdue clients found.</p>
+    return <p>No se encontraron clientes vencidos.</p>
   }
 
   return (
@@ -14,9 +14,9 @@ const OverdueClientsTable = ({ clients }: OverdueClientsTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Client Name</th>
-            <th>Amount Due</th>
-            <th>Days Overdue</th>
+            <th>Cliente</th>
+            <th>Monto vencido</th>
+            <th>Días en mora</th>
           </tr>
         </thead>
         <tbody>

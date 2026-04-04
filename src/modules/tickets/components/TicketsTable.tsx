@@ -26,13 +26,13 @@ const TicketsTable = ({ tickets, onView, onEdit }: TicketsTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Title</th>
-            <th>Client</th>
-            <th>Category</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Created At</th>
-            <th>Actions</th>
+            <th>Título</th>
+            <th>Cliente</th>
+            <th>Categoría</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Creado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -76,10 +76,10 @@ const TicketsTable = ({ tickets, onView, onEdit }: TicketsTableProps) => {
               <td>{ticket.createdAt}</td>
               <td style={{ display: "flex", gap: 8 }}>
                 <button type="button" onClick={() => onView(ticket.id)}>
-                  View
+                  Ver
                 </button>
                 <button type="button" onClick={() => onEdit(ticket.id)}>
-                  Edit
+                  Editar
                 </button>
               </td>
             </tr>

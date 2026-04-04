@@ -29,25 +29,25 @@ const PlanEditPage = () => {
   const handleSubmit = async (values: PlanFormValues) => {
     if (!id) return
     await updatePlan(id, values)
-    window.alert("Plan updated successfully.")
+    window.alert("Plan actualizado correctamente.")
     navigate("/plans")
   }
 
   if (loading) {
-    return <p>Loading plan...</p>
+    return <p>Cargando plan...</p>
   }
 
   if (!initialValues) {
-    return <p>Plan not found.</p>
+    return <p>Plan no encontrado.</p>
   }
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Edit Plan</h1>
-        <p style={{ color: "#6b7280" }}>Update plan details.</p>
+        <h1>Editar plan</h1>
+        <p style={{ color: "#6b7280" }}>Actualiza los detalles del plan.</p>
       </header>
-      <PlanForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Update" />
+      <PlanForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Actualizar" />
     </div>
   )
 }

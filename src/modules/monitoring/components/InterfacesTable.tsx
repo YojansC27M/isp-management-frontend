@@ -16,8 +16,8 @@ const InterfacesTable = ({ interfaces }: InterfacesTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Interface</th>
-            <th>Status</th>
+            <th>Interfaz</th>
+            <th>Estado</th>
             <th>RX</th>
             <th>TX</th>
           </tr>

@@ -30,37 +30,37 @@ const PlansListPage = () => {
   }, [plans, search])
 
   const handleDelete = async (id: string) => {
-    const confirmed = window.confirm("Are you sure you want to delete this plan?")
+    const confirmed = window.confirm("¿Estás seguro de eliminar este plan?")
     if (!confirmed) return
     await deletePlan(id)
     await loadPlans()
-    window.alert("Plan deleted successfully.")
+    window.alert("Plan eliminado correctamente.")
   }
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
         <div>
-          <h1>Service Plans</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Manage residential and business plans.</p>
+          <h1>Planes de servicio</h1>
+          <p style={{ color: "#6b7280", marginTop: 4 }}>Administra planes residenciales y empresariales.</p>
         </div>
         <button type="button" onClick={() => navigate("/plans/new")}>
-          Create Plan
+          Crear plan
         </button>
       </header>
 
       <input
         type="search"
-        placeholder="Search by plan name..."
+        placeholder="Buscar por nombre del plan..."
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         style={{ maxWidth: 360 }}
       />
 
       {loading ? (
-        <p>Loading plans...</p>
+        <p>Cargando planes...</p>
       ) : filteredPlans.length === 0 ? (
-        <p>No plans found.</p>
+        <p>No se encontraron planes.</p>
       ) : (
         <PlansTable
           plans={filteredPlans}

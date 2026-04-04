@@ -15,12 +15,12 @@ const PlansTable = ({ plans, onEdit, onDelete }: PlansTableProps) => {
       <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Name</th>
-            <th style={cellNumeric}>Download</th>
-            <th style={cellNumeric}>Upload</th>
-            <th style={cellNumeric}>Price</th>
-            <th>Type</th>
-            <th>Actions</th>
+            <th>Nombre</th>
+            <th style={cellNumeric}>Descarga</th>
+            <th style={cellNumeric}>Subida</th>
+            <th style={cellNumeric}>Precio</th>
+            <th>Tipo</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -33,10 +33,10 @@ const PlansTable = ({ plans, onEdit, onDelete }: PlansTableProps) => {
               <td style={{ textTransform: "capitalize" }}>{plan.type}</td>
               <td style={{ display: "flex", gap: 8 }}>
                 <button type="button" onClick={() => onEdit(plan.id)}>
-                  Edit
+                  Editar
                 </button>
                 <button type="button" onClick={() => onDelete(plan.id)}>
-                  Delete
+                  Eliminar
                 </button>
               </td>
             </tr>

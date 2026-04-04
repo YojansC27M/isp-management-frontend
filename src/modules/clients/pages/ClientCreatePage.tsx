@@ -27,13 +27,13 @@ const ClientCreatePage = () => {
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <header style={{ display: "grid", gap: 6 }}>
-        <h1>Create Client</h1>
-        <p style={{ color: "#6b7280" }}>Add a new client to your ISP.</p>
+        <h1>Crear cliente</h1>
+        <p style={{ color: "#6b7280" }}>Agrega un nuevo cliente a tu ISP.</p>
         <button type="button" onClick={() => navigate("/clients")} style={{ width: "fit-content" }}>
-          Back to Clients
+          Volver a Clientes
         </button>
       </header>
-      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Create" />
+      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Crear" />
     </div>
   )
 }

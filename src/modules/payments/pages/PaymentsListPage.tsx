@@ -5,9 +5,9 @@ import { getPayments } from "../services/paymentsApi"
 import type { Payment, PaymentStatus } from "../types/payment"
 
 const statusOptions: { label: string; value: PaymentStatus }[] = [
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
+  { label: "Pendiente", value: "pending" },
+  { label: "Pagado", value: "paid" },
+  { label: "Vencido", value: "overdue" },
 ]
 
 const PaymentsListPage = () => {
@@ -47,26 +47,26 @@ const PaymentsListPage = () => {
     <div style={{ display: "grid", gap: 20 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
         <div>
-          <h1>Payments</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Track payments and client status.</p>
+          <h1>Pagos</h1>
+          <p style={{ color: "#6b7280", marginTop: 4 }}>Controla pagos y estado de clientes.</p>
         </div>
         <button type="button" onClick={() => navigate("/payments/new")}>
-          Register Payment
+          Registrar pago
         </button>
       </header>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
         <input
           type="search"
-          placeholder="Search by client or invoice..."
+          placeholder="Buscar por cliente o factura..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           style={{ maxWidth: 360 }}
         />
         <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-          Status
+          Estado
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as PaymentStatus | "")}>
-            <option value="">All</option>
+            <option value="">Todos</option>
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -77,9 +77,9 @@ const PaymentsListPage = () => {
       </div>
 
       {loading ? (
-        <p>Loading payments...</p>
+        <p>Cargando pagos...</p>
       ) : filteredPayments.length === 0 ? (
-        <p>No payments found.</p>
+        <p>No se encontraron pagos.</p>
       ) : (
         <PaymentsTable
           payments={filteredPayments}

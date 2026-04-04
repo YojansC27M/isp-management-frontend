@@ -19,26 +19,26 @@ const ReportsFilters = ({ values, onChange, onApply, onClear }: ReportsFiltersPr
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Date From
+        Desde
         <input type="date" value={values.dateFrom} onChange={handleInputChange("dateFrom")} />
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Date To
+        Hasta
         <input type="date" value={values.dateTo} onChange={handleInputChange("dateTo")} />
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Zone
-        <input value={values.zone} onChange={handleInputChange("zone")} placeholder="Zone" />
+        Zona
+        <input value={values.zone} onChange={handleInputChange("zone")} placeholder="Zona" />
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
         Plan
         <input value={values.plan} onChange={handleInputChange("plan")} placeholder="Plan" />
       </label>
       <button type="button" onClick={onApply}>
-        Apply Filters
+        Aplicar filtros
       </button>
       <button type="button" onClick={onClear}>
-        Clear
+        Limpiar
       </button>
     </div>
   )

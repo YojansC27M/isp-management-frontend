@@ -9,9 +9,9 @@ interface ClientMapFiltersProps {
 }
 
 const statusOptions: { label: string; value: ClientMapStatus }[] = [
-  { label: "Active", value: "active" },
-  { label: "Suspended", value: "suspended" },
-  { label: "Inactive", value: "inactive" },
+  { label: "Activo", value: "active" },
+  { label: "Suspendido", value: "suspended" },
+  { label: "Inactivo", value: "inactive" },
 ]
 
 const ClientMapFilters = ({ values, onChange, onApply, onClear }: ClientMapFiltersProps) => {
@@ -32,9 +32,9 @@ const ClientMapFilters = ({ values, onChange, onApply, onClear }: ClientMapFilte
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Status
+        Estado
         <select value={values.status} onChange={handleStatusChange}>
-          <option value="">All</option>
+          <option value="">Todos</option>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -43,22 +43,22 @@ const ClientMapFilters = ({ values, onChange, onApply, onClear }: ClientMapFilte
         </select>
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Zone
-        <input value={values.zone} onChange={handleInputChange("zone")} placeholder="Zone" />
+        Zona
+        <input value={values.zone} onChange={handleInputChange("zone")} placeholder="Zona" />
       </label>
       <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Technician
+        Técnico
         <input
           value={values.technicianName}
           onChange={handleInputChange("technicianName")}
-          placeholder="Technician"
+          placeholder="Técnico"
         />
       </label>
       <button type="button" onClick={onApply}>
-        Apply Filters
+        Aplicar filtros
       </button>
       <button type="button" onClick={onClear}>
-        Clear
+        Limpiar
       </button>
     </div>
   )

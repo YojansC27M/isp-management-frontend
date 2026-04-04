@@ -62,26 +62,26 @@ const ReportsDashboardPage = () => {
   const metricsCards = useMemo(() => {
     if (!metrics) return []
     return [
-      { label: "Total Revenue", value: `$${metrics.totalRevenue.toFixed(2)}` },
-      { label: "Total Paid", value: `$${metrics.totalPaid.toFixed(2)}` },
-      { label: "Total Pending", value: `$${metrics.totalPending.toFixed(2)}` },
-      { label: "Total Overdue", value: `$${metrics.totalOverdue.toFixed(2)}` },
+      { label: "Ingresos totales", value: `$${metrics.totalRevenue.toFixed(2)}` },
+      { label: "Total pagado", value: `$${metrics.totalPaid.toFixed(2)}` },
+      { label: "Total pendiente", value: `$${metrics.totalPending.toFixed(2)}` },
+      { label: "Total vencido", value: `$${metrics.totalOverdue.toFixed(2)}` },
     ]
   }, [metrics])
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header>
-        <h1>Billing Reports</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Analyze revenue and receivables.</p>
+        <h1>Reportes de facturación</h1>
+        <p style={{ color: "#6b7280", marginTop: 4 }}>Analiza ingresos y cartera.</p>
       </header>
 
       <ReportsFilters values={filters} onChange={setFilters} onApply={handleApplyFilters} onClear={handleClearFilters} />
 
       {loading ? (
-        <p>Loading reports...</p>
+        <p>Cargando reportes...</p>
       ) : !metrics ? (
-        <p>No report data available.</p>
+        <p>No hay datos de reportes.</p>
       ) : (
         <>
           <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
@@ -94,7 +94,7 @@ const ReportsDashboardPage = () => {
             <StatusChart data={statusData} />
           </div>
           <section style={{ display: "grid", gap: 8 }}>
-            <h3 style={{ margin: 0 }}>Overdue Clients</h3>
+            <h3 style={{ margin: 0 }}>Clientes vencidos</h3>
             <OverdueClientsTable clients={overdueClients} />
           </section>
         </>

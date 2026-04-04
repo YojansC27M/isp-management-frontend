@@ -62,14 +62,14 @@ const MonitoringDashboardPage = () => {
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <header>
-        <h1>Network Monitoring</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Track router health and traffic.</p>
+        <h1>Monitoreo de red</h1>
+        <p style={{ color: "#6b7280", marginTop: 4 }}>Supervisa el estado de routers y tráfico.</p>
       </header>
 
       {loadingRouters ? (
-        <p>Loading routers...</p>
+        <p>Cargando routers...</p>
       ) : routers.length === 0 ? (
-        <p>No routers found.</p>
+        <p>No se encontraron routers.</p>
       ) : (
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
           {routers.map((router) => (
@@ -87,20 +87,24 @@ const MonitoringDashboardPage = () => {
         <section style={{ display: "grid", gap: 16 }}>
           <h2 style={{ margin: 0 }}>{selectedRouter.name}</h2>
           {loadingDetails ? (
-            <p>Loading router metrics...</p>
+            <p>Cargando métricas del router...</p>
           ) : metrics ? (
             <>
               <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-                <StatsCard label="CPU Usage" value={`${metrics.cpuUsage}%`} />
-                <StatsCard label="RAM Usage" value={`${metrics.ramUsage}%`} />
-                <StatsCard label="Uptime" value={metrics.uptime} />
-                <StatsCard label="Total Traffic" value={metrics.totalTraffic} />
+                <StatsCard label="Uso de CPU" value={`${metrics.cpuUsage}%`} />
+                <StatsCard label="Uso de RAM" value={`${metrics.ramUsage}%`} />
+                <StatsCard label="Tiempo en línea" value={metrics.uptime} />
+                <StatsCard label="Tráfico total" value={metrics.totalTraffic} />
               </div>
               <TrafficChart />
-              {interfaces.length === 0 ? <p>No interfaces found.</p> : <InterfacesTable interfaces={interfaces} />}
+              {interfaces.length === 0 ? (
+                <p>No se encontraron interfaces.</p>
+              ) : (
+                <InterfacesTable interfaces={interfaces} />
+              )}
             </>
           ) : (
-            <p>No metrics available.</p>
+            <p>No hay métricas disponibles.</p>
           )}
         </section>
       )}

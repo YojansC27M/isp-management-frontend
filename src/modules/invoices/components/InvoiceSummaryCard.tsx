@@ -8,27 +8,27 @@ const InvoiceSummaryCard = ({ invoice }: InvoiceSummaryCardProps) => {
   return (
     <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16, display: "grid", gap: 8 }}>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Invoice Number</strong>
+        <strong>Número de factura</strong>
         <span>{invoice.invoiceNumber}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Client</strong>
+        <strong>Cliente</strong>
         <span>{invoice.clientName}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Amount</strong>
+        <strong>Monto</strong>
         <span>${invoice.amount.toFixed(2)}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Issue Date</strong>
+        <strong>Fecha de emisión</strong>
         <span>{invoice.issueDate}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Due Date</strong>
+        <strong>Fecha de vencimiento</strong>
         <span>{invoice.dueDate}</span>
       </div>
       <div style={{ display: "grid", gap: 4 }}>
-        <strong>Status</strong>
+        <strong>Estado</strong>
         <span style={{ textTransform: "capitalize" }}>{invoice.status}</span>
       </div>
     </div>

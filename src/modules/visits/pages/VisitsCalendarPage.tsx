@@ -5,10 +5,10 @@ import { getVisits } from "../services/visitsApi"
 import type { Visit, VisitStatus } from "../types/visit"
 
 const statusOptions: { label: string; value: VisitStatus }[] = [
-  { label: "Scheduled", value: "scheduled" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Completed", value: "completed" },
-  { label: "Canceled", value: "canceled" },
+  { label: "Programada", value: "scheduled" },
+  { label: "En progreso", value: "in_progress" },
+  { label: "Completada", value: "completed" },
+  { label: "Cancelada", value: "canceled" },
 ]
 
 const VisitsCalendarPage = () => {
@@ -56,19 +56,19 @@ const VisitsCalendarPage = () => {
     <div style={{ display: "grid", gap: 20 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
         <div>
-          <h1>Technical Visits Schedule</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Monitor and schedule technician visits.</p>
+          <h1>Agenda de visitas técnicas</h1>
+          <p style={{ color: "#6b7280", marginTop: 4 }}>Monitorea y agenda visitas técnicas.</p>
         </div>
         <button type="button" onClick={() => navigate("/visits/new")}>
-          Schedule Visit
+          Programar visita
         </button>
       </header>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
         <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-          Technician
+          Técnico
           <select value={technicianFilter} onChange={(event) => setTechnicianFilter(event.target.value)}>
-            <option value="">All</option>
+            <option value="">Todos</option>
             {technicians.map((tech) => (
               <option key={tech} value={tech}>
                 {tech}
@@ -77,9 +77,9 @@ const VisitsCalendarPage = () => {
           </select>
         </label>
         <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-          Zone
+          Zona
           <select value={zoneFilter} onChange={(event) => setZoneFilter(event.target.value)}>
-            <option value="">All</option>
+            <option value="">Todos</option>
             {zones.map((zone) => (
               <option key={zone} value={zone}>
                 {zone}
@@ -88,9 +88,9 @@ const VisitsCalendarPage = () => {
           </select>
         </label>
         <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-          Status
+          Estado
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as VisitStatus | "")}>
-            <option value="">All</option>
+            <option value="">Todos</option>
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -101,9 +101,9 @@ const VisitsCalendarPage = () => {
       </div>
 
       {loading ? (
-        <p>Loading visits...</p>
+        <p>Cargando visitas...</p>
       ) : filteredVisits.length === 0 ? (
-        <p>No visits scheduled.</p>
+        <p>No hay visitas programadas.</p>
       ) : (
         <VisitsCalendar visits={filteredVisits} onView={(id) => navigate(`/visits/${id}`)} />
       )}

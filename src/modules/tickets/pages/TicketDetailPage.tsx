@@ -33,10 +33,10 @@ const TicketDetailPage = () => {
       ticketId,
       message,
       createdAt: new Date().toISOString(),
-      author: "You",
+      author: "Tú",
     }
     setComments((current) => [newComment, ...current])
-    window.alert("Comment added successfully.")
+    window.alert("Comentario agregado correctamente.")
   }
 
   const statusLabel = useMemo(() => {
@@ -45,11 +45,11 @@ const TicketDetailPage = () => {
   }, [ticket])
 
   if (loading) {
-    return <p>Loading ticket...</p>
+    return <p>Cargando ticket...</p>
   }
 
   if (!ticket) {
-    return <p>Ticket not found.</p>
+    return <p>Ticket no encontrado.</p>
   }
 
   return (
@@ -58,17 +58,17 @@ const TicketDetailPage = () => {
         <h1>{ticket.title}</h1>
         <p style={{ color: "#6b7280" }}>{ticket.clientName}</p>
         <button type="button" onClick={() => navigate("/tickets")} style={{ width: "fit-content" }}>
-          Back to Tickets
+          Volver a Tickets
         </button>
       </header>
 
       <section style={{ display: "grid", gap: 8 }}>
         <p style={{ margin: 0 }}>{ticket.description}</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 13, color: "#6b7280" }}>
-          <span>Status: {statusLabel}</span>
-          <span>Priority: {ticket.priority}</span>
-          <span>Category: {ticket.category}</span>
-          <span>Created: {ticket.createdAt}</span>
+          <span>Estado: {statusLabel}</span>
+          <span>Prioridad: {ticket.priority}</span>
+          <span>Categoría: {ticket.category}</span>
+          <span>Creado: {ticket.createdAt}</span>
         </div>
       </section>
 

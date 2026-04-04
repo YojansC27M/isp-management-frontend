@@ -20,16 +20,16 @@ type PaymentFormState = {
 type FormErrors = Partial<Record<keyof PaymentFormState, string>>
 
 const methodOptions: { label: string; value: PaymentMethod }[] = [
-  { label: "Cash", value: "cash" },
-  { label: "Transfer", value: "transfer" },
-  { label: "Card", value: "card" },
+  { label: "Efectivo", value: "cash" },
+  { label: "Transferencia", value: "transfer" },
+  { label: "Tarjeta", value: "card" },
   { label: "PSE", value: "pse" },
 ]
 
 const statusOptions: { label: string; value: PaymentStatus }[] = [
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
+  { label: "Pendiente", value: "pending" },
+  { label: "Pagado", value: "paid" },
+  { label: "Vencido", value: "overdue" },
 ]
 
 const inputStyle: CSSProperties = {
@@ -51,7 +51,7 @@ const errorStyle: CSSProperties = {
   fontSize: 12,
 }
 
-const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentFormProps) => {
+const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PaymentFormProps) => {
   const [values, setValues] = useState<PaymentFormState>({
     clientId: initialValues.clientId,
     invoiceNumber: initialValues.invoiceNumber,
@@ -90,17 +90,17 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentF
   const validate = () => {
     const nextErrors: FormErrors = {}
 
-    if (!values.clientId.trim()) nextErrors.clientId = "Client ID is required"
-    if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = "Invoice number is required"
+    if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
+    if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = "El número de factura es obligatorio"
 
     const amount = Number(values.amount)
     if (!values.amount || Number.isNaN(amount) || amount <= 0) {
-      nextErrors.amount = "Amount must be greater than 0"
+      nextErrors.amount = "El monto debe ser mayor a 0"
     }
 
-    if (!values.paymentMethod) nextErrors.paymentMethod = "Payment method is required"
-    if (!values.paymentDate) nextErrors.paymentDate = "Payment date is required"
-    if (!values.status) nextErrors.status = "Status is required"
+    if (!values.paymentMethod) nextErrors.paymentMethod = "El método de pago es obligatorio"
+    if (!values.paymentDate) nextErrors.paymentDate = "La fecha de pago es obligatoria"
+    if (!values.status) nextErrors.status = "El estado es obligatorio"
 
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -123,12 +123,12 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentF
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 520 }}>
       <label style={labelStyle}>
-        Client ID
+        ID de cliente
         <input name="clientId" value={values.clientId} onChange={handleChange("clientId")} style={inputStyle} />
         {errors.clientId && <span style={errorStyle}>{errors.clientId}</span>}
       </label>
       <label style={labelStyle}>
-        Invoice Number
+        Número de factura
         <input
           name="invoiceNumber"
           value={values.invoiceNumber}
@@ -138,7 +138,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentF
         {errors.invoiceNumber && <span style={errorStyle}>{errors.invoiceNumber}</span>}
       </label>
       <label style={labelStyle}>
-        Amount
+        Monto
         <input
           name="amount"
           type="number"
@@ -151,14 +151,14 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentF
         {errors.amount && <span style={errorStyle}>{errors.amount}</span>}
       </label>
       <label style={labelStyle}>
-        Payment Method
+        Método de pago
         <select
           name="paymentMethod"
           value={values.paymentMethod}
           onChange={handleSelectChange("paymentMethod")}
           style={inputStyle}
         >
-          <option value="">Select method</option>
+          <option value="">Selecciona un método</option>
           {methodOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -168,7 +168,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentF
         {errors.paymentMethod && <span style={errorStyle}>{errors.paymentMethod}</span>}
       </label>
       <label style={labelStyle}>
-        Payment Date
+        Fecha de pago
         <input
           name="paymentDate"
           type="date"
@@ -179,9 +179,9 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Save" }: PaymentF
         {errors.paymentDate && <span style={errorStyle}>{errors.paymentDate}</span>}
       </label>
       <label style={labelStyle}>
-        Status
+        Estado
         <select name="status" value={values.status} onChange={handleSelectChange("status")} style={inputStyle}>
-          <option value="">Select status</option>
+          <option value="">Selecciona un estado</option>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
