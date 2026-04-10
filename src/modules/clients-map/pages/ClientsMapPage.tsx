@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import StateMessage from "@/components/feedback/StateMessage"
 import ClientMapFilters from "../components/ClientMapFilters"
 import ClientsMapView from "../components/ClientsMapView"
 import { getClientsMap, getClientsMapByFilters } from "../services/clientsMapApi"
@@ -45,18 +46,18 @@ const ClientsMapPage = () => {
   }
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div className="grid gap-6">
       <header>
-        <h1>Mapa de clientes</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Visualiza clientes por ubicación y estado.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Mapa de clientes</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Visualiza clientes por ubicacion, estado y tecnico asignado.</p>
       </header>
 
       <ClientMapFilters values={filters} onChange={setFilters} onApply={applyFilters} onClear={clearFilters} />
 
       {loading ? (
-        <p>Cargando clientes...</p>
+        <StateMessage variant="loading" title="Cargando clientes..." />
       ) : clients.length === 0 ? (
-        <p>No se encontraron clientes.</p>
+        <StateMessage variant="empty" title="No se encontraron clientes." />
       ) : (
         <ClientsMapView clients={clients} />
       )}

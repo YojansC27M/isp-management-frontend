@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import StateMessage from "@/components/feedback/StateMessage"
 import VisitDetailsCard from "../components/VisitDetailsCard"
 import { getVisitById } from "../services/visitsApi"
 import type { Visit } from "../types/visit"
@@ -25,22 +27,19 @@ const VisitDetailPage = () => {
     loadVisit()
   }, [id])
 
-  if (loading) {
-    return <p>Cargando visita...</p>
-  }
-
-  if (!visit) {
-    return <p>Visita no encontrada.</p>
-  }
+  if (loading) return <StateMessage variant="loading" title="Cargando visita..." />
+  if (!visit) return <StateMessage variant="empty" title="Visita no encontrada." />
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 6 }}>
-        <h1>Detalle de visita</h1>
-        <p style={{ color: "#6b7280" }}>{visit.clientName}</p>
-        <button type="button" onClick={() => navigate("/visits")} style={{ width: "fit-content" }}>
+    <div className="grid gap-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Detalle de visita</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{visit.clientName}</p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/visits")}>
           Volver a Visitas
-        </button>
+        </Button>
       </header>
       <VisitDetailsCard visit={visit} />
     </div>

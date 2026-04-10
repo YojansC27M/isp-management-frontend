@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import { useCan } from "@/auth/usePermission"
 import type { ClientMapItem } from "../types/clientMap"
 
 interface ClientMapPopupProps {
@@ -7,26 +9,47 @@ interface ClientMapPopupProps {
 
 const ClientMapPopup = ({ client }: ClientMapPopupProps) => {
   const navigate = useNavigate()
+  const canManageClients = useCan("clients.write")
 
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#fff" }}>
-      <strong>{client.name}</strong>
-      <p style={{ margin: "6px 0", fontSize: 13, color: "#6b7280" }}>{client.document}</p>
-      <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-        <span>Teléfono: {client.phone}</span>
-        <span>Plan: {client.plan}</span>
-        <span>Estado: {client.status}</span>
-        <span>Zona: {client.zone}</span>
-        <span>Técnico: {client.technicianName}</span>
+    <section className="rounded-xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-foreground">{client.name}</h3>
+          <p className="text-sm text-muted-foreground">{client.document}</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/clients/${client.id}/edit`)}
+          disabled={!canManageClients}
+          title={!canManageClients ? "Tu perfil no tiene permiso para editar clientes." : undefined}
+        >
+          Ver cliente
+        </Button>
       </div>
-      <button
-        type="button"
-        style={{ marginTop: 10 }}
-        onClick={() => navigate(`/clients/${client.id}/edit`)}
-      >
-        Ver cliente
-      </button>
-    </div>
+      <dl className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Telefono</dt>
+          <dd>{client.phone}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Plan</dt>
+          <dd>{client.plan}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Estado</dt>
+          <dd className="capitalize">{client.status}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Zona</dt>
+          <dd>{client.zone}</dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Tecnico asignado</dt>
+          <dd>{client.technicianName}</dd>
+        </div>
+      </dl>
+    </section>
   )
 }
 

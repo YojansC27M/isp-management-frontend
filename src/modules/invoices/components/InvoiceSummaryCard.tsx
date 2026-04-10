@@ -1,3 +1,4 @@
+import KeyValueSummaryGrid, { type KeyValueSummaryItem } from "@/components/shared/KeyValueSummaryGrid"
 import type { Invoice } from "../types/invoice"
 
 interface InvoiceSummaryCardProps {
@@ -5,34 +6,16 @@ interface InvoiceSummaryCardProps {
 }
 
 const InvoiceSummaryCard = ({ invoice }: InvoiceSummaryCardProps) => {
-  return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16, display: "grid", gap: 8 }}>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Número de factura</strong>
-        <span>{invoice.invoiceNumber}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Cliente</strong>
-        <span>{invoice.clientName}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Monto</strong>
-        <span>${invoice.amount.toFixed(2)}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Fecha de emisión</strong>
-        <span>{invoice.issueDate}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Fecha de vencimiento</strong>
-        <span>{invoice.dueDate}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Estado</strong>
-        <span style={{ textTransform: "capitalize" }}>{invoice.status}</span>
-      </div>
-    </div>
-  )
+  const items: KeyValueSummaryItem[] = [
+    { label: "Numero de factura", value: invoice.invoiceNumber, valueClassName: "capitalize" },
+    { label: "Cliente", value: invoice.clientName, valueClassName: "capitalize" },
+    { label: "Monto", value: `$${invoice.amount.toFixed(2)}`, valueClassName: "capitalize" },
+    { label: "Fecha de emision", value: invoice.issueDate, valueClassName: "capitalize" },
+    { label: "Fecha de vencimiento", value: invoice.dueDate, valueClassName: "capitalize" },
+    { label: "Estado", value: invoice.status, valueClassName: "capitalize" },
+  ]
+
+  return <KeyValueSummaryGrid items={items} />
 }
 
 export default InvoiceSummaryCard

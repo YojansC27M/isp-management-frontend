@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react"
-import type { ChangeEvent, CSSProperties, FormEvent } from "react"
+import { useEffect, useRef, useState } from "react"
+import type { ChangeEvent, FormEvent } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { TicketCategory, TicketFormValues, TicketPriority, TicketStatus } from "../types/ticket"
 
 interface TicketFormProps {
@@ -10,6 +13,8 @@ interface TicketFormProps {
 
 type TicketFormState = {
   clientId: string
+  assignedTechnicianId: string
+  assignedTechnicianName: string
   title: string
   description: string
   category: TicketCategory | ""
@@ -18,11 +23,12 @@ type TicketFormState = {
 }
 
 type FormErrors = Partial<Record<keyof TicketFormState, string>>
+type FocusableField = keyof TicketFormState
 
 const categoryOptions: { label: string; value: TicketCategory }[] = [
-  { label: "Técnico", value: "technical" },
-  { label: "Facturación", value: "billing" },
-  { label: "Instalación", value: "installation" },
+  { label: "Tecnico", value: "technical" },
+  { label: "Facturacion", value: "billing" },
+  { label: "Instalacion", value: "installation" },
 ]
 
 const priorityOptions: { label: string; value: TicketPriority }[] = [
@@ -38,28 +44,20 @@ const statusOptions: { label: string; value: TicketStatus }[] = [
   { label: "Cerrado", value: "closed" },
 ]
 
-const inputStyle: CSSProperties = {
-  padding: "10px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: 6,
-  fontSize: 14,
-}
+const selectClass =
+  "h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
 
-const labelStyle: CSSProperties = {
-  display: "grid",
-  gap: 6,
-  fontSize: 13,
-  color: "#111827",
-}
+const textareaClass =
+  "min-h-28 w-full rounded-lg border border-border bg-card px-2.5 py-2 text-sm text-muted-foreground outline-none focus:border-ring"
 
-const errorStyle: CSSProperties = {
-  color: "#dc2626",
-  fontSize: 12,
-}
+const inputId = (field: string) => `ticket-form-${field}`
+const errorId = (field: string) => `ticket-form-${field}-error`
 
 const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: TicketFormProps) => {
   const [values, setValues] = useState<TicketFormState>({
     clientId: initialValues.clientId,
+    assignedTechnicianId: initialValues.assignedTechnicianId,
+    assignedTechnicianName: initialValues.assignedTechnicianName,
     title: initialValues.title,
     description: initialValues.description,
     category: initialValues.category,
@@ -67,10 +65,13 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     status: initialValues.status,
   })
   const [errors, setErrors] = useState<FormErrors>({})
+  const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
 
   useEffect(() => {
     setValues({
       clientId: initialValues.clientId,
+      assignedTechnicianId: initialValues.assignedTechnicianId,
+      assignedTechnicianName: initialValues.assignedTechnicianName,
       title: initialValues.title,
       description: initialValues.description,
       category: initialValues.category,
@@ -79,42 +80,51 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     })
   }, [initialValues])
 
-  const handleChange = (field: keyof TicketFormState) => (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setValues((current) => ({
-      ...current,
-      [field]: event.target.value,
-    }))
+  const handleChange = (field: keyof TicketFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setValues((current) => ({ ...current, [field]: event.target.value }))
   }
 
   const handleSelectChange = (field: "category" | "priority" | "status") => (event: ChangeEvent<HTMLSelectElement>) => {
-    setValues((current) => ({
-      ...current,
-      [field]: event.target.value,
-    }))
+    setValues((current) => ({ ...current, [field]: event.target.value }))
   }
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-
     if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
-    if (!values.title.trim()) nextErrors.title = "El título es obligatorio"
-    if (!values.description.trim()) nextErrors.description = "La descripción es obligatoria"
-    if (!values.category) nextErrors.category = "La categoría es obligatoria"
+    if (!values.assignedTechnicianId.trim()) nextErrors.assignedTechnicianId = "El ID del tecnico es obligatorio"
+    if (!values.assignedTechnicianName.trim()) nextErrors.assignedTechnicianName = "El tecnico asignado es obligatorio"
+    if (!values.title.trim()) nextErrors.title = "El titulo es obligatorio"
+    if (!values.description.trim()) nextErrors.description = "La descripcion es obligatoria"
+    if (!values.category) nextErrors.category = "La categoria es obligatoria"
     if (!values.priority) nextErrors.priority = "La prioridad es obligatoria"
     if (!values.status) nextErrors.status = "El estado es obligatorio"
-
     setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
+    return nextErrors
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!validate()) return
+    const nextErrors = validate()
+    if (Object.keys(nextErrors).length > 0) {
+      const order: FocusableField[] = [
+        "clientId",
+        "assignedTechnicianId",
+        "assignedTechnicianName",
+        "title",
+        "description",
+        "category",
+        "priority",
+        "status",
+      ]
+      const first = order.find((field) => nextErrors[field])
+      if (first) fieldRefs.current[first]?.focus()
+      return
+    }
 
     onSubmit({
       clientId: values.clientId.trim(),
+      assignedTechnicianId: values.assignedTechnicianId.trim(),
+      assignedTechnicianName: values.assignedTechnicianName.trim(),
       title: values.title.trim(),
       description: values.description.trim(),
       category: values.category as TicketCategory,
@@ -123,67 +133,156 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     })
   }
 
+  const describedBy = (field: keyof TicketFormState) => (errors[field] ? errorId(field) : undefined)
+
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 560 }}>
-      <label style={labelStyle}>
-        ID de cliente
-        <input name="clientId" value={values.clientId} onChange={handleChange("clientId")} style={inputStyle} />
-        {errors.clientId && <span style={errorStyle}>{errors.clientId}</span>}
-      </label>
-      <label style={labelStyle}>
-        Título
-        <input name="title" value={values.title} onChange={handleChange("title")} style={inputStyle} />
-        {errors.title && <span style={errorStyle}>{errors.title}</span>}
-      </label>
-      <label style={labelStyle}>
-        Descripción
-        <textarea
-          name="description"
-          rows={4}
-          value={values.description}
-          onChange={handleChange("description")}
-          style={inputStyle}
-        />
-        {errors.description && <span style={errorStyle}>{errors.description}</span>}
-      </label>
-      <label style={labelStyle}>
-        Categoría
-        <select name="category" value={values.category} onChange={handleSelectChange("category")} style={inputStyle}>
-          <option value="">Selecciona una categoría</option>
-          {categoryOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.category && <span style={errorStyle}>{errors.category}</span>}
-      </label>
-      <label style={labelStyle}>
-        Prioridad
-        <select name="priority" value={values.priority} onChange={handleSelectChange("priority")} style={inputStyle}>
-          <option value="">Selecciona una prioridad</option>
-          {priorityOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.priority && <span style={errorStyle}>{errors.priority}</span>}
-      </label>
-      <label style={labelStyle}>
-        Estado
-        <select name="status" value={values.status} onChange={handleSelectChange("status")} style={inputStyle}>
-          <option value="">Selecciona un estado</option>
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.status && <span style={errorStyle}>{errors.status}</span>}
-      </label>
-      <div style={{ display: "flex", gap: 12 }}>
-        <button type="submit">{submitLabel}</button>
+    <form onSubmit={handleSubmit} className="grid max-w-3xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("clientId")}>ID de cliente</Label>
+          <Input
+            id={inputId("clientId")}
+            name="clientId"
+            value={values.clientId}
+            onChange={handleChange("clientId")}
+            ref={(node) => (fieldRefs.current.clientId = node)}
+            aria-invalid={Boolean(errors.clientId)}
+            aria-describedby={describedBy("clientId")}
+          />
+          {errors.clientId && <span id={errorId("clientId")} className="text-xs text-rose-600" role="alert">{errors.clientId}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("assignedTechnicianId")}>ID de tecnico</Label>
+          <Input
+            id={inputId("assignedTechnicianId")}
+            name="assignedTechnicianId"
+            value={values.assignedTechnicianId}
+            onChange={handleChange("assignedTechnicianId")}
+            ref={(node) => (fieldRefs.current.assignedTechnicianId = node)}
+            aria-invalid={Boolean(errors.assignedTechnicianId)}
+            aria-describedby={describedBy("assignedTechnicianId")}
+          />
+          {errors.assignedTechnicianId && (
+            <span id={errorId("assignedTechnicianId")} className="text-xs text-rose-600" role="alert">
+              {errors.assignedTechnicianId}
+            </span>
+          )}
+        </label>
+        <label className="grid gap-1.5 md:col-span-2">
+          <Label htmlFor={inputId("assignedTechnicianName")}>Tecnico asignado</Label>
+          <Input
+            id={inputId("assignedTechnicianName")}
+            name="assignedTechnicianName"
+            value={values.assignedTechnicianName}
+            onChange={handleChange("assignedTechnicianName")}
+            ref={(node) => (fieldRefs.current.assignedTechnicianName = node)}
+            aria-invalid={Boolean(errors.assignedTechnicianName)}
+            aria-describedby={describedBy("assignedTechnicianName")}
+          />
+          {errors.assignedTechnicianName && (
+            <span id={errorId("assignedTechnicianName")} className="text-xs text-rose-600" role="alert">
+              {errors.assignedTechnicianName}
+            </span>
+          )}
+        </label>
+        <label className="grid gap-1.5 md:col-span-2">
+          <Label htmlFor={inputId("title")}>Titulo</Label>
+          <Input
+            id={inputId("title")}
+            name="title"
+            value={values.title}
+            onChange={handleChange("title")}
+            ref={(node) => (fieldRefs.current.title = node)}
+            aria-invalid={Boolean(errors.title)}
+            aria-describedby={describedBy("title")}
+          />
+          {errors.title && <span id={errorId("title")} className="text-xs text-rose-600" role="alert">{errors.title}</span>}
+        </label>
+        <label className="grid gap-1.5 md:col-span-2">
+          <Label htmlFor={inputId("description")}>Descripcion</Label>
+          <textarea
+            id={inputId("description")}
+            name="description"
+            rows={4}
+            value={values.description}
+            onChange={handleChange("description")}
+            className={textareaClass}
+            ref={(node) => (fieldRefs.current.description = node)}
+            aria-invalid={Boolean(errors.description)}
+            aria-describedby={describedBy("description")}
+          />
+          {errors.description && (
+            <span id={errorId("description")} className="text-xs text-rose-600" role="alert">
+              {errors.description}
+            </span>
+          )}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("category")}>Categoria</Label>
+          <select
+            id={inputId("category")}
+            name="category"
+            value={values.category}
+            onChange={handleSelectChange("category")}
+            className={selectClass}
+            ref={(node) => (fieldRefs.current.category = node)}
+            aria-invalid={Boolean(errors.category)}
+            aria-describedby={describedBy("category")}
+          >
+            <option value="">Selecciona una categoria</option>
+            {categoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.category && <span id={errorId("category")} className="text-xs text-rose-600" role="alert">{errors.category}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("priority")}>Prioridad</Label>
+          <select
+            id={inputId("priority")}
+            name="priority"
+            value={values.priority}
+            onChange={handleSelectChange("priority")}
+            className={selectClass}
+            ref={(node) => (fieldRefs.current.priority = node)}
+            aria-invalid={Boolean(errors.priority)}
+            aria-describedby={describedBy("priority")}
+          >
+            <option value="">Selecciona una prioridad</option>
+            {priorityOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.priority && <span id={errorId("priority")} className="text-xs text-rose-600" role="alert">{errors.priority}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("status")}>Estado</Label>
+          <select
+            id={inputId("status")}
+            name="status"
+            value={values.status}
+            onChange={handleSelectChange("status")}
+            className={selectClass}
+            ref={(node) => (fieldRefs.current.status = node)}
+            aria-invalid={Boolean(errors.status)}
+            aria-describedby={describedBy("status")}
+          >
+            <option value="">Selecciona un estado</option>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.status && <span id={errorId("status")} className="text-xs text-rose-600" role="alert">{errors.status}</span>}
+        </label>
+      </div>
+      <div className="flex items-center gap-2 pt-2">
+        <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
   )

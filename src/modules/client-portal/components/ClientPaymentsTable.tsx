@@ -1,3 +1,4 @@
+import StateMessage from "@/components/feedback/StateMessage"
 import type { ClientPayment } from "../types/clientPortal"
 
 interface ClientPaymentsTableProps {
@@ -6,30 +7,30 @@ interface ClientPaymentsTableProps {
 
 const ClientPaymentsTable = ({ payments }: ClientPaymentsTableProps) => {
   if (payments.length === 0) {
-    return <p>No se encontraron pagos.</p>
+    return <StateMessage variant="empty" title="No se encontraron pagos." />
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Monto</th>
-            <th>Fecha</th>
-            <th>Método</th>
+    <section className="overflow-x-auto rounded-xl border border-border bg-card">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+          <tr>
+            <th className="px-4 py-3">Monto</th>
+            <th className="px-4 py-3">Fecha</th>
+            <th className="px-4 py-3">Metodo</th>
           </tr>
         </thead>
         <tbody>
           {payments.map((payment) => (
-            <tr key={payment.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-              <td>${payment.amount.toFixed(2)}</td>
-              <td>{payment.paymentDate}</td>
-              <td style={{ textTransform: "capitalize" }}>{payment.method}</td>
+            <tr key={payment.id} className="border-t border-border/60 text-muted-foreground">
+              <td className="px-4 py-3 font-medium">${payment.amount.toFixed(2)}</td>
+              <td className="px-4 py-3">{payment.paymentDate}</td>
+              <td className="px-4 py-3 capitalize">{payment.method}</td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </section>
   )
 }
 

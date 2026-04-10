@@ -1,21 +1,3 @@
-const chartContainer: React.CSSProperties = {
-  border: "1px solid #e5e7eb",
-  borderRadius: 8,
-  padding: 16,
-}
-
-const barContainer: React.CSSProperties = {
-  display: "grid",
-  gap: 8,
-}
-
-const barRow: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "80px 1fr",
-  alignItems: "center",
-  gap: 12,
-}
-
 const TrafficChart = () => {
   const data = [
     { label: "08:00", rx: 40, tx: 30 },
@@ -26,36 +8,32 @@ const TrafficChart = () => {
   ]
 
   return (
-    <div style={chartContainer}>
-      <h3 style={{ marginTop: 0 }}>Tráfico (RX vs TX)</h3>
-      <div style={barContainer}>
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h3 className="text-sm font-semibold text-foreground">Tráfico (RX vs TX)</h3>
+      <div className="mt-4 grid gap-3">
         {data.map((point) => (
-          <div key={point.label} style={barRow}>
-            <span style={{ fontSize: 12, color: "#6b7280" }}>{point.label}</span>
-            <div style={{ display: "grid", gap: 6 }}>
-              <div
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#bfdbfe",
-                  width: `${point.rx}%`,
-                }}
-              />
-              <div
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  background: "#a7f3d0",
-                  width: `${point.tx}%`,
-                }}
-              />
+          <div key={point.label} className="grid grid-cols-[70px_1fr] items-center gap-3">
+            <span className="text-xs text-muted-foreground">{point.label}</span>
+            <div className="grid gap-2">
+              <div className="h-2 rounded-full bg-muted">
+                <div className="h-2 rounded-full bg-sky-400" style={{ width: `${point.rx}%` }} />
+              </div>
+              <div className="h-2 rounded-full bg-muted">
+                <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${point.tx}%` }} />
+              </div>
             </div>
           </div>
         ))}
       </div>
-      <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12, color: "#6b7280" }}>
-        <span>RX</span>
-        <span>TX</span>
+      <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-sky-400" />
+          RX
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-emerald-400" />
+          TX
+        </span>
       </div>
     </div>
   )

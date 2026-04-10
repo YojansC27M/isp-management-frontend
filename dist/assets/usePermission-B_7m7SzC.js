@@ -1,0 +1,1 @@
+import{A as t,c as o,r as n,l as i}from"./index-Jc0aDzhM.js";const u=()=>{const e=o(r=>r.user),s=o(r=>r.permissions);return n.useMemo(()=>s.length>0?s:i(e),[s,e])},a=e=>{const s=u();return t(s,e)};export{a as u};

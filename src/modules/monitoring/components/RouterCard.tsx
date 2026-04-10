@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react"
 import type { Router } from "../types/monitoring"
 
 interface RouterCardProps {
@@ -7,9 +6,9 @@ interface RouterCardProps {
   onSelect: (id: string) => void
 }
 
-const statusStyles: Record<Router["status"], CSSProperties> = {
-  online: { backgroundColor: "#dcfce7", color: "#166534" },
-  offline: { backgroundColor: "#fee2e2", color: "#991b1b" },
+const statusClasses: Record<Router["status"], string> = {
+  online: "bg-emerald-100 text-emerald-800",
+  offline: "bg-rose-100 text-rose-800",
 }
 
 const RouterCard = ({ router, selected, onSelect }: RouterCardProps) => {
@@ -17,33 +16,14 @@ const RouterCard = ({ router, selected, onSelect }: RouterCardProps) => {
     <button
       type="button"
       onClick={() => onSelect(router.id)}
-      style={{
-        textAlign: "left",
-        border: selected ? "2px solid #2563eb" : "1px solid #e5e7eb",
-        background: "#fff",
-        borderRadius: 10,
-        padding: 16,
-        display: "grid",
-        gap: 6,
-        cursor: "pointer",
-      }}
+      className={`grid gap-1 rounded-xl border bg-card p-4 text-left transition hover:border-border ${
+        selected ? "border-sky-500 ring-2 ring-sky-100" : "border-border"
+      }`}
     >
-      <strong>{router.name}</strong>
-      <span style={{ fontSize: 13, color: "#6b7280" }}>{router.ip}</span>
-      <span style={{ fontSize: 13, color: "#6b7280" }}>{router.location}</span>
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          padding: "2px 8px",
-          borderRadius: 999,
-          fontSize: 12,
-          fontWeight: 600,
-          textTransform: "capitalize",
-          width: "fit-content",
-          ...statusStyles[router.status],
-        }}
-      >
+      <strong className="text-foreground">{router.name}</strong>
+      <span className="text-xs text-muted-foreground">{router.ip}</span>
+      <span className="text-xs text-muted-foreground">{router.location}</span>
+      <span className={`mt-1 inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[router.status]}`}>
         {router.status}
       </span>
     </button>

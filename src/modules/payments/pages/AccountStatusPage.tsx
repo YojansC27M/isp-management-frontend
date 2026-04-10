@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import StateMessage from "@/components/feedback/StateMessage"
 import AccountStatusSummary from "../components/AccountStatusSummary"
 import { getAccountStatusByClient } from "../services/paymentsApi"
 import type { AccountStatusItem, PaymentStatus } from "../types/payment"
@@ -8,19 +10,10 @@ interface LocationState {
   clientName?: string
 }
 
-const badgeStyles: Record<PaymentStatus, React.CSSProperties> = {
-  pending: {
-    backgroundColor: "#fef3c7",
-    color: "#92400e",
-  },
-  paid: {
-    backgroundColor: "#dcfce7",
-    color: "#166534",
-  },
-  overdue: {
-    backgroundColor: "#fee2e2",
-    color: "#991b1b",
-  },
+const statusClasses: Record<PaymentStatus, string> = {
+  pending: "bg-amber-100 text-amber-800",
+  paid: "bg-emerald-100 text-emerald-800",
+  overdue: "bg-rose-100 text-rose-800",
 }
 
 const AccountStatusPage = () => {
@@ -61,19 +54,21 @@ const AccountStatusPage = () => {
   const clientLabel = state?.clientName ? state.clientName : clientId ? `Cliente ${clientId}` : "Cliente"
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
-      <header style={{ display: "grid", gap: 6 }}>
-        <h1>Estado de cuenta</h1>
-        <p style={{ color: "#6b7280" }}>{clientLabel}</p>
-        <button type="button" onClick={() => navigate("/payments")} style={{ width: "fit-content" }}>
+    <div className="grid gap-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Estado de cuenta</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{clientLabel}</p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/payments")}>
           Volver a Pagos
-        </button>
+        </Button>
       </header>
 
       {loading ? (
-        <p>Cargando estado de cuenta...</p>
+        <StateMessage variant="loading" title="Cargando estado de cuenta..." />
       ) : items.length === 0 ? (
-        <p>No se encontraron facturas.</p>
+        <StateMessage variant="empty" title="No se encontraron facturas." />
       ) : (
         <>
           <AccountStatusSummary
@@ -81,42 +76,33 @@ const AccountStatusPage = () => {
             totalPaid={summary.totalPaid}
             totalOverdue={summary.totalOverdue}
           />
-          <div style={{ overflowX: "auto" }}>
-            <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-                  <th>Número de factura</th>
-                  <th>Fecha de vencimiento</th>
-                  <th>Monto</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                    <td>{item.invoiceNumber}</td>
-                    <td>{item.dueDate}</td>
-                    <td>${item.amount.toFixed(2)}</td>
-                    <td>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "2px 8px",
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          textTransform: "capitalize",
-                          ...badgeStyles[item.status],
-                        }}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[620px] border-collapse text-left text-sm">
+                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Número de factura</th>
+                    <th className="px-4 py-3 font-semibold">Vencimiento</th>
+                    <th className="px-4 py-3 font-semibold">Monto</th>
+                    <th className="px-4 py-3 font-semibold">Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id} className="border-t border-border/60">
+                      <td className="px-4 py-3 font-medium text-foreground">{item.invoiceNumber}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{item.dueDate}</td>
+                      <td className="px-4 py-3 text-foreground">${item.amount.toFixed(2)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[item.status]}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

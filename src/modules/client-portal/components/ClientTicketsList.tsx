@@ -1,4 +1,5 @@
-﻿import type { ClientTicket } from "../types/clientPortal"
+import StateMessage from "@/components/feedback/StateMessage"
+import type { ClientTicket } from "../types/clientPortal"
 
 interface ClientTicketsListProps {
   tickets: ClientTicket[]
@@ -6,22 +7,21 @@ interface ClientTicketsListProps {
 
 const ClientTicketsList = ({ tickets }: ClientTicketsListProps) => {
   if (tickets.length === 0) {
-    return <p>No se encontraron tickets.</p>
+    return <StateMessage variant="empty" title="No se encontraron tickets." />
   }
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <section className="grid gap-3">
       {tickets.map((ticket) => (
-        <div key={ticket.id} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12 }}>
-          <strong>{ticket.title}</strong>
-          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-            <span style={{ textTransform: "capitalize" }}>{ticket.status}</span> • {ticket.createdAt}
-          </div>
-        </div>
+        <article key={ticket.id} className="rounded-xl border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">{ticket.title}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <span className="capitalize">{ticket.status}</span> • {ticket.createdAt}
+          </p>
+        </article>
       ))}
-    </div>
+    </section>
   )
 }
 
 export default ClientTicketsList
-

@@ -5,22 +5,24 @@ interface StatusChartProps {
 }
 
 const StatusChart = ({ data }: StatusChartProps) => {
-  if (data.length === 0) {
-    return <p>No hay distribución de estados.</p>
-  }
+  if (data.length === 0) return <p className="text-sm text-muted-foreground">No hay distribución de estados.</p>
+
+  const maxCount = Math.max(...data.map((item) => item.count), 1)
 
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-      <h3 style={{ marginTop: 0 }}>Distribución de estados de facturas</h3>
-      <div style={{ display: "grid", gap: 10 }}>
+    <section className="rounded-xl border border-border bg-card p-4">
+      <h3 className="text-sm font-semibold text-foreground">Distribución de estados</h3>
+      <div className="mt-3 grid gap-2.5">
         {data.map((item) => (
-          <div key={item.status} style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 12 }}>
-            <span style={{ fontSize: 12, textTransform: "capitalize", color: "#6b7280" }}>{item.status}</span>
-            <div style={{ height: 8, borderRadius: 999, background: "#fde68a", width: `${Math.min(item.count * 10, 100)}%` }} />
+          <div key={item.status} className="grid grid-cols-[100px_1fr] items-center gap-3">
+            <span className="text-xs capitalize text-muted-foreground">{item.status}</span>
+            <div className="h-2 rounded-full bg-muted">
+              <div className="h-2 rounded-full bg-amber-500" style={{ width: `${(item.count / maxCount) * 100}%` }} />
+            </div>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   )
 }
 

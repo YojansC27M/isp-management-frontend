@@ -1,5 +1,5 @@
 import api from "@/api/axios"
-import type { Ticket, TicketComment, TicketFormValues } from "../types/ticket"
+import type { Ticket, TicketComment, TicketCommentVisibility, TicketFormValues } from "../types/ticket"
 
 export const getTickets = async () => {
   const { data } = await api.get<Ticket[]>("/tickets")
@@ -21,7 +21,12 @@ export const updateTicket = async (id: string, payload: TicketFormValues) => {
   return data
 }
 
-export const addComment = async (ticketId: string, message: string) => {
-  const { data } = await api.post<TicketComment>(`/tickets/${ticketId}/comments`, { message })
+export const addComment = async (ticketId: string, message: string, visibility: TicketCommentVisibility) => {
+  const { data } = await api.post<TicketComment>(`/tickets/${ticketId}/comments`, { message, visibility })
+  return data
+}
+
+export const getTicketComments = async (ticketId: string) => {
+  const { data } = await api.get<TicketComment[]>(`/tickets/${ticketId}/comments`)
   return data
 }

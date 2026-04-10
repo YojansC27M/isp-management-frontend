@@ -4,28 +4,21 @@ interface AccountStatusSummaryProps {
   totalOverdue: number
 }
 
-const cardStyle: React.CSSProperties = {
-  border: "1px solid #e5e7eb",
-  borderRadius: 8,
-  padding: 16,
-  background: "#ffffff",
-}
-
 const AccountStatusSummary = ({ totalPending, totalPaid, totalOverdue }: AccountStatusSummaryProps) => {
+  const cards = [
+    { label: "Total pendiente", value: totalPending, color: "text-amber-700" },
+    { label: "Total pagado", value: totalPaid, color: "text-emerald-700" },
+    { label: "Total vencido", value: totalOverdue, color: "text-rose-700" },
+  ]
+
   return (
-    <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
-      <div style={cardStyle}>
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Total pendiente</p>
-        <p style={{ fontSize: 20, fontWeight: 600 }}>${totalPending.toFixed(2)}</p>
-      </div>
-      <div style={cardStyle}>
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Total pagado</p>
-        <p style={{ fontSize: 20, fontWeight: 600 }}>${totalPaid.toFixed(2)}</p>
-      </div>
-      <div style={cardStyle}>
-        <p style={{ fontSize: 12, color: "#6b7280" }}>Total vencido</p>
-        <p style={{ fontSize: 20, fontWeight: 600 }}>${totalOverdue.toFixed(2)}</p>
-      </div>
+    <div className="grid gap-3 sm:grid-cols-3">
+      {cards.map((card) => (
+        <article key={card.label} className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{card.label}</p>
+          <p className={`mt-2 text-2xl font-semibold ${card.color}`}>${card.value.toFixed(2)}</p>
+        </article>
+      ))}
     </div>
   )
 }

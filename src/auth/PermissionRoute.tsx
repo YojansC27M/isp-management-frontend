@@ -1,8 +1,10 @@
-﻿import type { ReactElement } from "react"
-import { Navigate } from "react-router-dom"
-import { useAuthStore } from "@/store/authStore"
+import type { ReactElement } from "react"
+import { Navigate, useLocation } from "react-router-dom"
+import { getFirstAllowedRoute } from "@/auth/navigation"
+import { getUserPermissions, hasAllPermissions, hasAnyPermission, isRoleEnabled } from "@/auth/permissions"
+import { getAuthToken } from "@/auth/session"
 import type { Permission } from "@/auth/types"
-import { getUserPermissions, hasAllPermissions, hasAnyPermission } from "@/auth/permissions"
+import { useAuthStore } from "@/store/authStore"
 
 interface PermissionRouteProps {
   children: ReactElement
@@ -19,13 +21,33 @@ const PermissionRoute = ({
   redirectTo = "/",
   unauthorizedTo = "/unauthorized",
 }: PermissionRouteProps) => {
-  const token = useAuthStore((state) => state.token) ?? localStorage.getItem("auth_token")
+  const location = useLocation()
+  const token = useAuthStore((state) => state.token) ?? getAuthToken()
   const user = useAuthStore((state) => state.user)
   const permissions = useAuthStore((state) => state.permissions)
+  const logout = useAuthStore((state) => state.logout)
   const effectivePermissions = permissions.length > 0 ? permissions : getUserPermissions(user)
 
   if (!token) {
-    return <Navigate to={redirectTo} replace state={{ message: "Debes iniciar sesión para continuar." }} />
+    return <Navigate to={redirectTo} replace state={{ message: "Debes iniciar sesion para continuar." }} />
+  }
+
+  if (user && !isRoleEnabled(user.role)) {
+    logout()
+    return (
+      <Navigate
+        to={redirectTo}
+        replace
+        state={{
+          message: `El perfil ${user.role} esta inactivo. Solicita activacion para continuar.`,
+          toast: {
+            title: "Perfil inactivo",
+            description: "Tu sesion se cerro porque el perfil fue deshabilitado.",
+            type: "error",
+          },
+        }}
+      />
+    )
   }
 
   const allowed = requireAll
@@ -33,7 +55,24 @@ const PermissionRoute = ({
     : hasAnyPermission(effectivePermissions, requiredPermissions)
 
   if (!allowed) {
-    return <Navigate to={unauthorizedTo} replace state={{ message: "No tienes permisos para acceder." }} />
+    const fallbackRoute = getFirstAllowedRoute(effectivePermissions)
+    const targetRoute = fallbackRoute !== location.pathname ? fallbackRoute : unauthorizedTo
+
+    return (
+      <Navigate
+        to={targetRoute}
+        replace
+        state={{
+          message: "No tienes permisos para acceder.",
+          deniedPath: location.pathname,
+          toast: {
+            title: "Acceso no autorizado",
+            description: "Te llevamos a una seccion habilitada para tu perfil.",
+            type: "error",
+          },
+        }}
+      />
+    )
   }
 
   return children

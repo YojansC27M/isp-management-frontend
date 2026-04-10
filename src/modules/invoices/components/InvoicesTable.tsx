@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react"
+import DataTableShell from "@/components/shared/DataTableShell"
 import type { Invoice, InvoiceStatus } from "../types/invoice"
 
 interface InvoicesTableProps {
@@ -7,64 +7,63 @@ interface InvoicesTableProps {
   onDownload: (invoice: Invoice) => void
 }
 
-const statusStyles: Record<InvoiceStatus, CSSProperties> = {
-  pending: { backgroundColor: "#fef3c7", color: "#92400e" },
-  paid: { backgroundColor: "#dcfce7", color: "#166534" },
-  overdue: { backgroundColor: "#fee2e2", color: "#991b1b" },
+const statusClasses: Record<InvoiceStatus, string> = {
+  pending: "bg-amber-100 text-amber-800",
+  paid: "bg-emerald-100 text-emerald-800",
+  overdue: "bg-rose-100 text-rose-800",
 }
 
 const InvoicesTable = ({ invoices, onView, onDownload }: InvoicesTableProps) => {
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Número de factura</th>
-            <th>Cliente</th>
-            <th>Monto</th>
-            <th>Fecha de emisión</th>
-            <th>Fecha de vencimiento</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoices.map((invoice) => (
-            <tr key={invoice.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-              <td>{invoice.invoiceNumber}</td>
-              <td>{invoice.clientName}</td>
-              <td>${invoice.amount.toFixed(2)}</td>
-              <td>{invoice.issueDate}</td>
-              <td>{invoice.dueDate}</td>
-              <td>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textTransform: "capitalize",
-                    ...statusStyles[invoice.status],
-                  }}
-                >
-                  {invoice.status}
-                </span>
-              </td>
-              <td style={{ display: "flex", gap: 8 }}>
-                <button type="button" onClick={() => onView(invoice.id)}>
-                  Ver
-                </button>
-                <button type="button" onClick={() => onDownload(invoice)}>
-                  Descargar PDF
-                </button>
-              </td>
+    <DataTableShell>
+        <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+          <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Factura</th>
+              <th className="px-4 py-3 font-semibold">Cliente</th>
+              <th className="px-4 py-3 font-semibold">Monto</th>
+              <th className="px-4 py-3 font-semibold">Emisión</th>
+              <th className="px-4 py-3 font-semibold">Vencimiento</th>
+              <th className="px-4 py-3 font-semibold">Estado</th>
+              <th className="px-4 py-3 font-semibold">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {invoices.map((invoice) => (
+              <tr key={invoice.id} className="border-t border-border/60">
+                <td className="px-4 py-3 font-medium text-foreground">{invoice.invoiceNumber}</td>
+                <td className="px-4 py-3 text-muted-foreground">{invoice.clientName}</td>
+                <td className="px-4 py-3 text-foreground">${invoice.amount.toFixed(2)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{invoice.issueDate}</td>
+                <td className="px-4 py-3 text-muted-foreground">{invoice.dueDate}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[invoice.status]}`}>
+                    {invoice.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
+                      onClick={() => onView(invoice.id)}
+                    >
+                      Ver
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
+                      onClick={() => onDownload(invoice)}
+                    >
+                      Descargar PDF
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+    </DataTableShell>
   )
 }
 

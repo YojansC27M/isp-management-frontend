@@ -6,28 +6,31 @@ interface ClientSummaryCardProps {
 
 const ClientSummaryCard = ({ profile }: ClientSummaryCardProps) => {
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16, display: "grid", gap: 8 }}>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Cliente</strong>
-        <span>{profile.name}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Correo</strong>
-        <span>{profile.email}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Plan</strong>
-        <span>{profile.plan}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Estado</strong>
-        <span style={{ textTransform: "capitalize" }}>{profile.status}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Dirección IP</strong>
-        <span>{profile.ipAddress}</span>
-      </div>
-    </div>
+    <section className="rounded-xl border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Datos del cliente</h2>
+      <dl className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Cliente</dt>
+          <dd>{profile.name}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Correo</dt>
+          <dd>{profile.email}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Plan</dt>
+          <dd>{profile.plan}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Estado</dt>
+          <dd className="capitalize">{profile.status}</dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Direccion IP</dt>
+          <dd>{profile.ipAddress}</dd>
+        </div>
+      </dl>
+    </section>
   )
 }
 

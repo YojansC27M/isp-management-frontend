@@ -1,49 +1,62 @@
-import type { CSSProperties } from "react"
+import DataTableShell from "@/components/shared/DataTableShell"
 import type { Plan } from "../types/plan"
 
 interface PlansTableProps {
   plans: Plan[]
   onEdit: (id: string) => void
   onDelete: (id: string) => void
+  canManage: boolean
 }
 
-const cellNumeric: CSSProperties = { textAlign: "right" }
-
-const PlansTable = ({ plans, onEdit, onDelete }: PlansTableProps) => {
+const PlansTable = ({ plans, onEdit, onDelete, canManage }: PlansTableProps) => {
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Nombre</th>
-            <th style={cellNumeric}>Descarga</th>
-            <th style={cellNumeric}>Subida</th>
-            <th style={cellNumeric}>Precio</th>
-            <th>Tipo</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {plans.map((plan) => (
-            <tr key={plan.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-              <td>{plan.name}</td>
-              <td style={cellNumeric}>{plan.downloadSpeed} Mbps</td>
-              <td style={cellNumeric}>{plan.uploadSpeed} Mbps</td>
-              <td style={cellNumeric}>${plan.price.toFixed(2)}</td>
-              <td style={{ textTransform: "capitalize" }}>{plan.type}</td>
-              <td style={{ display: "flex", gap: 8 }}>
-                <button type="button" onClick={() => onEdit(plan.id)}>
-                  Editar
-                </button>
-                <button type="button" onClick={() => onDelete(plan.id)}>
-                  Eliminar
-                </button>
-              </td>
+    <DataTableShell>
+        <table className="w-full min-w-[780px] border-collapse text-left text-sm">
+          <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Nombre</th>
+              <th className="px-4 py-3 text-right font-semibold">Descarga</th>
+              <th className="px-4 py-3 text-right font-semibold">Subida</th>
+              <th className="px-4 py-3 text-right font-semibold">Precio</th>
+              <th className="px-4 py-3 font-semibold">Tipo</th>
+              <th className="px-4 py-3 font-semibold">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {plans.map((plan) => (
+              <tr key={plan.id} className="border-t border-border/60">
+                <td className="px-4 py-3 font-medium text-foreground">{plan.name}</td>
+                <td className="px-4 py-3 text-right text-muted-foreground">{plan.downloadSpeed} Mbps</td>
+                <td className="px-4 py-3 text-right text-muted-foreground">{plan.uploadSpeed} Mbps</td>
+                <td className="px-4 py-3 text-right font-semibold text-foreground">${plan.price.toFixed(2)}</td>
+                <td className="px-4 py-3 capitalize text-muted-foreground">{plan.type}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => onEdit(plan.id)}
+                      disabled={!canManage}
+                      title={!canManage ? "Tu perfil no tiene permiso para editar planes." : undefined}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => onDelete(plan.id)}
+                      disabled={!canManage}
+                      title={!canManage ? "Tu perfil no tiene permiso para eliminar planes." : undefined}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+    </DataTableShell>
   )
 }
 

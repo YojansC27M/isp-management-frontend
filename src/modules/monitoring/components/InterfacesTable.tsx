@@ -1,53 +1,43 @@
-import type { CSSProperties } from "react"
 import type { InterfaceStatus, InterfaceStatusType } from "../types/monitoring"
 
 interface InterfacesTableProps {
   interfaces: InterfaceStatus[]
 }
 
-const statusStyles: Record<InterfaceStatusType, CSSProperties> = {
-  up: { backgroundColor: "#dcfce7", color: "#166534" },
-  down: { backgroundColor: "#fee2e2", color: "#991b1b" },
+const statusClasses: Record<InterfaceStatusType, string> = {
+  up: "bg-emerald-100 text-emerald-800",
+  down: "bg-rose-100 text-rose-800",
 }
 
 const InterfacesTable = ({ interfaces }: InterfacesTableProps) => {
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table width="100%" cellPadding={10} style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th>Interfaz</th>
-            <th>Estado</th>
-            <th>RX</th>
-            <th>TX</th>
-          </tr>
-        </thead>
-        <tbody>
-          {interfaces.map((item) => (
-            <tr key={item.name} style={{ borderBottom: "1px solid #f3f4f6" }}>
-              <td>{item.name}</td>
-              <td>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textTransform: "capitalize",
-                    ...statusStyles[item.status],
-                  }}
-                >
-                  {item.status}
-                </span>
-              </td>
-              <td>{item.rx}</td>
-              <td>{item.tx}</td>
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[620px] border-collapse text-left text-sm">
+          <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Interfaz</th>
+              <th className="px-4 py-3 font-semibold">Estado</th>
+              <th className="px-4 py-3 font-semibold">RX</th>
+              <th className="px-4 py-3 font-semibold">TX</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {interfaces.map((item) => (
+              <tr key={item.name} className="border-t border-border/60">
+                <td className="px-4 py-3 font-medium text-foreground">{item.name}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[item.status]}`}>
+                    {item.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">{item.rx}</td>
+                <td className="px-4 py-3 text-muted-foreground">{item.tx}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

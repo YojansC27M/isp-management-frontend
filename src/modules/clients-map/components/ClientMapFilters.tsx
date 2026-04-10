@@ -1,4 +1,8 @@
 import type { ChangeEvent } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import FilterPanel from "@/components/shared/FilterPanel"
 import type { ClientMapFiltersValues, ClientMapStatus } from "../types/clientMap"
 
 interface ClientMapFiltersProps {
@@ -13,6 +17,8 @@ const statusOptions: { label: string; value: ClientMapStatus }[] = [
   { label: "Suspendido", value: "suspended" },
   { label: "Inactivo", value: "inactive" },
 ]
+
+const inputId = (field: string) => `clients-map-filters-${field}`
 
 const ClientMapFilters = ({ values, onChange, onApply, onClear }: ClientMapFiltersProps) => {
   const handleInputChange = (field: keyof ClientMapFiltersValues) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -30,37 +36,49 @@ const ClientMapFilters = ({ values, onChange, onApply, onClear }: ClientMapFilte
   }
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-      <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Estado
-        <select value={values.status} onChange={handleStatusChange}>
-          <option value="">Todos</option>
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Zona
-        <input value={values.zone} onChange={handleInputChange("zone")} placeholder="Zona" />
-      </label>
-      <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-        Técnico
-        <input
-          value={values.technicianName}
-          onChange={handleInputChange("technicianName")}
-          placeholder="Técnico"
-        />
-      </label>
-      <button type="button" onClick={onApply}>
-        Aplicar filtros
-      </button>
-      <button type="button" onClick={onClear}>
-        Limpiar
-      </button>
-    </div>
+    <FilterPanel>
+      <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto_auto] md:items-end">
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("status")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Estado
+          </Label>
+          <select
+            id={inputId("status")}
+            value={values.status}
+            onChange={handleStatusChange}
+            className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
+          >
+            <option value="">Todos</option>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("zone")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Zona
+          </Label>
+          <Input id={inputId("zone")} value={values.zone} onChange={handleInputChange("zone")} placeholder="Ej: Centro" />
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("technician")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Tecnico
+          </Label>
+          <Input
+            id={inputId("technician")}
+            value={values.technicianName}
+            onChange={handleInputChange("technicianName")}
+            placeholder="Nombre del tecnico"
+          />
+        </label>
+        <Button variant="outline" onClick={onClear}>
+          Limpiar
+        </Button>
+        <Button onClick={onApply}>Aplicar filtros</Button>
+      </div>
+    </FilterPanel>
   )
 }
 

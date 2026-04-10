@@ -1,16 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import StateMessage from "@/components/feedback/StateMessage"
 import MetricsCard from "../components/MetricsCard"
 import OverdueClientsTable from "../components/OverdueClientsTable"
 import ReportsFilters from "../components/ReportsFilters"
 import RevenueChart from "../components/RevenueChart"
 import StatusChart from "../components/StatusChart"
-import {
-  getOverdueClients,
-  getReportMetrics,
-  getRevenueData,
-  getStatusDistribution,
-} from "../services/reportsApi"
+import { getOverdueClients, getReportMetrics, getRevenueData, getStatusDistribution } from "../services/reportsApi"
 import type { OverdueClient, ReportMetrics, ReportsFiltersValues, RevenueData, StatusDistribution } from "../types/report"
+import { getErrorMessage } from "@/lib/errors"
 
 const initialFilters: ReportsFiltersValues = {
   dateFrom: "",
@@ -27,9 +24,11 @@ const ReportsDashboardPage = () => {
   const [statusData, setStatusData] = useState<StatusDistribution[]>([])
   const [overdueClients, setOverdueClients] = useState<OverdueClient[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const loadReports = useCallback(async (activeFilters: ReportsFiltersValues) => {
     setLoading(true)
+    setError("")
     try {
       const [metricsResult, revenueResult, statusResult, overdueResult] = await Promise.all([
         getReportMetrics(activeFilters),
@@ -41,6 +40,8 @@ const ReportsDashboardPage = () => {
       setRevenueData(revenueResult)
       setStatusData(statusResult)
       setOverdueClients(overdueResult)
+    } catch (err) {
+      setError(getErrorMessage(err, "No fue posible cargar los reportes."))
     } finally {
       setLoading(false)
     }
@@ -50,9 +51,7 @@ const ReportsDashboardPage = () => {
     loadReports(appliedFilters)
   }, [appliedFilters, loadReports])
 
-  const handleApplyFilters = () => {
-    setAppliedFilters(filters)
-  }
+  const handleApplyFilters = () => setAppliedFilters(filters)
 
   const handleClearFilters = () => {
     setFilters(initialFilters)
@@ -70,31 +69,33 @@ const ReportsDashboardPage = () => {
   }, [metrics])
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div className="grid gap-6">
       <header>
-        <h1>Reportes de facturación</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Analiza ingresos y cartera.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Reportes de facturación</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Analiza ingresos, cartera y comportamiento de cobro.</p>
       </header>
 
       <ReportsFilters values={filters} onChange={setFilters} onApply={handleApplyFilters} onClear={handleClearFilters} />
 
       {loading ? (
-        <p>Cargando reportes...</p>
+        <StateMessage variant="loading" title="Cargando reportes..." />
+      ) : error ? (
+        <StateMessage variant="error" title="Error al cargar reportes" description={error} />
       ) : !metrics ? (
-        <p>No hay datos de reportes.</p>
+        <StateMessage variant="empty" title="No hay datos de reportes." />
       ) : (
         <>
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {metricsCards.map((card) => (
               <MetricsCard key={card.label} label={card.label} value={card.value} />
             ))}
           </div>
-          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+          <div className="grid gap-4 xl:grid-cols-2">
             <RevenueChart data={revenueData} />
             <StatusChart data={statusData} />
           </div>
-          <section style={{ display: "grid", gap: 8 }}>
-            <h3 style={{ margin: 0 }}>Clientes vencidos</h3>
+          <section className="grid gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Clientes vencidos</h3>
             <OverdueClientsTable clients={overdueClients} />
           </section>
         </>

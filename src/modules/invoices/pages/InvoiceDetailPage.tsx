@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import StateMessage from "@/components/feedback/StateMessage"
 import InvoiceSummaryCard from "../components/InvoiceSummaryCard"
 import { downloadInvoicePdf, getInvoiceById } from "../services/invoicesApi"
 import type { Invoice } from "../types/invoice"
@@ -37,37 +39,32 @@ const InvoiceDetailPage = () => {
       link.download = `${invoice.invoiceNumber}.pdf`
       link.click()
       window.URL.revokeObjectURL(url)
-      window.alert("PDF de factura descargado.")
-    } catch {
-      window.alert("No se pudo descargar el PDF de la factura.")
     } finally {
       setDownloading(false)
     }
   }
 
-  if (loading) {
-    return <p>Cargando factura...</p>
-  }
-
-  if (!invoice) {
-    return <p>Factura no encontrada.</p>
-  }
+  if (loading) return <StateMessage variant="loading" title="Cargando factura..." />
+  if (!invoice) return <StateMessage variant="empty" title="Factura no encontrada." />
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 6 }}>
-        <h1>Detalle de factura</h1>
-        <p style={{ color: "#6b7280" }}>{invoice.clientName}</p>
-        <button type="button" onClick={() => navigate("/invoices")} style={{ width: "fit-content" }}>
-          Volver a Facturas
-        </button>
+    <div className="grid gap-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Detalle de factura</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{invoice.clientName}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate("/invoices")}>
+            Volver a Facturas
+          </Button>
+          <Button onClick={handleDownload} disabled={downloading}>
+            {downloading ? "Descargando..." : "Descargar PDF"}
+          </Button>
+        </div>
       </header>
 
       <InvoiceSummaryCard invoice={invoice} />
-
-      <button type="button" onClick={handleDownload} disabled={downloading} style={{ width: "fit-content" }}>
-        {downloading ? "Descargando..." : "Descargar PDF"}
-      </button>
     </div>
   )
 }

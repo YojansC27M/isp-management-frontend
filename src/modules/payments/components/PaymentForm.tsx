@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react"
-import type { ChangeEvent, CSSProperties, FormEvent } from "react"
+import { useEffect, useRef, useState } from "react"
+import type { ChangeEvent, FormEvent } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { PaymentFormValues, PaymentMethod, PaymentStatus } from "../types/payment"
 
 interface PaymentFormProps {
@@ -18,6 +21,7 @@ type PaymentFormState = {
 }
 
 type FormErrors = Partial<Record<keyof PaymentFormState, string>>
+type FocusableField = keyof PaymentFormState
 
 const methodOptions: { label: string; value: PaymentMethod }[] = [
   { label: "Efectivo", value: "cash" },
@@ -32,24 +36,11 @@ const statusOptions: { label: string; value: PaymentStatus }[] = [
   { label: "Vencido", value: "overdue" },
 ]
 
-const inputStyle: CSSProperties = {
-  padding: "10px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: 6,
-  fontSize: 14,
-}
+const selectClass =
+  "h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
 
-const labelStyle: CSSProperties = {
-  display: "grid",
-  gap: 6,
-  fontSize: 13,
-  color: "#111827",
-}
-
-const errorStyle: CSSProperties = {
-  color: "#dc2626",
-  fontSize: 12,
-}
+const inputId = (field: string) => `payment-form-${field}`
+const errorId = (field: string) => `payment-form-${field}-error`
 
 const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PaymentFormProps) => {
   const [values, setValues] = useState<PaymentFormState>({
@@ -61,6 +52,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
     status: initialValues.status,
   })
   const [errors, setErrors] = useState<FormErrors>({})
+  const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
 
   useEffect(() => {
     setValues({
@@ -74,41 +66,35 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
   }, [initialValues])
 
   const handleChange = (field: keyof PaymentFormState) => (event: ChangeEvent<HTMLInputElement>) => {
-    setValues((current) => ({
-      ...current,
-      [field]: event.target.value,
-    }))
+    setValues((current) => ({ ...current, [field]: event.target.value }))
   }
 
   const handleSelectChange = (field: "paymentMethod" | "status") => (event: ChangeEvent<HTMLSelectElement>) => {
-    setValues((current) => ({
-      ...current,
-      [field]: event.target.value,
-    }))
+    setValues((current) => ({ ...current, [field]: event.target.value }))
   }
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-
     if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
     if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = "El número de factura es obligatorio"
-
     const amount = Number(values.amount)
-    if (!values.amount || Number.isNaN(amount) || amount <= 0) {
-      nextErrors.amount = "El monto debe ser mayor a 0"
-    }
-
+    if (!values.amount || Number.isNaN(amount) || amount <= 0) nextErrors.amount = "El monto debe ser mayor a 0"
     if (!values.paymentMethod) nextErrors.paymentMethod = "El método de pago es obligatorio"
     if (!values.paymentDate) nextErrors.paymentDate = "La fecha de pago es obligatoria"
     if (!values.status) nextErrors.status = "El estado es obligatorio"
-
     setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
+    return nextErrors
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!validate()) return
+    const nextErrors = validate()
+    if (Object.keys(nextErrors).length > 0) {
+      const order: FocusableField[] = ["clientId", "invoiceNumber", "amount", "paymentMethod", "paymentDate", "status"]
+      const first = order.find((field) => nextErrors[field])
+      if (first) fieldRefs.current[first]?.focus()
+      return
+    }
 
     onSubmit({
       clientId: values.clientId.trim(),
@@ -120,78 +106,112 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
     })
   }
 
+  const describedBy = (field: keyof PaymentFormState) => (errors[field] ? errorId(field) : undefined)
+
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 520 }}>
-      <label style={labelStyle}>
-        ID de cliente
-        <input name="clientId" value={values.clientId} onChange={handleChange("clientId")} style={inputStyle} />
-        {errors.clientId && <span style={errorStyle}>{errors.clientId}</span>}
-      </label>
-      <label style={labelStyle}>
-        Número de factura
-        <input
-          name="invoiceNumber"
-          value={values.invoiceNumber}
-          onChange={handleChange("invoiceNumber")}
-          style={inputStyle}
-        />
-        {errors.invoiceNumber && <span style={errorStyle}>{errors.invoiceNumber}</span>}
-      </label>
-      <label style={labelStyle}>
-        Monto
-        <input
-          name="amount"
-          type="number"
-          min="0"
-          step="0.01"
-          value={values.amount}
-          onChange={handleChange("amount")}
-          style={inputStyle}
-        />
-        {errors.amount && <span style={errorStyle}>{errors.amount}</span>}
-      </label>
-      <label style={labelStyle}>
-        Método de pago
-        <select
-          name="paymentMethod"
-          value={values.paymentMethod}
-          onChange={handleSelectChange("paymentMethod")}
-          style={inputStyle}
-        >
-          <option value="">Selecciona un método</option>
-          {methodOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.paymentMethod && <span style={errorStyle}>{errors.paymentMethod}</span>}
-      </label>
-      <label style={labelStyle}>
-        Fecha de pago
-        <input
-          name="paymentDate"
-          type="date"
-          value={values.paymentDate}
-          onChange={handleChange("paymentDate")}
-          style={inputStyle}
-        />
-        {errors.paymentDate && <span style={errorStyle}>{errors.paymentDate}</span>}
-      </label>
-      <label style={labelStyle}>
-        Estado
-        <select name="status" value={values.status} onChange={handleSelectChange("status")} style={inputStyle}>
-          <option value="">Selecciona un estado</option>
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.status && <span style={errorStyle}>{errors.status}</span>}
-      </label>
-      <div style={{ display: "flex", gap: 12 }}>
-        <button type="submit">{submitLabel}</button>
+    <form onSubmit={handleSubmit} className="grid max-w-2xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("clientId")}>ID de cliente</Label>
+          <Input
+            id={inputId("clientId")}
+            name="clientId"
+            value={values.clientId}
+            onChange={handleChange("clientId")}
+            ref={(node) => (fieldRefs.current.clientId = node)}
+            aria-invalid={Boolean(errors.clientId)}
+            aria-describedby={describedBy("clientId")}
+          />
+          {errors.clientId && <span id={errorId("clientId")} className="text-xs text-rose-600" role="alert">{errors.clientId}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("invoiceNumber")}>Número de factura</Label>
+          <Input
+            id={inputId("invoiceNumber")}
+            name="invoiceNumber"
+            value={values.invoiceNumber}
+            onChange={handleChange("invoiceNumber")}
+            ref={(node) => (fieldRefs.current.invoiceNumber = node)}
+            aria-invalid={Boolean(errors.invoiceNumber)}
+            aria-describedby={describedBy("invoiceNumber")}
+          />
+          {errors.invoiceNumber && <span id={errorId("invoiceNumber")} className="text-xs text-rose-600" role="alert">{errors.invoiceNumber}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("amount")}>Monto</Label>
+          <Input
+            id={inputId("amount")}
+            name="amount"
+            type="number"
+            min="0"
+            step="0.01"
+            value={values.amount}
+            onChange={handleChange("amount")}
+            ref={(node) => (fieldRefs.current.amount = node)}
+            aria-invalid={Boolean(errors.amount)}
+            aria-describedby={describedBy("amount")}
+          />
+          {errors.amount && <span id={errorId("amount")} className="text-xs text-rose-600" role="alert">{errors.amount}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("paymentMethod")}>Método de pago</Label>
+          <select
+            id={inputId("paymentMethod")}
+            name="paymentMethod"
+            value={values.paymentMethod}
+            onChange={handleSelectChange("paymentMethod")}
+            className={selectClass}
+            ref={(node) => (fieldRefs.current.paymentMethod = node)}
+            aria-invalid={Boolean(errors.paymentMethod)}
+            aria-describedby={describedBy("paymentMethod")}
+          >
+            <option value="">Selecciona un método</option>
+            {methodOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.paymentMethod && <span id={errorId("paymentMethod")} className="text-xs text-rose-600" role="alert">{errors.paymentMethod}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("paymentDate")}>Fecha de pago</Label>
+          <Input
+            id={inputId("paymentDate")}
+            name="paymentDate"
+            type="date"
+            value={values.paymentDate}
+            onChange={handleChange("paymentDate")}
+            ref={(node) => (fieldRefs.current.paymentDate = node)}
+            aria-invalid={Boolean(errors.paymentDate)}
+            aria-describedby={describedBy("paymentDate")}
+          />
+          {errors.paymentDate && <span id={errorId("paymentDate")} className="text-xs text-rose-600" role="alert">{errors.paymentDate}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("status")}>Estado</Label>
+          <select
+            id={inputId("status")}
+            name="status"
+            value={values.status}
+            onChange={handleSelectChange("status")}
+            className={selectClass}
+            ref={(node) => (fieldRefs.current.status = node)}
+            aria-invalid={Boolean(errors.status)}
+            aria-describedby={describedBy("status")}
+          >
+            <option value="">Selecciona un estado</option>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.status && <span id={errorId("status")} className="text-xs text-rose-600" role="alert">{errors.status}</span>}
+        </label>
+      </div>
+      <div className="flex items-center gap-2 pt-2">
+        <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
   )

@@ -1,15 +1,14 @@
-ï»¿import { useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAuthStore } from "@/store/authStore"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { login } from "../services/clientPortalApi"
+import { setClientToken } from "@/auth/session"
 
 const ClientLoginPage = () => {
   const navigate = useNavigate()
-  const setToken = useAuthStore((state) => state.setToken)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -25,70 +24,69 @@ const ClientLoginPage = () => {
     }
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("El correo no es vÃ¡lido")
+      setError("El correo no es válido")
       return
     }
 
     if (!password.trim()) {
-      setError("La contraseÃ±a es obligatoria")
+      setError("La contraseña es obligatoria")
       return
     }
 
     setLoading(true)
     try {
       const response = await login(email.trim(), password)
-      localStorage.setItem("client_token", response.token)
-      setToken(response.token)
+      setClientToken(response.token)
       navigate("/client/dashboard")
     } catch {
-      setError("Inicio de sesiÃ³n fallido")
+      setError("Inicio de sesión fallido")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="relative min-h-screen bg-[#0b1020] text-slate-100">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_15%_20%,rgba(59,130,246,0.22),transparent_60%),radial-gradient(700px_circle_at_85%_0%,rgba(14,165,233,0.2),transparent_55%),radial-gradient(600px_circle_at_50%_85%,rgba(15,23,42,0.7),transparent_60%)]" />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,rgba(148,163,184,0.08),rgba(15,23,42,0.0))]" />
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/5 to-transparent" />
+    <div className="relative min-h-screen bg-background text-foreground dark:bg-[#0b1020] dark:text-slate-100">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_circle_at_15%_20%,rgba(59,130,246,0.12),transparent_60%),radial-gradient(700px_circle_at_85%_0%,rgba(14,165,233,0.1),transparent_55%),radial-gradient(600px_circle_at_50%_85%,rgba(15,23,42,0.08),transparent_60%)] dark:bg-[radial-gradient(900px_circle_at_15%_20%,rgba(59,130,246,0.22),transparent_60%),radial-gradient(700px_circle_at_85%_0%,rgba(14,165,233,0.2),transparent_55%),radial-gradient(600px_circle_at_50%_85%,rgba(15,23,42,0.7),transparent_60%)]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,rgba(148,163,184,0.05),rgba(15,23,42,0.0))] dark:bg-[linear-gradient(120deg,rgba(148,163,184,0.08),rgba(15,23,42,0.0))]" />
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary/10 to-transparent dark:from-white/5" />
 
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-12">
         <div className="grid w-full max-w-6xl gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="hidden flex-col justify-between gap-10 lg:flex">
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-800/70 bg-slate-900/70">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card/70 dark:border-slate-800/70 dark:bg-slate-900/70">
                   <span className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-sky-400/30 to-blue-700/30 blur" />
                   <img src="/brand-mark.svg" alt="Corma Networks" className="relative h-10" />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Portal Empresarial</p>
-                  <p className="text-lg font-semibold text-white">Corma Networks</p>
+                  <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Portal Empresarial</p>
+                  <p className="text-lg font-semibold text-foreground dark:text-white">Corma Networks</p>
                 </div>
               </div>
-              <h1 className="text-4xl font-semibold leading-tight text-white">
+              <h1 className="text-4xl font-semibold leading-tight text-foreground dark:text-white">
                 Acceso seguro para clientes con controles de nivel empresarial.
               </h1>
-              <p className="max-w-lg text-sm leading-relaxed text-slate-400">
-                Supervisa facturaciÃ³n, estado del servicio y soporte en un entorno controlado para clientes premium.
+              <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+                Supervisa facturación, estado del servicio y soporte en un entorno controlado para clientes premium.
               </p>
             </div>
 
-            <div className="grid gap-4 rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 shadow-lg shadow-slate-950/40">
+            <div className="grid gap-4 rounded-2xl border border-border bg-card/70 p-6 shadow-lg shadow-foreground/10 dark:border-slate-800/70 dark:bg-slate-900/60 dark:shadow-slate-950/40">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Seguridad</p>
-                  <p className="text-sm font-medium text-slate-200">Aislamiento multi-tenant</p>
+                  <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Seguridad</p>
+                  <p className="text-sm font-medium text-foreground dark:text-slate-200">Aislamiento multi-tenant</p>
                 </div>
                 <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
                   MFA habilitado
                 </span>
               </div>
-              <div className="grid gap-3 text-sm text-slate-300">
+              <div className="grid gap-3 text-sm text-muted-foreground dark:text-slate-300">
                 {[
                   "Visibilidad centralizada de cuentas",
-                  "Trazabilidad para auditorÃ­a",
+                  "Trazabilidad para auditoría",
                   "Acceso basado en roles",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
@@ -97,38 +95,38 @@ const ClientLoginPage = () => {
                   </div>
                 ))}
               </div>
-              <div className="flex flex-wrap gap-2 pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">
+              <div className="flex flex-wrap gap-2 pt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                 {["ISO 27001", "SOC 2", "PCI DSS"].map((item) => (
-                  <span key={item} className="rounded-full border border-slate-700/70 bg-slate-950/60 px-3 py-1">
+                  <span key={item} className="rounded-full border border-border bg-background/70 px-3 py-1 dark:border-slate-700/70 dark:bg-slate-950/60">
                     {item}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="flex items-center gap-6 text-xs text-slate-500">
+            <div className="flex items-center gap-6 text-xs text-muted-foreground">
               <span>Soporte: +1 (800) 555-0199</span>
               <span>seguridad@corma.net</span>
             </div>
           </div>
 
-          <Card className="relative overflow-hidden border-slate-800/70 bg-slate-900/85 text-slate-100 shadow-2xl shadow-slate-900/50">
+          <Card className="relative overflow-hidden border-border bg-card/90 text-foreground shadow-2xl shadow-foreground/10 dark:border-slate-800/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-slate-900/50">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-sky-500/10 to-transparent" />
-            <CardHeader className="gap-2 border-b border-slate-800/60 pb-6">
+            <CardHeader className="gap-2 border-b border-border pb-6 dark:border-slate-800/60">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-white">Ingreso al portal de clientes</CardTitle>
-                <span className="rounded-full border border-slate-700/70 bg-slate-950/60 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">
+                <CardTitle className="text-lg text-foreground dark:text-white">Ingreso al portal de clientes</CardTitle>
+                <span className="rounded-full border border-border bg-background/70 px-3 py-1 dark:border-slate-700/70 dark:bg-slate-950/60 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                   Verificado
                 </span>
               </div>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-muted-foreground">
                 Usa tus credenciales corporativas para continuar.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="grid gap-5">
                 <div className="grid gap-2">
-                  <Label htmlFor="client-email" className="text-slate-300">
+                  <Label htmlFor="client-email" className="text-foreground dark:text-slate-300">
                     Correo
                   </Label>
                   <Input
@@ -137,20 +135,20 @@ const ClientLoginPage = () => {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="admin@isp.com"
-                    className="h-11 border-slate-700/70 bg-slate-950/60 text-slate-100 placeholder:text-slate-500"
+                    className="h-11 border-border bg-background text-foreground placeholder:text-muted-foreground dark:border-slate-700/70 dark:bg-slate-950/60 dark:text-slate-100"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="client-password" className="text-slate-300">
-                    ContraseÃ±a
+                  <Label htmlFor="client-password" className="text-foreground dark:text-slate-300">
+                    Contraseña
                   </Label>
                   <Input
                     id="client-password"
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
-                    className="h-11 border-slate-700/70 bg-slate-950/60 text-slate-100 placeholder:text-slate-500"
+                    placeholder="••••••"
+                    className="h-11 border-border bg-background text-foreground placeholder:text-muted-foreground dark:border-slate-700/70 dark:bg-slate-950/60 dark:text-slate-100"
                   />
                 </div>
                 {error && <span className="text-xs font-medium text-rose-400">{error}</span>}
@@ -162,20 +160,20 @@ const ClientLoginPage = () => {
                   {loading ? "Ingresando..." : "Ingresar"}
                 </Button>
               </form>
-              <div className="mt-6 grid gap-3 rounded-xl border border-slate-800/70 bg-slate-950/60 p-4 text-xs text-slate-400">
+              <div className="mt-6 grid gap-3 rounded-xl border border-border bg-muted/30 p-4 text-xs text-muted-foreground dark:border-slate-800/70 dark:bg-slate-950/60">
                 <div className="flex items-center justify-between">
-                  <span>Ãšltimo acceso</span>
-                  <span className="text-slate-200">21 Ago, 09:45</span>
+                  <span>Último acceso</span>
+                  <span className="text-foreground dark:text-slate-200">21 Ago, 09:45</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>UbicaciÃ³n</span>
-                  <span className="text-slate-200">BogotÃ¡, CO</span>
+                  <span>Ubicación</span>
+                  <span className="text-foreground dark:text-slate-200">Bogotá, CO</span>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col items-start gap-2 border-t border-slate-800/60 text-xs text-slate-400">
+            <CardFooter className="flex flex-col items-start gap-2 border-t border-border text-xs text-muted-foreground dark:border-slate-800/60">
               <span>Protegido con cifrado de nivel empresarial.</span>
-              <span>Â¿Necesitas acceso? Contacta a tu gestor de cuenta.</span>
+              <span>¿Necesitas acceso? Contacta a tu gestor de cuenta.</span>
             </CardFooter>
           </Card>
         </div>
@@ -185,3 +183,5 @@ const ClientLoginPage = () => {
 }
 
 export default ClientLoginPage
+
+

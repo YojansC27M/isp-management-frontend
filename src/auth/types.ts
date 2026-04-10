@@ -16,6 +16,9 @@ export type Permission =
   | "monitoring.read"
   | "reports.read"
   | "clients_map.read"
+  | "roles.read"
+  | "roles.write"
+  | "audit.read"
   | "client_portal.read"
   | "client_portal.write"
 

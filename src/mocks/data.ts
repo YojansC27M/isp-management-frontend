@@ -136,23 +136,49 @@ export const tickets: Ticket[] = [
     id: "t1",
     clientId: "1",
     clientName: "Mariana Torres",
+    assignedTechnicianId: "tech-1",
+    assignedTechnicianName: "Jorge Ruiz",
     title: "Intermittent connection",
     description: "Internet drops every few minutes.",
     status: "open",
     priority: "high",
     category: "technical",
     createdAt: "2024-10-01",
+    history: [
+      {
+        id: "h1",
+        ticketId: "t1",
+        message: "Ticket creado por el cliente.",
+        createdAt: "2024-10-01T09:00:00Z",
+      },
+      {
+        id: "h2",
+        ticketId: "t1",
+        message: "Asignado a Jorge Ruiz.",
+        createdAt: "2024-10-01T09:15:00Z",
+      },
+    ],
   },
   {
     id: "t2",
     clientId: "2",
     clientName: "Carlos Rojas",
+    assignedTechnicianId: "tech-2",
+    assignedTechnicianName: "Sara Velez",
     title: "Billing question",
     description: "Invoice shows extra charges.",
     status: "in_progress",
     priority: "medium",
     category: "billing",
     createdAt: "2024-10-02",
+    history: [
+      {
+        id: "h3",
+        ticketId: "t2",
+        message: "Ticket creado por soporte.",
+        createdAt: "2024-10-02T12:00:00Z",
+      },
+    ],
   },
 ]
 
@@ -163,6 +189,15 @@ export const ticketComments: TicketComment[] = [
     message: "We are reviewing your modem logs.",
     createdAt: "2024-10-01T10:30:00Z",
     author: "Support Agent",
+    visibility: "public",
+  },
+  {
+    id: "c2",
+    ticketId: "t1",
+    message: "Validar potencia de RX en visita tecnica.",
+    createdAt: "2024-10-01T11:00:00Z",
+    author: "Jorge Ruiz",
+    visibility: "internal",
   },
 ]
 

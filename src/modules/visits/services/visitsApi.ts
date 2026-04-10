@@ -20,3 +20,15 @@ export const updateVisit = async (id: string, payload: VisitFormValues) => {
   const { data } = await api.put<Visit>(`/visits/${id}`, payload)
   return data
 }
+
+export const findTechnicianConflict = async (payload: Pick<VisitFormValues, "technicianId" | "scheduledDate" | "scheduledTime">) => {
+  const visits = await getVisits()
+  const conflict = visits.find(
+    (visit) =>
+      visit.technicianId === payload.technicianId &&
+      visit.scheduledDate === payload.scheduledDate &&
+      visit.scheduledTime === payload.scheduledTime &&
+      visit.status !== "canceled",
+  )
+  return conflict ?? null
+}

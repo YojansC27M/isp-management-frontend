@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
 import ClientForm from "../components/ClientForm"
 import { createClient } from "../services/clientsApi"
 import type { ClientFormValues } from "../types/client"
@@ -25,15 +26,17 @@ const ClientCreatePage = () => {
   }
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 6 }}>
-        <h1>Crear cliente</h1>
-        <p style={{ color: "#6b7280" }}>Agrega un nuevo cliente a tu ISP.</p>
-        <button type="button" onClick={() => navigate("/clients")} style={{ width: "fit-content" }}>
+    <div className="grid gap-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Crear cliente</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Agrega un nuevo cliente a tu operación.</p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/clients")}>
           Volver a Clientes
-        </button>
+        </Button>
       </header>
-      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Crear" />
+      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Crear cliente" />
     </div>
   )
 }

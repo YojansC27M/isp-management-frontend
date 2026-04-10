@@ -1,66 +1,89 @@
-﻿import type { Visit } from "../types/visit"
+﻿import FullCalendar from "@fullcalendar/react"
+import dayGridPlugin from "@fullcalendar/daygrid"
+import timeGridPlugin from "@fullcalendar/timegrid"
+import interactionPlugin from "@fullcalendar/interaction"
+import esLocale from "@fullcalendar/core/locales/es"
+import type { Visit, VisitStatus } from "../types/visit"
 
 interface VisitsCalendarProps {
   visits: Visit[]
   onView: (id: string) => void
 }
 
+const statusColors: Record<VisitStatus, string> = {
+  scheduled: "#2563eb",
+  in_progress: "#d97706",
+  completed: "#16a34a",
+  canceled: "#dc2626",
+}
+
+const statusLabel: Record<VisitStatus, string> = {
+  scheduled: "Programada",
+  in_progress: "En progreso",
+  completed: "Completada",
+  canceled: "Cancelada",
+}
+
 const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
-  const grouped = visits.reduce<Record<string, Visit[]>>((acc, visit) => {
-    const date = visit.scheduledDate
-    if (!acc[date]) acc[date] = []
-    acc[date].push(visit)
-    return acc
-  }, {})
-
-  const dates = Object.keys(grouped).sort()
-
-  if (dates.length === 0) {
-    return <p>No hay visitas programadas.</p>
-  }
+  const events = visits.map((visit) => ({
+    id: visit.id,
+    title: `${visit.clientName} - ${visit.technicianName}`,
+    start: `${visit.scheduledDate}T${visit.scheduledTime}`,
+    allDay: false,
+    backgroundColor: statusColors[visit.status],
+    borderColor: statusColors[visit.status],
+    extendedProps: {
+      status: visit.status,
+      type: visit.type,
+      zone: visit.zone,
+    },
+  }))
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      {dates.map((date) => (
-        <section key={date} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-          <h3 style={{ margin: 0 }}>{date}</h3>
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-            {grouped[date].map((visit) => (
-              <div
-                key={visit.id}
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 12,
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: 12,
-                  border: "1px solid #f3f4f6",
-                  borderRadius: 6,
-                }}
-              >
-                <div style={{ display: "grid", gap: 4 }}>
-                  <strong>{visit.clientName}</strong>
-                  <span style={{ fontSize: 13, color: "#6b7280" }}>{visit.technicianName}</span>
-                  <span style={{ fontSize: 13, color: "#6b7280" }}>
-                    {visit.type} - {visit.scheduledTime}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <span style={{ fontSize: 12, textTransform: "capitalize" }}>{visit.status.replace("_", " ")}</span>
-                  <button type="button" onClick={() => onView(visit.id)}>
-                    Ver detalles
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+    <div className="visits-calendar grid gap-4">
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          timeZone="America/Bogota"
+          firstDay={1}
+          nowIndicator
+          dayMaxEventRows={true}
+          eventTimeFormat={{ hour: "2-digit", minute: "2-digit", meridiem: false }}
+          slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+          dayHeaderFormat={{ weekday: "short", day: "numeric", month: "numeric" }}
+          locale={esLocale}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+          buttonText={{
+            today: "Hoy",
+            month: "Mes",
+            week: "Semana",
+            day: "Dia",
+          }}
+          events={events}
+          eventClassNames={(arg) => ["visit-event", `visit-event--${arg.event.extendedProps.status as VisitStatus}`]}
+          eventClick={(info) => {
+            info.jsEvent.preventDefault()
+            onView(info.event.id)
+          }}
+          height="auto"
+        />
+      </section>
+
+      <section className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        {Object.entries(statusColors).map(([status, color]) => (
+          <span key={status} className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
+            {statusLabel[status as VisitStatus]}
+          </span>
+        ))}
+      </section>
     </div>
   )
 }
 
 export default VisitsCalendar
-
-

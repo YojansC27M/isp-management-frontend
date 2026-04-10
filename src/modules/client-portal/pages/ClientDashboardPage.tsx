@@ -1,29 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAuthStore } from "@/store/authStore"
+import { Button } from "@/components/ui/button"
+import StateMessage from "@/components/feedback/StateMessage"
+import { getErrorMessage } from "@/lib/errors"
+import { clearClientToken } from "@/auth/session"
 import ClientSummaryCard from "../components/ClientSummaryCard"
 import { getInvoices, getProfile, getTickets } from "../services/clientPortalApi"
 import type { ClientInvoice, ClientProfile, ClientTicket } from "../types/clientPortal"
 
 const ClientDashboardPage = () => {
   const navigate = useNavigate()
-  const logout = useAuthStore((state) => state.logout)
   const [profile, setProfile] = useState<ClientProfile | null>(null)
   const [invoices, setInvoices] = useState<ClientInvoice[]>([])
   const [tickets, setTickets] = useState<ClientTicket[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const loadDashboard = useCallback(async () => {
     setLoading(true)
+    setError("")
     try {
-      const [profileData, invoicesData, ticketsData] = await Promise.all([
-        getProfile(),
-        getInvoices(),
-        getTickets(),
-      ])
+      const [profileData, invoicesData, ticketsData] = await Promise.all([getProfile(), getInvoices(), getTickets()])
       setProfile(profileData)
       setInvoices(invoicesData)
       setTickets(ticketsData)
+    } catch (err) {
+      setError(getErrorMessage(err, "No fue posible cargar tu panel."))
     } finally {
       setLoading(false)
     }
@@ -34,8 +36,7 @@ const ClientDashboardPage = () => {
   }, [loadDashboard])
 
   const handleLogout = () => {
-    localStorage.removeItem("client_token")
-    logout()
+    clearClientToken()
     navigate("/client/login")
   }
 
@@ -46,46 +47,52 @@ const ClientDashboardPage = () => {
   }, [invoices])
 
   if (loading) {
-    return <p>Cargando panel...</p>
+    return <StateMessage variant="loading" title="Cargando panel..." />
+  }
+
+  if (error) {
+    return <StateMessage variant="error" title="Error al cargar panel" description={error} />
   }
 
   if (!profile) {
-    return <p>No se encontró el perfil del cliente.</p>
+    return <StateMessage variant="empty" title="No se encontro el perfil del cliente." />
   }
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+    <div className="grid gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1>Bienvenido, {profile.name}</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Resumen del portal de clientes</p>
+          <h1 className="text-2xl font-semibold text-foreground">Bienvenido, {profile.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Resumen del portal de clientes</p>
         </div>
-        <button type="button" onClick={handleLogout}>
-          Cerrar sesión
-        </button>
+        <Button variant="outline" onClick={handleLogout}>
+          Cerrar sesion
+        </Button>
       </header>
 
       <ClientSummaryCard profile={profile} />
 
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-        <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-          <strong>Facturas</strong>
-          <p style={{ marginTop: 6, color: "#6b7280" }}>Pendientes: {invoiceSummary.pending}</p>
-          <p style={{ marginTop: 4, color: "#6b7280" }}>Pagadas: {invoiceSummary.paid}</p>
-          <button type="button" onClick={() => navigate("/client/payments")}>
+      <section className="grid gap-3 sm:grid-cols-2">
+        <article className="rounded-xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold text-foreground">Facturas</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Pendientes: {invoiceSummary.pending}</p>
+          <p className="text-sm text-muted-foreground">Pagadas: {invoiceSummary.paid}</p>
+          <Button className="mt-3" variant="outline" onClick={() => navigate("/client/payments")}>
             Ver pagos
-          </button>
-        </div>
-        <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-          <strong>Tickets</strong>
-          <p style={{ marginTop: 6, color: "#6b7280" }}>Tickets abiertos: {tickets.length}</p>
-          <button type="button" onClick={() => navigate("/client/tickets")}>
+          </Button>
+        </article>
+        <article className="rounded-xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold text-foreground">Tickets</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Tickets abiertos: {tickets.length}</p>
+          <Button className="mt-3" variant="outline" onClick={() => navigate("/client/tickets")}>
             Ver tickets
-          </button>
-        </div>
-      </div>
+          </Button>
+        </article>
+      </section>
     </div>
   )
 }
 
 export default ClientDashboardPage
+
+

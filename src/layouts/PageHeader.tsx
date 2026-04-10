@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react"
+import type { ReactNode } from "react"
 
 interface PageHeaderProps {
   title: string
@@ -10,8 +10,8 @@ const PageHeader = ({ title, description, actions }: PageHeaderProps) => {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
-        {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+        <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>

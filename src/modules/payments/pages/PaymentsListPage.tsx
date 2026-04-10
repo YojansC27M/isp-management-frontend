@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useCan } from "@/auth/usePermission"
+import StateMessage from "@/components/feedback/StateMessage"
+import FilterPanel from "@/components/shared/FilterPanel"
+import PageHeader from "@/components/shared/PageHeader"
+import { getErrorMessage } from "@/lib/errors"
 import PaymentsTable from "../components/PaymentsTable"
 import { getPayments } from "../services/paymentsApi"
 import type { Payment, PaymentStatus } from "../types/payment"
@@ -10,18 +18,25 @@ const statusOptions: { label: string; value: PaymentStatus }[] = [
   { label: "Vencido", value: "overdue" },
 ]
 
+const inputId = (field: string) => `payments-list-${field}`
+
 const PaymentsListPage = () => {
   const navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "">("")
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const canManagePayments = useCan("payments.write")
 
   const loadPayments = useCallback(async () => {
     setLoading(true)
+    setError("")
     try {
       const data = await getPayments()
       setPayments(data)
+    } catch (err) {
+      setError(getErrorMessage(err, "No fue posible cargar los pagos."))
     } finally {
       setLoading(false)
     }
@@ -34,58 +49,73 @@ const PaymentsListPage = () => {
   const filteredPayments = useMemo(() => {
     const term = search.trim().toLowerCase()
     return payments.filter((payment) => {
-      const matchesSearch = [payment.clientName, payment.invoiceNumber]
-        .join(" ")
-        .toLowerCase()
-        .includes(term)
+      const matchesSearch = [payment.clientName, payment.invoiceNumber].join(" ").toLowerCase().includes(term)
       const matchesStatus = statusFilter ? payment.status === statusFilter : true
       return matchesSearch && matchesStatus
     })
   }, [payments, search, statusFilter])
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-        <div>
-          <h1>Pagos</h1>
-          <p style={{ color: "#6b7280", marginTop: 4 }}>Controla pagos y estado de clientes.</p>
-        </div>
-        <button type="button" onClick={() => navigate("/payments/new")}>
-          Registrar pago
-        </button>
-      </header>
+    <div className="grid gap-6">
+      <PageHeader
+        title="Pagos"
+        description="Controla pagos y estado de cuenta de tus clientes."
+        actions={
+          <Button
+            onClick={() => navigate("/payments/new")}
+            disabled={!canManagePayments}
+            title={!canManagePayments ? "Tu perfil no tiene permiso para registrar pagos." : undefined}
+          >
+            Registrar pago
+          </Button>
+        }
+      />
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-        <input
-          type="search"
-          placeholder="Buscar por cliente o factura..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          style={{ maxWidth: 360 }}
-        />
-        <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
-          Estado
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as PaymentStatus | "")}>
-            <option value="">Todos</option>
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <FilterPanel>
+        <div className="grid gap-3 md:grid-cols-[2fr_1fr] md:items-end">
+          <div className="grid gap-1.5">
+            <Label htmlFor={inputId("search")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Buscar
+            </Label>
+            <Input
+              id={inputId("search")}
+              type="search"
+              placeholder="Cliente o factura..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+          <label className="grid gap-1.5">
+            <Label htmlFor={inputId("status")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Estado
+            </Label>
+            <select
+              id={inputId("status")}
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as PaymentStatus | "")}
+              className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
+            >
+              <option value="">Todos</option>
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </FilterPanel>
 
       {loading ? (
-        <p>Cargando pagos...</p>
+        <StateMessage variant="loading" title="Cargando pagos..." />
+      ) : error ? (
+        <StateMessage variant="error" title="Error al cargar pagos" description={error} />
       ) : filteredPayments.length === 0 ? (
-        <p>No se encontraron pagos.</p>
+        <StateMessage variant="empty" title="No se encontraron pagos." />
       ) : (
         <PaymentsTable
           payments={filteredPayments}
-          onViewStatus={(clientId, clientName) =>
-            navigate(`/payments/account-status/${clientId}`, { state: { clientName } })
-          }
+          onViewStatus={(clientId, clientName) => navigate(`/payments/account-status/${clientId}`, { state: { clientName } })}
         />
       )}
     </div>

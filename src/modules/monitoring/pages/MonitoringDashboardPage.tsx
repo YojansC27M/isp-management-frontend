@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import StateMessage from "@/components/feedback/StateMessage"
+import { getErrorMessage } from "@/lib/errors"
 import InterfacesTable from "../components/InterfacesTable"
 import RouterCard from "../components/RouterCard"
 import StatsCard from "../components/StatsCard"
 import TrafficChart from "../components/TrafficChart"
 import { getRouterInterfaces, getRouterMetrics, getRouters } from "../services/monitoringApi"
 import type { InterfaceStatus, Router, RouterMetrics } from "../types/monitoring"
+
+const CPU_THRESHOLD = 85
+const RAM_THRESHOLD = 85
 
 const MonitoringDashboardPage = () => {
   const [routers, setRouters] = useState<Router[]>([])
@@ -13,15 +18,20 @@ const MonitoringDashboardPage = () => {
   const [interfaces, setInterfaces] = useState<InterfaceStatus[]>([])
   const [loadingRouters, setLoadingRouters] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
+  const [routersError, setRoutersError] = useState("")
+  const [detailsError, setDetailsError] = useState("")
 
   const loadRouters = useCallback(async () => {
     setLoadingRouters(true)
+    setRoutersError("")
     try {
       const data = await getRouters()
       setRouters(data)
       if (data.length > 0 && !selectedRouterId) {
         setSelectedRouterId(data[0].id)
       }
+    } catch (err) {
+      setRoutersError(getErrorMessage(err, "No fue posible cargar los routers."))
     } finally {
       setLoadingRouters(false)
     }
@@ -29,13 +39,13 @@ const MonitoringDashboardPage = () => {
 
   const loadDetails = useCallback(async (routerId: string) => {
     setLoadingDetails(true)
+    setDetailsError("")
     try {
-      const [metricsData, interfacesData] = await Promise.all([
-        getRouterMetrics(routerId),
-        getRouterInterfaces(routerId),
-      ])
+      const [metricsData, interfacesData] = await Promise.all([getRouterMetrics(routerId), getRouterInterfaces(routerId)])
       setMetrics(metricsData)
       setInterfaces(interfacesData)
+    } catch (err) {
+      setDetailsError(getErrorMessage(err, "No fue posible cargar las metricas del router."))
     } finally {
       setLoadingDetails(false)
     }
@@ -50,61 +60,64 @@ const MonitoringDashboardPage = () => {
     loadDetails(selectedRouterId)
     const interval = setInterval(() => {
       loadDetails(selectedRouterId)
-    }, 12000)
+    }, 30000)
     return () => clearInterval(interval)
   }, [selectedRouterId, loadDetails])
 
-  const selectedRouter = useMemo(
-    () => routers.find((router) => router.id === selectedRouterId) ?? null,
-    [routers, selectedRouterId],
-  )
+  const selectedRouter = useMemo(() => routers.find((router) => router.id === selectedRouterId) ?? null, [routers, selectedRouterId])
+
+  const showThresholdAlert = metrics ? metrics.cpuUsage >= CPU_THRESHOLD || metrics.ramUsage >= RAM_THRESHOLD : false
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div className="grid gap-6">
       <header>
-        <h1>Monitoreo de red</h1>
-        <p style={{ color: "#6b7280", marginTop: 4 }}>Supervisa el estado de routers y tráfico.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Monitoreo de red</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Supervisa routers, interfaces y consumo en tiempo real.</p>
       </header>
 
       {loadingRouters ? (
-        <p>Cargando routers...</p>
+        <StateMessage variant="loading" title="Cargando routers..." />
+      ) : routersError ? (
+        <StateMessage variant="error" title="Error al cargar routers" description={routersError} />
       ) : routers.length === 0 ? (
-        <p>No se encontraron routers.</p>
+        <StateMessage variant="empty" title="No se encontraron routers." />
       ) : (
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {routers.map((router) => (
-            <RouterCard
-              key={router.id}
-              router={router}
-              selected={router.id === selectedRouterId}
-              onSelect={setSelectedRouterId}
-            />
+            <RouterCard key={router.id} router={router} selected={router.id === selectedRouterId} onSelect={setSelectedRouterId} />
           ))}
         </div>
       )}
 
       {selectedRouter && (
-        <section style={{ display: "grid", gap: 16 }}>
-          <h2 style={{ margin: 0 }}>{selectedRouter.name}</h2>
+        <section className="grid gap-4">
+          <h2 className="text-lg font-semibold text-foreground">{selectedRouter.name}</h2>
           {loadingDetails ? (
-            <p>Cargando métricas del router...</p>
+            <StateMessage variant="loading" title="Cargando metricas del router..." />
+          ) : detailsError ? (
+            <StateMessage variant="error" title="Error en metricas del router" description={detailsError} />
           ) : metrics ? (
             <>
-              <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+              {showThresholdAlert && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  Alerta: consumo alto de recursos detectado en este router.
+                </div>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <StatsCard label="Uso de CPU" value={`${metrics.cpuUsage}%`} />
                 <StatsCard label="Uso de RAM" value={`${metrics.ramUsage}%`} />
-                <StatsCard label="Tiempo en línea" value={metrics.uptime} />
-                <StatsCard label="Tráfico total" value={metrics.totalTraffic} />
+                <StatsCard label="Tiempo en linea" value={metrics.uptime} />
+                <StatsCard label="Trafico total" value={metrics.totalTraffic} />
               </div>
               <TrafficChart />
               {interfaces.length === 0 ? (
-                <p>No se encontraron interfaces.</p>
+                <StateMessage variant="empty" title="No se encontraron interfaces." />
               ) : (
                 <InterfacesTable interfaces={interfaces} />
               )}
             </>
           ) : (
-            <p>No hay métricas disponibles.</p>
+            <StateMessage variant="empty" title="No hay metricas disponibles." />
           )}
         </section>
       )}

@@ -182,6 +182,11 @@ const mockAdapter: AxiosAdapter = async (config) => {
 
   if (method === "get" && path.startsWith("/tickets/")) {
     const segments = path.split("/")
+    if (segments[3] === "comments") {
+      const ticketId = segments[2]
+      const comments = ticketComments.filter((comment) => comment.ticketId === ticketId)
+      return ok(config, comments)
+    }
     const id = segments[2]
     const ticket = tickets.find((item) => item.id === id)
     return ticket ? ok(config, ticket) : notFound(config)
@@ -190,7 +195,22 @@ const mockAdapter: AxiosAdapter = async (config) => {
   if (method === "post" && path === "/tickets") {
     const payload = parseBody<TicketFormValues>(config)
     if (!payload) return notFound(config)
-    const created = { id: generateId(), clientName: "New Client", createdAt: new Date().toISOString(), ...payload }
+    const createdAt = new Date().toISOString()
+    const created = {
+      id: generateId(),
+      clientName: "New Client",
+      createdAt,
+      ...payload,
+      history: [
+        {
+          id: `h-${generateId()}`,
+          ticketId: "temp",
+          message: "Ticket creado en la plataforma.",
+          createdAt,
+        },
+      ],
+    }
+    created.history[0].ticketId = created.id
     tickets.push(created)
     return ok(config, created, 201)
   }
@@ -200,21 +220,46 @@ const mockAdapter: AxiosAdapter = async (config) => {
     const payload = parseBody<TicketFormValues>(config)
     const index = tickets.findIndex((item) => item.id === id)
     if (index === -1 || !payload) return notFound(config)
+    const previousStatus = tickets[index].status
+    const nextHistory = [...tickets[index].history]
+    if (previousStatus !== payload.status) {
+      nextHistory.unshift({
+        id: `h-${generateId()}`,
+        ticketId: id,
+        message: `Estado actualizado de ${previousStatus} a ${payload.status}.`,
+        createdAt: new Date().toISOString(),
+      })
+    }
     tickets[index] = { ...tickets[index], ...payload }
+    tickets[index].history = nextHistory
     return ok(config, tickets[index])
   }
 
   if (method === "post" && path.endsWith("/comments")) {
     const ticketId = path.split("/")[2]
-    const payload = parseBody<{ message: string }>(config)
+    const payload = parseBody<{ message: string; visibility?: "public" | "internal" }>(config)
     const comment = {
       id: generateId(),
       ticketId,
       message: payload?.message ?? "",
       createdAt: new Date().toISOString(),
       author: "You",
+      visibility: payload?.visibility ?? "public",
     }
     ticketComments.unshift(comment)
+    const ticketIndex = tickets.findIndex((ticket) => ticket.id === ticketId)
+    if (ticketIndex >= 0) {
+      const note =
+        comment.visibility === "internal"
+          ? "Se agrego una nota interna."
+          : "Se agrego un comentario publico."
+      tickets[ticketIndex].history.unshift({
+        id: `h-${generateId()}`,
+        ticketId,
+        message: note,
+        createdAt: comment.createdAt,
+      })
+    }
     return ok(config, comment, 201)
   }
 

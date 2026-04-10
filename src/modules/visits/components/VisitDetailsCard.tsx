@@ -1,3 +1,4 @@
+import KeyValueSummaryGrid, { type KeyValueSummaryItem } from "@/components/shared/KeyValueSummaryGrid"
 import type { Visit } from "../types/visit"
 
 interface VisitDetailsCardProps {
@@ -5,38 +6,18 @@ interface VisitDetailsCardProps {
 }
 
 const VisitDetailsCard = ({ visit }: VisitDetailsCardProps) => {
-  return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 16, display: "grid", gap: 8 }}>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Cliente</strong>
-        <span>{visit.clientName}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Técnico</strong>
-        <span>{visit.technicianName}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Zona</strong>
-        <span>{visit.zone}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Tipo</strong>
-        <span style={{ textTransform: "capitalize" }}>{visit.type}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Programado</strong>
-        <span>{visit.scheduledDate} a las {visit.scheduledTime}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Estado</strong>
-        <span style={{ textTransform: "capitalize" }}>{visit.status.replace("_", " ")}</span>
-      </div>
-      <div style={{ display: "grid", gap: 4 }}>
-        <strong>Notas</strong>
-        <span>{visit.notes || "Sin notas"}</span>
-      </div>
-    </div>
-  )
+  const items: KeyValueSummaryItem[] = [
+    { label: "Cliente", value: visit.clientName, valueClassName: "capitalize" },
+    { label: "Tecnico", value: visit.technicianName, valueClassName: "capitalize" },
+    { label: "Zona", value: visit.zone, valueClassName: "capitalize" },
+    { label: "Tipo", value: visit.type, valueClassName: "capitalize" },
+    { label: "Programado", value: `${visit.scheduledDate} - ${visit.scheduledTime}`, valueClassName: "capitalize" },
+    { label: "Estado", value: visit.status.replace("_", " "), valueClassName: "capitalize" },
+    { label: "Notas", value: visit.notes || "Sin notas", valueClassName: "capitalize" },
+  ]
+
+  return <KeyValueSummaryGrid items={items} gridClassName="grid gap-4 sm:grid-cols-2" />
 }
 
 export default VisitDetailsCard
+

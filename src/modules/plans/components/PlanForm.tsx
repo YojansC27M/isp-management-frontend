@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react"
-import type { ChangeEvent, CSSProperties, FormEvent } from "react"
+import { useEffect, useRef, useState } from "react"
+import type { ChangeEvent, FormEvent } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { PlanFormValues, PlanType } from "../types/plan"
 
 interface PlanFormProps {
@@ -17,30 +20,18 @@ type PlanFormState = {
 }
 
 type FormErrors = Partial<Record<keyof PlanFormState, string>>
+type FocusableField = keyof PlanFormState
 
 const typeOptions: { label: string; value: PlanType }[] = [
   { label: "Residencial", value: "residential" },
   { label: "Empresarial", value: "business" },
 ]
 
-const inputStyle: CSSProperties = {
-  padding: "10px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: 6,
-  fontSize: 14,
-}
+const selectClass =
+  "h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
 
-const labelStyle: CSSProperties = {
-  display: "grid",
-  gap: 6,
-  fontSize: 13,
-  color: "#111827",
-}
-
-const errorStyle: CSSProperties = {
-  color: "#dc2626",
-  fontSize: 12,
-}
+const inputId = (field: string) => `plan-form-${field}`
+const errorId = (field: string) => `plan-form-${field}-error`
 
 const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanFormProps) => {
   const [values, setValues] = useState<PlanFormState>({
@@ -51,6 +42,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
     type: initialValues.type,
   })
   const [errors, setErrors] = useState<FormErrors>({})
+  const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
 
   useEffect(() => {
     setValues({
@@ -63,48 +55,36 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
   }, [initialValues])
 
   const handleChange = (field: keyof PlanFormState) => (event: ChangeEvent<HTMLInputElement>) => {
-    setValues((current) => ({
-      ...current,
-      [field]: event.target.value,
-    }))
+    setValues((current) => ({ ...current, [field]: event.target.value }))
   }
 
   const handleSelectChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setValues((current) => ({
-      ...current,
-      type: event.target.value as PlanType,
-    }))
+    setValues((current) => ({ ...current, type: event.target.value as PlanType }))
   }
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-
     if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio"
-
     const download = Number(values.downloadSpeed)
-    if (!values.downloadSpeed || Number.isNaN(download) || download <= 0) {
-      nextErrors.downloadSpeed = "La velocidad de descarga debe ser mayor a 0"
-    }
-
+    if (!values.downloadSpeed || Number.isNaN(download) || download <= 0) nextErrors.downloadSpeed = "La velocidad de descarga debe ser mayor a 0"
     const upload = Number(values.uploadSpeed)
-    if (!values.uploadSpeed || Number.isNaN(upload) || upload <= 0) {
-      nextErrors.uploadSpeed = "La velocidad de subida debe ser mayor a 0"
-    }
-
+    if (!values.uploadSpeed || Number.isNaN(upload) || upload <= 0) nextErrors.uploadSpeed = "La velocidad de subida debe ser mayor a 0"
     const price = Number(values.price)
-    if (!values.price || Number.isNaN(price) || price <= 0) {
-      nextErrors.price = "El precio debe ser mayor a 0"
-    }
-
+    if (!values.price || Number.isNaN(price) || price <= 0) nextErrors.price = "El precio debe ser mayor a 0"
     if (!values.type) nextErrors.type = "El tipo es obligatorio"
-
     setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
+    return nextErrors
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!validate()) return
+    const nextErrors = validate()
+    if (Object.keys(nextErrors).length > 0) {
+      const order: FocusableField[] = ["name", "downloadSpeed", "uploadSpeed", "price", "type"]
+      const first = order.find((field) => nextErrors[field])
+      if (first) fieldRefs.current[first]?.focus()
+      return
+    }
 
     onSubmit({
       name: values.name.trim(),
@@ -115,66 +95,96 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
     })
   }
 
+  const describedBy = (field: keyof PlanFormState) => (errors[field] ? errorId(field) : undefined)
+
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, maxWidth: 520 }}>
-      <label style={labelStyle}>
-        Nombre
-        <input name="name" value={values.name} onChange={handleChange("name")} style={inputStyle} />
-        {errors.name && <span style={errorStyle}>{errors.name}</span>}
-      </label>
-      <label style={labelStyle}>
-        Velocidad de descarga (Mbps)
-        <input
-          name="downloadSpeed"
-          type="number"
-          min="0"
-          step="1"
-          value={values.downloadSpeed}
-          onChange={handleChange("downloadSpeed")}
-          style={inputStyle}
-        />
-        {errors.downloadSpeed && <span style={errorStyle}>{errors.downloadSpeed}</span>}
-      </label>
-      <label style={labelStyle}>
-        Velocidad de subida (Mbps)
-        <input
-          name="uploadSpeed"
-          type="number"
-          min="0"
-          step="1"
-          value={values.uploadSpeed}
-          onChange={handleChange("uploadSpeed")}
-          style={inputStyle}
-        />
-        {errors.uploadSpeed && <span style={errorStyle}>{errors.uploadSpeed}</span>}
-      </label>
-      <label style={labelStyle}>
-        Precio
-        <input
-          name="price"
-          type="number"
-          min="0"
-          step="0.01"
-          value={values.price}
-          onChange={handleChange("price")}
-          style={inputStyle}
-        />
-        {errors.price && <span style={errorStyle}>{errors.price}</span>}
-      </label>
-      <label style={labelStyle}>
-        Tipo
-        <select name="type" value={values.type} onChange={handleSelectChange} style={inputStyle}>
-          <option value="">Selecciona un tipo</option>
-          {typeOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {errors.type && <span style={errorStyle}>{errors.type}</span>}
-      </label>
-      <div style={{ display: "flex", gap: 12 }}>
-        <button type="submit">{submitLabel}</button>
+    <form onSubmit={handleSubmit} className="grid max-w-2xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="grid gap-1.5 md:col-span-2">
+          <Label htmlFor={inputId("name")}>Nombre</Label>
+          <Input
+            id={inputId("name")}
+            name="name"
+            value={values.name}
+            onChange={handleChange("name")}
+            ref={(node) => (fieldRefs.current.name = node)}
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={describedBy("name")}
+          />
+          {errors.name && <span id={errorId("name")} className="text-xs text-rose-600" role="alert">{errors.name}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("downloadSpeed")}>Velocidad de descarga (Mbps)</Label>
+          <Input
+            id={inputId("downloadSpeed")}
+            name="downloadSpeed"
+            type="number"
+            min="0"
+            step="1"
+            value={values.downloadSpeed}
+            onChange={handleChange("downloadSpeed")}
+            ref={(node) => (fieldRefs.current.downloadSpeed = node)}
+            aria-invalid={Boolean(errors.downloadSpeed)}
+            aria-describedby={describedBy("downloadSpeed")}
+          />
+          {errors.downloadSpeed && <span id={errorId("downloadSpeed")} className="text-xs text-rose-600" role="alert">{errors.downloadSpeed}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("uploadSpeed")}>Velocidad de subida (Mbps)</Label>
+          <Input
+            id={inputId("uploadSpeed")}
+            name="uploadSpeed"
+            type="number"
+            min="0"
+            step="1"
+            value={values.uploadSpeed}
+            onChange={handleChange("uploadSpeed")}
+            ref={(node) => (fieldRefs.current.uploadSpeed = node)}
+            aria-invalid={Boolean(errors.uploadSpeed)}
+            aria-describedby={describedBy("uploadSpeed")}
+          />
+          {errors.uploadSpeed && <span id={errorId("uploadSpeed")} className="text-xs text-rose-600" role="alert">{errors.uploadSpeed}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("price")}>Precio mensual</Label>
+          <Input
+            id={inputId("price")}
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            value={values.price}
+            onChange={handleChange("price")}
+            ref={(node) => (fieldRefs.current.price = node)}
+            aria-invalid={Boolean(errors.price)}
+            aria-describedby={describedBy("price")}
+          />
+          {errors.price && <span id={errorId("price")} className="text-xs text-rose-600" role="alert">{errors.price}</span>}
+        </label>
+        <label className="grid gap-1.5">
+          <Label htmlFor={inputId("type")}>Tipo</Label>
+          <select
+            id={inputId("type")}
+            name="type"
+            value={values.type}
+            onChange={handleSelectChange}
+            className={selectClass}
+            ref={(node) => (fieldRefs.current.type = node)}
+            aria-invalid={Boolean(errors.type)}
+            aria-describedby={describedBy("type")}
+          >
+            <option value="">Selecciona un tipo</option>
+            {typeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.type && <span id={errorId("type")} className="text-xs text-rose-600" role="alert">{errors.type}</span>}
+        </label>
+      </div>
+      <div className="flex items-center gap-2 pt-2">
+        <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
   )
