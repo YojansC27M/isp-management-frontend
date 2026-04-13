@@ -110,7 +110,8 @@ const TicketDetailPage = () => {
           <span className="rounded-full bg-muted px-2.5 py-1">Estado: {statusLabel(ticket.status)}</span>
           <span className="rounded-full bg-muted px-2.5 py-1">Prioridad: {ticket.priority}</span>
           <span className="rounded-full bg-muted px-2.5 py-1">Categoria: {categoryLabel(ticket.category)}</span>
-          <span className="rounded-full bg-muted px-2.5 py-1">Tecnico: {ticket.assignedTechnicianName}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">Responsable: {ticket.assignedUserName || "Sin asignar"}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">Tecnico: {ticket.assignedTechnicianName || "Sin asignar"}</span>
           <span className="rounded-full bg-muted px-2.5 py-1">Creado: {ticket.createdAt}</span>
         </div>
       </section>

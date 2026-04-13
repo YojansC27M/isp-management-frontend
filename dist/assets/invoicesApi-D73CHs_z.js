@@ -1,1 +1,0 @@
-import{a as s}from"./axios-XObwpf23.js";const t=async()=>{const{data:a}=await s.get("/invoices");return a},o=async a=>{const{data:e}=await s.get(`/invoices/${a}`);return e},c=async a=>(await s.get(`/invoices/${a}/pdf`,{responseType:"blob"})).data;export{o as a,c as d,t as g};

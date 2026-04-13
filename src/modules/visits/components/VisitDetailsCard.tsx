@@ -8,7 +8,7 @@ interface VisitDetailsCardProps {
 const VisitDetailsCard = ({ visit }: VisitDetailsCardProps) => {
   const items: KeyValueSummaryItem[] = [
     { label: "Cliente", value: visit.clientName, valueClassName: "capitalize" },
-    { label: "Tecnico", value: visit.technicianName, valueClassName: "capitalize" },
+    { label: "Tecnico", value: visit.technicianName || "Sin asignar", valueClassName: "capitalize" },
     { label: "Zona", value: visit.zone, valueClassName: "capitalize" },
     { label: "Tipo", value: visit.type, valueClassName: "capitalize" },
     { label: "Programado", value: `${visit.scheduledDate} - ${visit.scheduledTime}`, valueClassName: "capitalize" },

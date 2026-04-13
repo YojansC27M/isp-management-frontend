@@ -9,6 +9,10 @@ export type SecurityAuditAction =
   | "toggle_role_status"
   | "reset_role"
   | "reset_all"
+  | "internal_user_create"
+  | "internal_user_update"
+  | "internal_user_delete"
+  | "technician_assignment"
 
 export interface SecurityAuditEntry {
   id: string
@@ -22,7 +26,17 @@ export interface SecurityAuditEntry {
 
 const isBrowser = () => typeof window !== "undefined" && typeof localStorage !== "undefined"
 const roleSet = new Set<Role>(appRoles)
-const actionSet = new Set<SecurityAuditAction>(["save", "save_all", "toggle_role_status", "reset_role", "reset_all"])
+const actionSet = new Set<SecurityAuditAction>([
+  "save",
+  "save_all",
+  "toggle_role_status",
+  "reset_role",
+  "reset_all",
+  "internal_user_create",
+  "internal_user_update",
+  "internal_user_delete",
+  "technician_assignment",
+])
 
 const isValidRole = (value: unknown): value is Role => typeof value === "string" && roleSet.has(value as Role)
 

@@ -12,6 +12,9 @@ const LoginPage = lazy(() => import("../pages/LoginPage"))
 const DashboardPage = lazy(() => import("../pages/DashboardPage"))
 const UnauthorizedPage = lazy(() => import("@/auth/UnauthorizedPage"))
 const ClientsListPage = lazy(() => import("../modules/clients/pages/ClientsListPage"))
+const InternalUsersListPage = lazy(() => import("../modules/internal-users/pages/InternalUsersListPage"))
+const InternalUserCreatePage = lazy(() => import("../modules/internal-users/pages/InternalUserCreatePage"))
+const InternalUserEditPage = lazy(() => import("../modules/internal-users/pages/InternalUserEditPage"))
 const ClientCreatePage = lazy(() => import("../modules/clients/pages/ClientCreatePage"))
 const ClientEditPage = lazy(() => import("../modules/clients/pages/ClientEditPage"))
 const PlansListPage = lazy(() => import("../modules/plans/pages/PlansListPage"))
@@ -94,6 +97,30 @@ const AppRouter = () => {
             <ProtectedRoute>
               <MainLayout>{suspenseNode(<DashboardPage />)}</MainLayout>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/internal-users"
+          element={
+            <PermissionRoute requiredPermissions={["internal_users.read"]}>
+              <MainLayout>{suspenseNode(<InternalUsersListPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/internal-users/new"
+          element={
+            <PermissionRoute requiredPermissions={["internal_users.write"]}>
+              <MainLayout>{suspenseNode(<InternalUserCreatePage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/internal-users/:id/edit"
+          element={
+            <PermissionRoute requiredPermissions={["internal_users.write"]}>
+              <MainLayout>{suspenseNode(<InternalUserEditPage />)}</MainLayout>
+            </PermissionRoute>
           }
         />
         <Route

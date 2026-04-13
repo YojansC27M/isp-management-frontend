@@ -10,6 +10,20 @@ export interface PermissionDefinition {
 
 export const permissionCatalog: PermissionDefinition[] = [
   {
+    permission: "internal_users.read",
+    module: "Usuarios internos",
+    action: "read",
+    label: "Ver usuarios internos",
+    description: "Puede consultar el listado y el perfil de usuarios internos.",
+  },
+  {
+    permission: "internal_users.write",
+    module: "Usuarios internos",
+    action: "write",
+    label: "Gestionar usuarios internos",
+    description: "Puede crear, editar y eliminar usuarios internos.",
+  },
+  {
     permission: "clients.read",
     module: "Clientes",
     action: "read",

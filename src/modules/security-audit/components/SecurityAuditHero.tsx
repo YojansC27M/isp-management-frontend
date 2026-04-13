@@ -20,10 +20,19 @@ const SecurityAuditHero = ({ onRefresh, onExport, disableExport }: SecurityAudit
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={onRefresh}>
+          <Button
+            variant="outline"
+            className="border-white/70 bg-white/90 text-slate-900 shadow-sm hover:bg-white dark:border-white/40 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+            onClick={onRefresh}
+          >
             Actualizar
           </Button>
-          <Button className="bg-card text-foreground hover:bg-muted" onClick={onExport} disabled={disableExport}>
+          <Button
+            variant="outline"
+            className="border-white/50 bg-cyan-100/90 text-cyan-950 shadow-sm hover:bg-cyan-100 disabled:border-white/30 disabled:bg-white/40 disabled:text-slate-500 dark:border-cyan-200/35 dark:bg-cyan-200/15 dark:text-cyan-50 dark:hover:bg-cyan-200/25 dark:disabled:border-white/20 dark:disabled:bg-white/10 dark:disabled:text-white/40"
+            onClick={onExport}
+            disabled={disableExport}
+          >
             Exportar JSON
           </Button>
         </div>

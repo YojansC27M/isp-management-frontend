@@ -8,6 +8,7 @@ export interface AppNavItem extends NavItem {
 
 export const appNavItems: AppNavItem[] = [
   { label: "Panel", href: "/dashboard" },
+  { label: "Usuarios internos", href: "/internal-users", requiredPermissions: ["internal_users.read"] },
   { label: "Clientes", href: "/clients", requiredPermissions: ["clients.read"] },
   { label: "Planes", href: "/plans", requiredPermissions: ["plans.read"] },
   { label: "Pagos", href: "/payments", requiredPermissions: ["payments.read"] },

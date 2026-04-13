@@ -41,6 +41,10 @@
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214 31% 88%;
     --sidebar-ring: 218 70% 35%;
+    --scrollbar-track: 210 28% 92%;
+    --scrollbar-thumb: 207 76% 58%;
+    --scrollbar-thumb-hover: 201 81% 50%;
+    --scrollbar-thumb-active: 195 86% 44%;
   }
 
   .dark {
@@ -76,6 +80,10 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 23%;
     --sidebar-ring: 207 90% 60%;
+    --scrollbar-track: 218 31% 17%;
+    --scrollbar-thumb: 206 88% 64%;
+    --scrollbar-thumb-hover: 192 85% 52%;
+    --scrollbar-thumb-active: 187 85% 44%;
   }
 
   * {
@@ -99,40 +107,36 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(214 24% 70%) hsl(210 25% 93%);
+    scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--scrollbar-track));
   }
 
   *::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
   }
 
   *::-webkit-scrollbar-track {
-    background: hsl(210 25% 93%);
+    background: linear-gradient(180deg, hsl(var(--scrollbar-track)), hsl(var(--scrollbar-track) / 0.85));
     border-radius: 999px;
   }
 
   *::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(207 76% 58%), hsl(196 75% 41%));
-    border: 3px solid hsl(210 25% 93%);
+    background: linear-gradient(180deg, hsl(var(--scrollbar-thumb)), hsl(var(--scrollbar-thumb-active)));
+    border: 2px solid hsl(var(--scrollbar-track));
     border-radius: 999px;
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.22);
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, hsl(207 82% 52%), hsl(187 85% 40%));
+    background: linear-gradient(180deg, hsl(var(--scrollbar-thumb-hover)), hsl(var(--scrollbar-thumb-active)));
   }
 
-  .dark * {
-    scrollbar-color: hsl(216 16% 45%) hsl(217 33% 19%);
+  *::-webkit-scrollbar-thumb:active {
+    background: hsl(var(--scrollbar-thumb-active));
   }
 
-  .dark *::-webkit-scrollbar-track {
-    background: hsl(217 33% 19%);
-  }
-
-  .dark *::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(207 90% 60%), hsl(187 85% 44%));
-    border-color: hsl(217 33% 19%);
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 

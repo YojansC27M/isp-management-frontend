@@ -1,0 +1,304 @@
+Backlog de Producto
+ISP Management System — Laravel + React + MikroTik
+Stack Backend: Laravel 11 (API REST)
+Stack Frontend: React + Vite + Zustand
+Integración: MikroTik RouterOS API
+Total historias: 22 historias de usuario
+Épicas: Core, MikroTik, Clientes, Facturación, Soporte
+  Épica 1: Core / Infraestructura
+CORE-01  Setup Laravel + estructura base del proyecto
+ Backend  Prioridad: Alta  Estado: Por hacer 
+Descripción: Inicializar proyecto Laravel con arquitectura modular (Modules o DDD). Configurar Docker Compose con MySQL, Redis y Laravel.
+Criterios de aceptación:
+Proyecto corre en Docker
+.env.example documentado con todas las variables necesarias
+Módulos separados por dominio (clientes, facturación, mikrotik, soporte)
+CORE-02  Autenticación y gestión de roles (Sanctum + Spatie)
+ Backend  Prioridad: Alta  Estado: Por hacer 
+Descripción: Implementar autenticación con Laravel Sanctum para SPA. Roles definidos: SuperAdmin, Admin, Técnico, Soporte.
+Criterios de aceptación:
+Login/logout con token JWT
+Middleware de roles funcionando por ruta
+Seeders de roles y usuario administrador inicial
+CORE-03  Setup React + React Router + Zustand
+ Frontend  Prioridad: Alta  Estado: Por hacer 
+Descripción: Crear aplicación React con Vite. Configurar React Router para navegación, Zustand para estado global, Axios con interceptores para manejo de tokens.
+Criterios de aceptación:
+Flujo de autenticación completo en React
+Rutas protegidas por rol de usuario
+Variables de entorno configuradas (.env)
+CORE-04  Módulo de configuración del sistema ISP
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: CRUD de parámetros globales del sistema: nombre de empresa, moneda, zona horaria, datos de facturación, logo.
+Criterios de aceptación:
+Panel de ajustes accesible solo para SuperAdmin
+Parámetros cacheados en Redis para rendimiento
+  Épica 2: MikroTik
+MK-01  Integración RouterOS API (RouterOSClient)
+ Backend  Prioridad: Alta  Estado: Por hacer 
+Descripción: Implementar servicio Laravel para conectarse vía API a routers MikroTik usando librería PHP RouterOSClient. Pool de conexiones con reintentos y manejo de errores.
+Criterios de aceptación:
+Conexión exitosa a un router MikroTik real
+Manejo de timeout y errores de red
+Credenciales de acceso cifradas en base de datos
+MK-02  CRUD de routers en el sistema
+ Backend  Prioridad: Alta  Estado: Backlog 
+Descripción: Gestionar múltiples routers: IP, puerto, usuario, contraseña, ubicación geográfica. Estado de conexión en tiempo real.
+Criterios de aceptación:
+Listado con indicador de estado (online/offline)
+Edición y eliminación segura con confirmación
+Botón "Probar conexión" desde la UI
+MK-03  Dashboard de monitoreo de routers
+ Fullstack  Prioridad: Alta  Estado: Backlog 
+Descripción: Panel que muestre CPU, RAM, interfaces activas, uptime y ancho de banda en tiempo real. Polling cada 30 segundos o vía WebSockets con Laravel Reverb.
+Criterios de aceptación:
+Gráficas de CPU y RAM en tiempo real
+Listado de interfaces con estado (up/down)
+Alertas visuales si algún recurso supera umbrales configurables
+MK-04  Gestión de queues y bandwidth por cliente
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: Crear, editar y eliminar Simple Queues en MikroTik asociadas a clientes del sistema. Aplicar planes de velocidad de forma automática.
+Criterios de aceptación:
+Queue creada en el router al activar un cliente
+Sincronización bidireccional entre sistema y MikroTik
+Log de cambios de velocidad por cliente
+MK-05  Suspensión automática por morosidad
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: Job de Laravel que suspende el acceso en MikroTik cuando un cliente supera su fecha de vencimiento.
+Criterios de aceptación:
+Job programado con Laravel Scheduler
+Notificación al cliente antes del corte
+Reactivación automática al registrar el pago
+MK-06  Exportar configuración de backup del router
+ Backend  Prioridad: Baja  Estado: Backlog 
+Descripción: Endpoint que descarga el archivo de backup de configuración del router vía API de MikroTik y lo almacena en el sistema.
+Criterios de aceptación:
+Descarga de archivo .backup desde la UI
+Historial de backups almacenado con fecha y usuario
+  Épica 3: Gestión de Clientes
+CLI-01  CRUD completo de clientes
+ Fullstack  Prioridad: Alta  Estado: Por hacer 
+Descripción: Gestionar clientes con todos sus datos: nombre, cédula/NIT, dirección, teléfono, email, coordenadas GPS, plan contratado, IP asignada, estado del servicio.
+Criterios de aceptación:
+Formulario con validación en frontend y backend
+Búsqueda por nombre, cédula o IP
+Filtros por estado, zona y plan
+Importación masiva desde CSV
+CLI-02  Gestión de planes de servicio
+ Fullstack  Prioridad: Alta  Estado: Backlog 
+Descripción: CRUD de planes de internet: nombre, velocidad de bajada/subida (Mbps), precio mensual, tipo (residencial/empresarial).
+Criterios de aceptación:
+Planes vinculados a perfiles de queue en MikroTik
+Historial de cambios de plan por cliente
+Precio editable sin afectar contratos vigentes
+CLI-03  Mapa de clientes con Leaflet.js
+ Frontend  Prioridad: Media  Estado: Backlog 
+Descripción: Visualización geográfica de todos los clientes sobre un mapa. Filtrar por estado y por zona de cobertura.
+Criterios de aceptación:
+Marcadores con color diferenciado por estado
+Clic en marcador muestra información básica del cliente
+Capas filtrables por estado y por técnico asignado
+CLI-04  Portal de autogestión para clientes
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: Micro-portal donde el cliente puede ver su estado de cuenta, velocidad de su plan actual, historial de pagos y abrir tickets de soporte.
+Criterios de aceptación:
+Acceso con credenciales propias (email + contraseña)
+Vista de solo lectura de sus datos
+Posibilidad de abrir ticket desde el portal
+  Épica 4: Facturación
+FAC-01  Generación automática de facturas mensuales
+ Fullstack  Prioridad: Alta  Estado: Backlog 
+Descripción: Job que genera facturas para todos los clientes activos al inicio de cada período. Soportar facturación por fecha de corte individual. PDF descargable.
+Criterios de aceptación:
+Facturas generadas automáticamente en fecha configurada
+PDF descargable desde la UI y enviado por email al cliente
+Numeración correlativa y configurable
+FAC-02  Registro de pagos y estado de cuenta
+ Fullstack  Prioridad: Alta  Estado: Backlog 
+Descripción: Módulo para registrar pagos manuales y/o desde pasarela de pago. Estado de facturas: pendiente, pagado, vencido.
+Criterios de aceptación:
+CRUD de pagos con método de pago
+Estado de cuenta completo por cliente
+Alertas de vencimiento próximo (3 días antes)
+FAC-03  Integración con pasarela de pago (PSE / MercadoPago)
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: Webhook para registrar pagos automáticos desde pasarela. Reconciliación automática con facturas pendientes del cliente.
+Criterios de aceptación:
+Webhook seguro con validación de firma
+Conciliación automática con factura correspondiente
+Log completo de transacciones recibidas
+FAC-04  Reportes de cartera y facturación
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: Dashboard con métricas de facturación del mes, cartera vencida, efectividad de cobro y comparativo mensual.
+Criterios de aceptación:
+Gráficas exportables a PDF y Excel
+Filtros por rango de fecha, zona geográfica y plan
+Resumen de clientes morosos con días de vencimiento
+  Épica 5: Soporte
+SOP-01  Sistema de tickets de soporte
+ Fullstack  Prioridad: Alta  Estado: Backlog 
+Descripción: Clientes y técnicos pueden crear tickets. Estados: abierto, en proceso, resuelto, cerrado. Con prioridad y categoría.
+Criterios de aceptación:
+CRUD de tickets con comentarios internos y públicos
+Asignación a técnico específico
+Historial completo de cambios de estado y notas
+SOP-02  Agenda de visitas técnicas
+ Fullstack  Prioridad: Media  Estado: Backlog 
+Descripción: Calendario para programar visitas de instalación o mantenimiento. Vista por técnico asignado y por zona geográfica.
+Criterios de aceptación:
+Calendario interactivo con FullCalendar
+Asignación a técnico con verificación de disponibilidad
+Notificación automática al cliente con fecha y hora de visita
+SOP-03  Notificaciones por WhatsApp / Email
+ Backend  Prioridad: Media  Estado: Backlog 
+Descripción: Envío de notificaciones automáticas en eventos clave: vencimiento, corte de servicio, ticket actualizado, confirmación de pago.
+Criterios de aceptación:
+Templates de mensajes configurables desde el panel
+Log de mensajes enviados con estado (enviado/fallido)
+Respetar horario de envío (no notificar de noche)
+SOP-04  Base de conocimiento interna
+ Backend  Prioridad: Baja  Estado: Backlog 
+Descripción: Wiki interna para técnicos con procedimientos estándar, configuraciones tipo de MikroTik y soluciones a problemas frecuentes.
+Criterios de aceptación:
+CRUD de artículos con editor Markdown
+Búsqueda por palabra clave
+Categorización por tipo de problema
+  Resumen del Backlog
+ID
+Título
+Épica
+Tipo
+Prioridad
+Estado
+CORE-01
+Setup Laravel + estructura base
+Core
+Backend
+Alta
+Por hacer
+CORE-02
+Autenticación y roles
+Core
+Backend
+Alta
+Por hacer
+CORE-03
+Setup React + Zustand
+Core
+Frontend
+Alta
+Por hacer
+CORE-04
+Configuración del sistema
+Core
+Backend
+Media
+Backlog
+MK-01
+Integración RouterOS API
+MikroTik
+Backend
+Alta
+Por hacer
+MK-02
+CRUD de routers
+MikroTik
+Backend
+Alta
+Backlog
+MK-03
+Dashboard de monitoreo
+MikroTik
+Fullstack
+Alta
+Backlog
+MK-04
+Queues y bandwidth
+MikroTik
+Backend
+Media
+Backlog
+MK-05
+Suspensión por morosidad
+MikroTik
+Backend
+Media
+Backlog
+MK-06
+Backup de router
+MikroTik
+Backend
+Baja
+Backlog
+CLI-01
+CRUD de clientes
+Clientes
+Fullstack
+Alta
+Por hacer
+CLI-02
+Planes de servicio
+Clientes
+Fullstack
+Alta
+Backlog
+CLI-03
+Mapa de clientes
+Clientes
+Frontend
+Media
+Backlog
+CLI-04
+Portal de autogestión
+Clientes
+Backend
+Media
+Backlog
+FAC-01
+Facturas automáticas
+Facturación
+Fullstack
+Alta
+Backlog
+FAC-02
+Registro de pagos
+Facturación
+Fullstack
+Alta
+Backlog
+FAC-03
+Pasarela de pago
+Facturación
+Backend
+Media
+Backlog
+FAC-04
+Reportes de cartera
+Facturación
+Backend
+Media
+Backlog
+SOP-01
+Sistema de tickets
+Soporte
+Fullstack
+Alta
+Backlog
+SOP-02
+Agenda de visitas
+Soporte
+Fullstack
+Media
+Backlog
+SOP-03
+Notificaciones WhatsApp/Email
+Soporte
+Backend
+Media
+Backlog
+SOP-04
+Base de conocimiento
+Soporte
+Backend
+Baja
+Backlog

@@ -13,6 +13,8 @@ export interface TicketHistoryEntry {
 export interface Ticket {
   id: string
   clientId: string
+  assignedUserId: string
+  assignedUserName: string
   clientName: string
   assignedTechnicianId: string
   assignedTechnicianName: string
@@ -27,6 +29,8 @@ export interface Ticket {
 
 export interface TicketFormValues {
   clientId: string
+  assignedUserId: string
+  assignedUserName: string
   assignedTechnicianId: string
   assignedTechnicianName: string
   title: string

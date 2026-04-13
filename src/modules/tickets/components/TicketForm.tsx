@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState } from "react"
+﻿import { useEffect, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import ClientAutocompleteField, { type ClientSummary } from "@/modules/clients/components/ClientAutocompleteField"
+import { getTicketAssigneeOptions, suggestTicketAssignee, type TicketAssigneeOption } from "@/modules/internal-users/services/ticketAssignee"
+import {
+  getClientZone,
+  getTechnicianAssignmentOptions,
+  suggestTechnicianAssignment,
+} from "@/modules/internal-users/services/technicianAssignment"
+import type { TechnicianAssignmentOption } from "@/modules/internal-users/types/internalUser"
 import type { TicketCategory, TicketFormValues, TicketPriority, TicketStatus } from "../types/ticket"
 
 interface TicketFormProps {
@@ -13,8 +21,8 @@ interface TicketFormProps {
 
 type TicketFormState = {
   clientId: string
+  assignedUserId: string
   assignedTechnicianId: string
-  assignedTechnicianName: string
   title: string
   description: string
   category: TicketCategory | ""
@@ -24,6 +32,12 @@ type TicketFormState = {
 
 type FormErrors = Partial<Record<keyof TicketFormState, string>>
 type FocusableField = keyof TicketFormState
+
+type ResponsibleOption = {
+  id: string
+  name: string
+  meta: string
+}
 
 const categoryOptions: { label: string; value: TicketCategory }[] = [
   { label: "Tecnico", value: "technical" },
@@ -44,6 +58,13 @@ const statusOptions: { label: string; value: TicketStatus }[] = [
   { label: "Cerrado", value: "closed" },
 ]
 
+const roleLabel: Record<TicketAssigneeOption["role"], string> = {
+  support: "Soporte",
+  staff: "Staff",
+  admin: "Administrador",
+  technician: "Tecnico",
+}
+
 const selectClass =
   "h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
 
@@ -53,11 +74,13 @@ const textareaClass =
 const inputId = (field: string) => `ticket-form-${field}`
 const errorId = (field: string) => `ticket-form-${field}-error`
 
+const isTechnicalCategory = (category: TicketCategory | "") => category === "technical" || category === "installation"
+
 const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: TicketFormProps) => {
   const [values, setValues] = useState<TicketFormState>({
     clientId: initialValues.clientId,
+    assignedUserId: initialValues.assignedUserId,
     assignedTechnicianId: initialValues.assignedTechnicianId,
-    assignedTechnicianName: initialValues.assignedTechnicianName,
     title: initialValues.title,
     description: initialValues.description,
     category: initialValues.category,
@@ -65,13 +88,18 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     status: initialValues.status,
   })
   const [errors, setErrors] = useState<FormErrors>({})
+  const [assigneeOptions, setAssigneeOptions] = useState<TicketAssigneeOption[]>([])
+  const [technicianOptions, setTechnicianOptions] = useState<TechnicianAssignmentOption[]>([])
+  const [zone, setZone] = useState("")
+  const [loadingResponsible, setLoadingResponsible] = useState(false)
+  const [autoAssigningResponsible, setAutoAssigningResponsible] = useState(false)
   const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
 
   useEffect(() => {
     setValues({
       clientId: initialValues.clientId,
+      assignedUserId: initialValues.assignedUserId,
       assignedTechnicianId: initialValues.assignedTechnicianId,
-      assignedTechnicianName: initialValues.assignedTechnicianName,
       title: initialValues.title,
       description: initialValues.description,
       category: initialValues.category,
@@ -80,19 +108,111 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     })
   }, [initialValues])
 
-  const handleChange = (field: keyof TicketFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setValues((current) => ({ ...current, [field]: event.target.value }))
+  useEffect(() => {
+    let cancelled = false
+
+    const loadResponsibleOptions = async () => {
+      if (!values.category) return
+
+      setLoadingResponsible(true)
+      try {
+        if (isTechnicalCategory(values.category)) {
+          const clientZone = values.clientId.trim() ? await getClientZone(values.clientId) : ""
+          const techOptions = await getTechnicianAssignmentOptions({ zone: clientZone })
+          if (cancelled) return
+          setZone(clientZone)
+          setTechnicianOptions(techOptions)
+          setAssigneeOptions([])
+        } else {
+          const internalOptions = await getTicketAssigneeOptions(values.category)
+          if (cancelled) return
+          setAssigneeOptions(internalOptions)
+          setTechnicianOptions([])
+        }
+      } finally {
+        if (!cancelled) setLoadingResponsible(false)
+      }
+    }
+
+    void loadResponsibleOptions()
+    return () => {
+      cancelled = true
+    }
+  }, [values.category, values.clientId])
+
+  const responsibleOptions = useMemo<ResponsibleOption[]>(() => {
+    if (!values.category) return []
+
+    if (isTechnicalCategory(values.category)) {
+      return technicianOptions.map((option) => ({
+        id: option.id,
+        name: option.name,
+        meta: option.availableForContext
+          ? `Tecnico de campo · carga ${option.currentLoad}`
+          : `${option.unavailableReason ?? "No disponible"} · carga ${option.currentLoad}`,
+      }))
+    }
+
+    return assigneeOptions.map((option) => ({
+      id: option.id,
+      name: option.name,
+      meta: `${roleLabel[option.role]} · carga ${option.currentLoad}`,
+    }))
+  }, [assigneeOptions, technicianOptions, values.category])
+
+  const selectedResponsibleId = useMemo(() => {
+    if (!values.category) return ""
+    return isTechnicalCategory(values.category) ? values.assignedTechnicianId : values.assignedUserId
+  }, [values.assignedTechnicianId, values.assignedUserId, values.category])
+
+  const selectedResponsibleName = useMemo(() => {
+    return responsibleOptions.find((item) => item.id === selectedResponsibleId)?.name ?? "Sin asignar"
+  }, [responsibleOptions, selectedResponsibleId])
+
+  const handleChange = (field: keyof Omit<TicketFormState, "category" | "priority" | "status">) => {
+    return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setValues((current) => ({ ...current, [field]: event.target.value }))
+    }
   }
 
-  const handleSelectChange = (field: "category" | "priority" | "status") => (event: ChangeEvent<HTMLSelectElement>) => {
-    setValues((current) => ({ ...current, [field]: event.target.value }))
+  const handleClientSelect = (client: ClientSummary | null) => {
+    setValues((current) => ({
+      ...current,
+      clientId: client?.id ?? "",
+      assignedUserId: "",
+      assignedTechnicianId: "",
+    }))
+  }
+
+  const handleSelectChange = (field: "category" | "priority" | "status") => {
+    return (event: ChangeEvent<HTMLSelectElement>) => {
+      const nextValue = event.target.value
+      if (field === "category") {
+        setValues((current) => ({
+          ...current,
+          category: nextValue as TicketCategory,
+          assignedUserId: "",
+          assignedTechnicianId: "",
+        }))
+        return
+      }
+      setValues((current) => ({ ...current, [field]: nextValue }))
+    }
+  }
+
+  const handleResponsibleChange = (responsibleId: string) => {
+    setValues((current) => {
+      if (!current.category) return current
+      if (isTechnicalCategory(current.category)) {
+        return { ...current, assignedTechnicianId: responsibleId, assignedUserId: "" }
+      }
+      return { ...current, assignedUserId: responsibleId, assignedTechnicianId: "" }
+    })
   }
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
-    if (!values.assignedTechnicianId.trim()) nextErrors.assignedTechnicianId = "El ID del tecnico es obligatorio"
-    if (!values.assignedTechnicianName.trim()) nextErrors.assignedTechnicianName = "El tecnico asignado es obligatorio"
+    if (!values.clientId.trim()) nextErrors.clientId = "Debes seleccionar un cliente"
     if (!values.title.trim()) nextErrors.title = "El titulo es obligatorio"
     if (!values.description.trim()) nextErrors.description = "La descripcion es obligatoria"
     if (!values.category) nextErrors.category = "La categoria es obligatoria"
@@ -102,29 +222,41 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     return nextErrors
   }
 
+  const handleAutoAssignResponsible = async () => {
+    if (!values.category) return
+
+    setAutoAssigningResponsible(true)
+    try {
+      if (isTechnicalCategory(values.category)) {
+        const suggestion = await suggestTechnicianAssignment({ zone })
+        handleResponsibleChange(suggestion?.id ?? "")
+      } else {
+        const suggestion = await suggestTicketAssignee(values.category)
+        handleResponsibleChange(suggestion?.id ?? "")
+      }
+    } finally {
+      setAutoAssigningResponsible(false)
+    }
+  }
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const nextErrors = validate()
     if (Object.keys(nextErrors).length > 0) {
-      const order: FocusableField[] = [
-        "clientId",
-        "assignedTechnicianId",
-        "assignedTechnicianName",
-        "title",
-        "description",
-        "category",
-        "priority",
-        "status",
-      ]
+      const order: FocusableField[] = ["clientId", "category", "title", "description", "priority", "status"]
       const first = order.find((field) => nextErrors[field])
       if (first) fieldRefs.current[first]?.focus()
       return
     }
 
+    const technical = isTechnicalCategory(values.category)
+
     onSubmit({
       clientId: values.clientId.trim(),
-      assignedTechnicianId: values.assignedTechnicianId.trim(),
-      assignedTechnicianName: values.assignedTechnicianName.trim(),
+      assignedUserId: technical ? "" : values.assignedUserId.trim(),
+      assignedUserName: technical ? "Sin asignar" : selectedResponsibleName,
+      assignedTechnicianId: technical ? values.assignedTechnicianId.trim() : "",
+      assignedTechnicianName: technical ? selectedResponsibleName : "Sin asignar",
       title: values.title.trim(),
       description: values.description.trim(),
       category: values.category as TicketCategory,
@@ -139,84 +271,19 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     <form onSubmit={handleSubmit} className="grid max-w-3xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("clientId")}>ID de cliente</Label>
-          <Input
+          <Label htmlFor={inputId("clientId")}>Cliente</Label>
+          <ClientAutocompleteField
             id={inputId("clientId")}
             name="clientId"
             value={values.clientId}
-            onChange={handleChange("clientId")}
+            onSelect={handleClientSelect}
             ref={(node) => (fieldRefs.current.clientId = node)}
-            aria-invalid={Boolean(errors.clientId)}
-            aria-describedby={describedBy("clientId")}
+            ariaInvalid={Boolean(errors.clientId)}
+            ariaDescribedBy={describedBy("clientId")}
           />
           {errors.clientId && <span id={errorId("clientId")} className="text-xs text-rose-600" role="alert">{errors.clientId}</span>}
         </label>
-        <label className="grid gap-1.5">
-          <Label htmlFor={inputId("assignedTechnicianId")}>ID de tecnico</Label>
-          <Input
-            id={inputId("assignedTechnicianId")}
-            name="assignedTechnicianId"
-            value={values.assignedTechnicianId}
-            onChange={handleChange("assignedTechnicianId")}
-            ref={(node) => (fieldRefs.current.assignedTechnicianId = node)}
-            aria-invalid={Boolean(errors.assignedTechnicianId)}
-            aria-describedby={describedBy("assignedTechnicianId")}
-          />
-          {errors.assignedTechnicianId && (
-            <span id={errorId("assignedTechnicianId")} className="text-xs text-rose-600" role="alert">
-              {errors.assignedTechnicianId}
-            </span>
-          )}
-        </label>
-        <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("assignedTechnicianName")}>Tecnico asignado</Label>
-          <Input
-            id={inputId("assignedTechnicianName")}
-            name="assignedTechnicianName"
-            value={values.assignedTechnicianName}
-            onChange={handleChange("assignedTechnicianName")}
-            ref={(node) => (fieldRefs.current.assignedTechnicianName = node)}
-            aria-invalid={Boolean(errors.assignedTechnicianName)}
-            aria-describedby={describedBy("assignedTechnicianName")}
-          />
-          {errors.assignedTechnicianName && (
-            <span id={errorId("assignedTechnicianName")} className="text-xs text-rose-600" role="alert">
-              {errors.assignedTechnicianName}
-            </span>
-          )}
-        </label>
-        <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("title")}>Titulo</Label>
-          <Input
-            id={inputId("title")}
-            name="title"
-            value={values.title}
-            onChange={handleChange("title")}
-            ref={(node) => (fieldRefs.current.title = node)}
-            aria-invalid={Boolean(errors.title)}
-            aria-describedby={describedBy("title")}
-          />
-          {errors.title && <span id={errorId("title")} className="text-xs text-rose-600" role="alert">{errors.title}</span>}
-        </label>
-        <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("description")}>Descripcion</Label>
-          <textarea
-            id={inputId("description")}
-            name="description"
-            rows={4}
-            value={values.description}
-            onChange={handleChange("description")}
-            className={textareaClass}
-            ref={(node) => (fieldRefs.current.description = node)}
-            aria-invalid={Boolean(errors.description)}
-            aria-describedby={describedBy("description")}
-          />
-          {errors.description && (
-            <span id={errorId("description")} className="text-xs text-rose-600" role="alert">
-              {errors.description}
-            </span>
-          )}
-        </label>
+
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("category")}>Categoria</Label>
           <select
@@ -238,6 +305,78 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
           </select>
           {errors.category && <span id={errorId("category")} className="text-xs text-rose-600" role="alert">{errors.category}</span>}
         </label>
+
+        {values.category && (
+          <div className="grid gap-2 rounded-lg border border-border/80 bg-muted/20 p-3 md:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor={inputId("responsible")}>Persona responsable</Label>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAutoAssignResponsible}
+                disabled={loadingResponsible || autoAssigningResponsible}
+              >
+                {autoAssigningResponsible ? "Asignando..." : "Asignar automaticamente"}
+              </Button>
+            </div>
+
+            <select
+              id={inputId("responsible")}
+              value={selectedResponsibleId}
+              onChange={(event) => handleResponsibleChange(event.target.value)}
+              className={selectClass}
+              disabled={loadingResponsible}
+            >
+              <option value="">Sin asignar</option>
+              {responsibleOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name} - {option.meta}
+                </option>
+              ))}
+            </select>
+
+            <p className="text-xs text-muted-foreground">
+              {isTechnicalCategory(values.category)
+                ? `Categoria tecnica: se asigna tecnico de campo por zona (${zone || "sin zona detectada"}), disponibilidad y carga.`
+                : "Categoria de facturacion: se prioriza Soporte, luego Staff y despues Administrador."}
+            </p>
+          </div>
+        )}
+
+        <label className="grid gap-1.5 md:col-span-2">
+          <Label htmlFor={inputId("title")}>Titulo</Label>
+          <Input
+            id={inputId("title")}
+            name="title"
+            value={values.title}
+            onChange={handleChange("title")}
+            ref={(node) => (fieldRefs.current.title = node)}
+            aria-invalid={Boolean(errors.title)}
+            aria-describedby={describedBy("title")}
+          />
+          {errors.title && <span id={errorId("title")} className="text-xs text-rose-600" role="alert">{errors.title}</span>}
+        </label>
+
+        <label className="grid gap-1.5 md:col-span-2">
+          <Label htmlFor={inputId("description")}>Descripcion</Label>
+          <textarea
+            id={inputId("description")}
+            name="description"
+            rows={4}
+            value={values.description}
+            onChange={handleChange("description")}
+            className={textareaClass}
+            ref={(node) => (fieldRefs.current.description = node)}
+            aria-invalid={Boolean(errors.description)}
+            aria-describedby={describedBy("description")}
+          />
+          {errors.description && (
+            <span id={errorId("description")} className="text-xs text-rose-600" role="alert">
+              {errors.description}
+            </span>
+          )}
+        </label>
+
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("priority")}>Prioridad</Label>
           <select
@@ -259,6 +398,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
           </select>
           {errors.priority && <span id={errorId("priority")} className="text-xs text-rose-600" role="alert">{errors.priority}</span>}
         </label>
+
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("status")}>Estado</Label>
           <select
@@ -281,6 +421,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
           {errors.status && <span id={errorId("status")} className="text-xs text-rose-600" role="alert">{errors.status}</span>}
         </label>
       </div>
+
       <div className="flex items-center gap-2 pt-2">
         <Button type="submit">{submitLabel}</Button>
       </div>

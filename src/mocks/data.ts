@@ -8,6 +8,7 @@ import type { OverdueClient, ReportMetrics, RevenueData, StatusDistribution } fr
 import type { Ticket, TicketComment } from "@/modules/tickets/types/ticket"
 import type { Visit } from "@/modules/visits/types/visit"
 import type { ClientInvoice, ClientPayment, ClientProfile, ClientTicket } from "@/modules/client-portal/types/clientPortal"
+import type { InternalUser } from "@/modules/internal-users/types/internalUser"
 
 export const clients: Client[] = [
   {
@@ -136,7 +137,9 @@ export const tickets: Ticket[] = [
     id: "t1",
     clientId: "1",
     clientName: "Mariana Torres",
-    assignedTechnicianId: "tech-1",
+    assignedUserId: "iu-staff-1",
+    assignedUserName: "Laura Salgado",
+    assignedTechnicianId: "iu-tech-1",
     assignedTechnicianName: "Jorge Ruiz",
     title: "Intermittent connection",
     description: "Internet drops every few minutes.",
@@ -163,8 +166,10 @@ export const tickets: Ticket[] = [
     id: "t2",
     clientId: "2",
     clientName: "Carlos Rojas",
-    assignedTechnicianId: "tech-2",
-    assignedTechnicianName: "Sara Velez",
+    assignedUserId: "iu-support-1",
+    assignedUserName: "Paula Cardenas",
+    assignedTechnicianId: "",
+    assignedTechnicianName: "Sin asignar",
     title: "Billing question",
     description: "Invoice shows extra charges.",
     status: "in_progress",
@@ -206,7 +211,7 @@ export const visits: Visit[] = [
     id: "v1",
     clientId: "1",
     clientName: "Mariana Torres",
-    technicianId: "tech-1",
+    technicianId: "iu-tech-1",
     technicianName: "Jorge Ruiz",
     zone: "North",
     type: "support",
@@ -219,7 +224,7 @@ export const visits: Visit[] = [
     id: "v2",
     clientId: "3",
     clientName: "Laura G\u00f3mez",
-    technicianId: "tech-2",
+    technicianId: "iu-tech-2",
     technicianName: "Sara V\u00e9lez",
     zone: "South",
     type: "installation",
@@ -387,6 +392,85 @@ export const clientPortalPayments: ClientPayment[] = [
 
 export const clientPortalTickets: ClientTicket[] = [
   { id: "cp-t1", title: "Slow speed at night", status: "open", createdAt: "2024-10-01" },
+]
+
+export const internalUsers: InternalUser[] = [
+  {
+    id: "iu-staff-1",
+    name: "Laura Salgado",
+    email: "laura.salgado@isp.local",
+    phone: "+57 315 300 1001",
+    role: "staff",
+    status: "active",
+    technicianProfile: null,
+  },
+  {
+    id: "iu-admin-1",
+    name: "Andres Mejia",
+    email: "andres.mejia@isp.local",
+    phone: "+57 315 300 1002",
+    role: "admin",
+    status: "active",
+    technicianProfile: null,
+  },
+  {
+    id: "iu-support-1",
+    name: "Paula Cardenas",
+    email: "paula.cardenas@isp.local",
+    phone: "+57 315 300 1003",
+    role: "support",
+    status: "active",
+    technicianProfile: null,
+  },
+  {
+    id: "iu-tech-1",
+    name: "Jorge Ruiz",
+    email: "jorge.ruiz@isp.local",
+    phone: "+57 315 300 2001",
+    role: "technician",
+    status: "active",
+    technicianProfile: {
+      coverageZones: ["North", "Center"],
+      skills: ["Fibra", "Empalmes", "Router"],
+      availability: [
+        { id: "mon-am", label: "Lunes 08:00-12:00", dayOfWeek: 1, startTime: "08:00", endTime: "12:00" },
+        { id: "mon-pm", label: "Lunes 13:00-18:00", dayOfWeek: 1, startTime: "13:00", endTime: "18:00" },
+        { id: "tue-am", label: "Martes 08:00-12:00", dayOfWeek: 2, startTime: "08:00", endTime: "12:00" },
+        { id: "fri-am", label: "Viernes 08:00-12:00", dayOfWeek: 5, startTime: "08:00", endTime: "12:00" },
+      ],
+    },
+  },
+  {
+    id: "iu-tech-2",
+    name: "Sara Velez",
+    email: "sara.velez@isp.local",
+    phone: "+57 315 300 2002",
+    role: "technician",
+    status: "active",
+    technicianProfile: {
+      coverageZones: ["South", "West"],
+      skills: ["Instalaciones", "Acometidas", "ONT"],
+      availability: [
+        { id: "tue-pm", label: "Martes 13:00-18:00", dayOfWeek: 2, startTime: "13:00", endTime: "18:00" },
+        { id: "wed-am", label: "Miercoles 08:00-12:00", dayOfWeek: 3, startTime: "08:00", endTime: "12:00" },
+        { id: "thu-am", label: "Jueves 08:00-12:00", dayOfWeek: 4, startTime: "08:00", endTime: "12:00" },
+        { id: "sat-am", label: "Sabado 08:00-12:00", dayOfWeek: 6, startTime: "08:00", endTime: "12:00" },
+      ],
+    },
+  },
+  {
+    id: "iu-tech-3",
+    name: "Diego Romero",
+    email: "diego.romero@isp.local",
+    phone: "+57 315 300 2003",
+    role: "technician",
+    status: "inactive",
+    technicianProfile: {
+      coverageZones: ["North"],
+      skills: ["Soporte NOC", "Radioenlaces"],
+      availability: [{ id: "wed-pm", label: "Miercoles 13:00-18:00", dayOfWeek: 3, startTime: "13:00", endTime: "18:00" }],
+    },
+  },
 ]
 
 

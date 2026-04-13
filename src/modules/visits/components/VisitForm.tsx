@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState } from "react"
+﻿import { useEffect, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import ClientAutocompleteField, { type ClientSummary } from "@/modules/clients/components/ClientAutocompleteField"
+import TechnicianAssignmentField from "@/modules/internal-users/components/TechnicianAssignmentField"
+import {
+  getClientZone,
+  getTechnicianAssignmentOptions,
+  suggestTechnicianAssignment,
+} from "@/modules/internal-users/services/technicianAssignment"
+import type { TechnicianAssignmentOption } from "@/modules/internal-users/types/internalUser"
 import type { VisitFormValues, VisitStatus, VisitType } from "../types/visit"
 
 interface VisitFormProps {
@@ -26,7 +34,7 @@ type FormErrors = Partial<Record<keyof VisitFormState, string>>
 type FocusableField = keyof VisitFormState
 
 const typeOptions: { label: string; value: VisitType }[] = [
-  { label: "Instalación", value: "installation" },
+  { label: "Instalacion", value: "installation" },
   { label: "Mantenimiento", value: "maintenance" },
   { label: "Soporte", value: "support" },
 ]
@@ -59,6 +67,9 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     notes: initialValues.notes,
   })
   const [errors, setErrors] = useState<FormErrors>({})
+  const [assignmentOptions, setAssignmentOptions] = useState<TechnicianAssignmentOption[]>([])
+  const [loadingAssignment, setLoadingAssignment] = useState(false)
+  const [autoAssigning, setAutoAssigning] = useState(false)
   const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
 
   useEffect(() => {
@@ -74,6 +85,44 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     })
   }, [initialValues])
 
+  useEffect(() => {
+    let cancelled = false
+    const loadAssignmentContext = async () => {
+      setLoadingAssignment(true)
+      try {
+        const options = await getTechnicianAssignmentOptions({
+          zone: values.zone,
+          scheduledDate: values.scheduledDate,
+          scheduledTime: values.scheduledTime,
+        })
+        if (cancelled) return
+        setAssignmentOptions(options)
+      } finally {
+        if (!cancelled) setLoadingAssignment(false)
+      }
+    }
+
+    void loadAssignmentContext()
+    return () => {
+      cancelled = true
+    }
+  }, [values.zone, values.scheduledDate, values.scheduledTime])
+
+  const handleClientSelect = async (client: ClientSummary | null) => {
+    if (!client) {
+      setValues((current) => ({ ...current, clientId: "", zone: "", technicianId: "" }))
+      return
+    }
+
+    const detectedZone = await getClientZone(client.id)
+    setValues((current) => ({
+      ...current,
+      clientId: client.id,
+      zone: detectedZone || current.zone,
+      technicianId: "",
+    }))
+  }
+
   const handleChange = (field: keyof VisitFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setValues((current) => ({ ...current, [field]: event.target.value }))
   }
@@ -82,10 +131,13 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     setValues((current) => ({ ...current, [field]: event.target.value }))
   }
 
+  const selectedTechnicianName = useMemo(() => {
+    return assignmentOptions.find((item) => item.id === values.technicianId)?.name ?? "Sin asignar"
+  }, [assignmentOptions, values.technicianId])
+
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
-    if (!values.technicianId.trim()) nextErrors.technicianId = "El ID del técnico es obligatorio"
+    if (!values.clientId.trim()) nextErrors.clientId = "Debes seleccionar un cliente"
     if (!values.zone.trim()) nextErrors.zone = "La zona es obligatoria"
     if (!values.type) nextErrors.type = "El tipo es obligatorio"
     if (!values.scheduledDate) nextErrors.scheduledDate = "La fecha programada es obligatoria"
@@ -95,11 +147,25 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     return nextErrors
   }
 
+  const handleAutoAssign = async () => {
+    setAutoAssigning(true)
+    try {
+      const suggestion = await suggestTechnicianAssignment({
+        zone: values.zone,
+        scheduledDate: values.scheduledDate,
+        scheduledTime: values.scheduledTime,
+      })
+      setValues((current) => ({ ...current, technicianId: suggestion?.id ?? "" }))
+    } finally {
+      setAutoAssigning(false)
+    }
+  }
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const nextErrors = validate()
     if (Object.keys(nextErrors).length > 0) {
-      const order: FocusableField[] = ["clientId", "technicianId", "zone", "type", "scheduledDate", "scheduledTime", "status"]
+      const order: FocusableField[] = ["clientId", "zone", "type", "scheduledDate", "scheduledTime", "status"]
       const first = order.find((field) => nextErrors[field])
       if (first) fieldRefs.current[first]?.focus()
       return
@@ -108,6 +174,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     onSubmit({
       clientId: values.clientId.trim(),
       technicianId: values.technicianId.trim(),
+      technicianName: selectedTechnicianName,
       zone: values.zone.trim(),
       type: values.type as VisitType,
       scheduledDate: values.scheduledDate,
@@ -123,31 +190,19 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     <form onSubmit={handleSubmit} className="grid max-w-3xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("clientId")}>ID de cliente</Label>
-          <Input
+          <Label htmlFor={inputId("clientId")}>Cliente</Label>
+          <ClientAutocompleteField
             id={inputId("clientId")}
             name="clientId"
             value={values.clientId}
-            onChange={handleChange("clientId")}
+            onSelect={(client) => void handleClientSelect(client)}
             ref={(node) => (fieldRefs.current.clientId = node)}
-            aria-invalid={Boolean(errors.clientId)}
-            aria-describedby={describedBy("clientId")}
+            ariaInvalid={Boolean(errors.clientId)}
+            ariaDescribedBy={describedBy("clientId")}
           />
           {errors.clientId && <span id={errorId("clientId")} className="text-xs text-rose-600" role="alert">{errors.clientId}</span>}
         </label>
-        <label className="grid gap-1.5">
-          <Label htmlFor={inputId("technicianId")}>ID de técnico</Label>
-          <Input
-            id={inputId("technicianId")}
-            name="technicianId"
-            value={values.technicianId}
-            onChange={handleChange("technicianId")}
-            ref={(node) => (fieldRefs.current.technicianId = node)}
-            aria-invalid={Boolean(errors.technicianId)}
-            aria-describedby={describedBy("technicianId")}
-          />
-          {errors.technicianId && <span id={errorId("technicianId")} className="text-xs text-rose-600" role="alert">{errors.technicianId}</span>}
-        </label>
+
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("zone")}>Zona</Label>
           <Input
@@ -161,6 +216,19 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
           />
           {errors.zone && <span id={errorId("zone")} className="text-xs text-rose-600" role="alert">{errors.zone}</span>}
         </label>
+
+        <div className="grid gap-1.5 md:col-span-2">
+          <TechnicianAssignmentField
+            value={values.technicianId}
+            options={assignmentOptions}
+            zone={values.zone}
+            autoAssigning={autoAssigning}
+            disabled={loadingAssignment}
+            onChange={(technicianId) => setValues((current) => ({ ...current, technicianId }))}
+            onAutoAssign={handleAutoAssign}
+          />
+        </div>
+
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("type")}>Tipo</Label>
           <select

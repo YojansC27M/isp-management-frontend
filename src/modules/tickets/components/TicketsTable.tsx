@@ -30,11 +30,12 @@ const categoryLabel = (value: Ticket["category"]) => {
 const TicketsTable = ({ tickets, onView, onEdit, canManage }: TicketsTableProps) => {
   return (
     <DataTableShell>
-        <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[1200px] border-collapse text-left text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-semibold">Titulo</th>
               <th className="px-4 py-3 font-semibold">Cliente</th>
+              <th className="px-4 py-3 font-semibold">Responsable</th>
               <th className="px-4 py-3 font-semibold">Tecnico asignado</th>
               <th className="px-4 py-3 font-semibold">Categoria</th>
               <th className="px-4 py-3 font-semibold">Prioridad</th>
@@ -48,7 +49,8 @@ const TicketsTable = ({ tickets, onView, onEdit, canManage }: TicketsTableProps)
               <tr key={ticket.id} className="border-t border-border/60">
                 <td className="px-4 py-3 font-medium text-foreground">{ticket.title}</td>
                 <td className="px-4 py-3 text-muted-foreground">{ticket.clientName}</td>
-                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedTechnicianName}</td>
+                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedUserName || "Sin asignar"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedTechnicianName || "Sin asignar"}</td>
                 <td className="px-4 py-3 text-muted-foreground">{categoryLabel(ticket.category)}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${priorityClasses[ticket.priority]}`}>

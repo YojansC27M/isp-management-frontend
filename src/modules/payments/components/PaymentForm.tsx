@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react"
+﻿import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import ClientAutocompleteField from "@/modules/clients/components/ClientAutocompleteField"
 import type { PaymentFormValues, PaymentMethod, PaymentStatus } from "../types/payment"
 
 interface PaymentFormProps {
@@ -75,11 +76,11 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.clientId.trim()) nextErrors.clientId = "El ID de cliente es obligatorio"
-    if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = "El número de factura es obligatorio"
+    if (!values.clientId.trim()) nextErrors.clientId = "Debes seleccionar un cliente"
+    if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = "El numero de factura es obligatorio"
     const amount = Number(values.amount)
     if (!values.amount || Number.isNaN(amount) || amount <= 0) nextErrors.amount = "El monto debe ser mayor a 0"
-    if (!values.paymentMethod) nextErrors.paymentMethod = "El método de pago es obligatorio"
+    if (!values.paymentMethod) nextErrors.paymentMethod = "El metodo de pago es obligatorio"
     if (!values.paymentDate) nextErrors.paymentDate = "La fecha de pago es obligatoria"
     if (!values.status) nextErrors.status = "El estado es obligatorio"
     setErrors(nextErrors)
@@ -112,20 +113,20 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
     <form onSubmit={handleSubmit} className="grid max-w-2xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("clientId")}>ID de cliente</Label>
-          <Input
+          <Label htmlFor={inputId("clientId")}>Cliente</Label>
+          <ClientAutocompleteField
             id={inputId("clientId")}
             name="clientId"
             value={values.clientId}
-            onChange={handleChange("clientId")}
+            onSelect={(client) => setValues((current) => ({ ...current, clientId: client?.id ?? "" }))}
             ref={(node) => (fieldRefs.current.clientId = node)}
-            aria-invalid={Boolean(errors.clientId)}
-            aria-describedby={describedBy("clientId")}
+            ariaInvalid={Boolean(errors.clientId)}
+            ariaDescribedBy={describedBy("clientId")}
           />
           {errors.clientId && <span id={errorId("clientId")} className="text-xs text-rose-600" role="alert">{errors.clientId}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("invoiceNumber")}>Número de factura</Label>
+          <Label htmlFor={inputId("invoiceNumber")}>Numero de factura</Label>
           <Input
             id={inputId("invoiceNumber")}
             name="invoiceNumber"
@@ -154,7 +155,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
           {errors.amount && <span id={errorId("amount")} className="text-xs text-rose-600" role="alert">{errors.amount}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("paymentMethod")}>Método de pago</Label>
+          <Label htmlFor={inputId("paymentMethod")}>Metodo de pago</Label>
           <select
             id={inputId("paymentMethod")}
             name="paymentMethod"
@@ -165,7 +166,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
             aria-invalid={Boolean(errors.paymentMethod)}
             aria-describedby={describedBy("paymentMethod")}
           >
-            <option value="">Selecciona un método</option>
+            <option value="">Selecciona un metodo</option>
             {methodOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}

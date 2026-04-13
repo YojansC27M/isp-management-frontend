@@ -2,7 +2,7 @@ import api from "@/api/axios"
 import type { Plan, PlanFormValues } from "../types/plan"
 
 export const getPlans = async () => {
-  const { data } = await api.get<Plan[]>("/plans")
+  const { data } = await api.get<Plan[]>("/plans", { cancelKey: "list" })
   return data
 }
 

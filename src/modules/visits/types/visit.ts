@@ -18,6 +18,7 @@ export interface Visit {
 export interface VisitFormValues {
   clientId: string
   technicianId: string
+  technicianName?: string
   zone: string
   type: VisitType
   scheduledDate: string

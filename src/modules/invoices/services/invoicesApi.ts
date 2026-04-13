@@ -2,7 +2,7 @@ import api from "@/api/axios"
 import type { Invoice } from "../types/invoice"
 
 export const getInvoices = async () => {
-  const { data } = await api.get<Invoice[]>("/invoices")
+  const { data } = await api.get<Invoice[]>("/invoices", { cancelKey: "list" })
   return data
 }
 

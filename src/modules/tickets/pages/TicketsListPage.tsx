@@ -57,7 +57,10 @@ const TicketsListPage = () => {
   const filteredTickets = useMemo(() => {
     const term = search.trim().toLowerCase()
     return tickets.filter((ticket) => {
-      const matchesSearch = [ticket.title, ticket.clientName, ticket.assignedTechnicianName].join(" ").toLowerCase().includes(term)
+      const matchesSearch = [ticket.title, ticket.clientName, ticket.assignedUserName, ticket.assignedTechnicianName]
+        .join(" ")
+        .toLowerCase()
+        .includes(term)
       const matchesStatus = statusFilter ? ticket.status === statusFilter : true
       const matchesPriority = priorityFilter ? ticket.priority === priorityFilter : true
       return matchesSearch && matchesStatus && matchesPriority
@@ -89,7 +92,7 @@ const TicketsListPage = () => {
             <Input
               id={inputId("search")}
               type="search"
-              placeholder="Titulo, cliente o tecnico..."
+              placeholder="Titulo, cliente, responsable o tecnico..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />

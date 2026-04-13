@@ -1,0 +1,1 @@
+import{a as e}from"./axios-DAvZ4md-.js";const t=async()=>{const{data:a}=await e.get("/invoices",{cancelKey:"list"});return a},o=async a=>{const{data:s}=await e.get(`/invoices/${a}`);return s},c=async a=>(await e.get(`/invoices/${a}/pdf`,{responseType:"blob"})).data;export{o as a,c as d,t as g};

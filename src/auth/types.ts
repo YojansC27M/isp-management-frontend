@@ -1,6 +1,8 @@
 export type Role = "admin" | "staff" | "support" | "billing" | "technician" | "client"
 
 export type Permission =
+  | "internal_users.read"
+  | "internal_users.write"
   | "clients.read"
   | "clients.write"
   | "plans.read"

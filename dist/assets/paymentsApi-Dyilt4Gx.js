@@ -1,1 +1,0 @@
-import{a as s}from"./axios-XObwpf23.js";const e=async()=>{const{data:t}=await s.get("/payments");return t},c=async t=>{const{data:a}=await s.post("/payments",t);return a},o=async t=>{const{data:a}=await s.get(`/payments/account-status/${t}`);return a};export{o as a,c,e as g};

@@ -2,7 +2,7 @@ import api from "@/api/axios"
 import type { Ticket, TicketComment, TicketCommentVisibility, TicketFormValues } from "../types/ticket"
 
 export const getTickets = async () => {
-  const { data } = await api.get<Ticket[]>("/tickets")
+  const { data } = await api.get<Ticket[]>("/tickets", { cancelKey: "list" })
   return data
 }
 
@@ -27,6 +27,8 @@ export const addComment = async (ticketId: string, message: string, visibility: 
 }
 
 export const getTicketComments = async (ticketId: string) => {
-  const { data } = await api.get<TicketComment[]>(`/tickets/${ticketId}/comments`)
+  const { data } = await api.get<TicketComment[]>(`/tickets/${ticketId}/comments`, {
+    cancelKey: `comments:${ticketId}`,
+  })
   return data
 }

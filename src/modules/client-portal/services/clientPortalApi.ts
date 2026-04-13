@@ -13,21 +13,21 @@ export const login = async (email: string, password: string) => {
 }
 
 export const getProfile = async () => {
-  const { data } = await api.get<ClientProfile>("/client-portal/profile")
+  const { data } = await api.get<ClientProfile>("/client-portal/profile", { cancelKey: "profile" })
   return data
 }
 
 export const getInvoices = async () => {
-  const { data } = await api.get<ClientInvoice[]>("/client-portal/invoices")
+  const { data } = await api.get<ClientInvoice[]>("/client-portal/invoices", { cancelKey: "invoices" })
   return data
 }
 
 export const getPayments = async () => {
-  const { data } = await api.get<ClientPayment[]>("/client-portal/payments")
+  const { data } = await api.get<ClientPayment[]>("/client-portal/payments", { cancelKey: "payments" })
   return data
 }
 
 export const getTickets = async () => {
-  const { data } = await api.get<ClientTicket[]>("/client-portal/tickets")
+  const { data } = await api.get<ClientTicket[]>("/client-portal/tickets", { cancelKey: "tickets" })
   return data
 }

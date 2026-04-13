@@ -1,1 +1,0 @@
-import{a as s}from"./axios-XObwpf23.js";const c=async()=>{const{data:t}=await s.get("/clients");return t},o=async t=>{const{data:e}=await s.get(`/clients/${t}`);return e},r=async t=>(await s.post("/clients",t)).data,i=async(t,e)=>(await s.put(`/clients/${t}`,e)).data,l=async t=>(await s.delete(`/clients/${t}`)).data;export{o as a,r as c,l as d,c as g,i as u};

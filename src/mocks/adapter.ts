@@ -6,6 +6,7 @@ import type { TicketFormValues } from "@/modules/tickets/types/ticket"
 import type { VisitFormValues } from "@/modules/visits/types/visit"
 import type { ClientMapFiltersValues } from "@/modules/clients-map/types/clientMap"
 import type { ReportsFiltersValues } from "@/modules/reports/types/report"
+import type { InternalUserFormValues } from "@/modules/internal-users/types/internalUser"
 import {
   accountStatusByClientId,
   clientPortalInvoices,
@@ -15,6 +16,7 @@ import {
   clients,
   clientsMap,
   invoices,
+  internalUsers,
   overdueClients,
   payments,
   plans,
@@ -78,12 +80,52 @@ const matches = (value: string, query: string) => value.toLowerCase().includes(q
 
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000)}`
 
+const getAssignableTechnician = (id: string) => {
+  return internalUsers.find((user) => user.id === id && user.role === "technician" && user.status === "active")
+}
+
+const getAssignableTicketUser = (id: string) => {
+  return internalUsers.find(
+    (user) =>
+      user.id === id &&
+      user.status === "active" &&
+      (user.role === "support" || user.role === "staff" || user.role === "admin"),
+  )
+}
+
+const getExistingClient = (id: string) => {
+  return clients.find((client) => client.id === id)
+}
+
 const mockAdapter: AxiosAdapter = async (config) => {
   const method = (config.method ?? "get").toLowerCase()
   const path = getPath(config.url)
 
   if (method === "get" && path === "/clients") {
     return ok(config, clients)
+  }
+
+  if (method === "get" && path === "/clients/search") {
+    const query = getParam(config, "q").trim().toLowerCase()
+    const limitRaw = Number.parseInt(getParam(config, "limit"), 10)
+    const limit = Number.isNaN(limitRaw) ? 20 : Math.min(Math.max(limitRaw, 5), 50)
+
+    if (!query || query.length < 2) return ok(config, [])
+
+    const filtered = clients
+      .filter((client) => {
+        const fields = [client.name, client.document, client.phone, client.email]
+        return fields.some((value) => value.toLowerCase().includes(query))
+      })
+      .sort((a, b) => {
+        const aStartsWith = a.name.toLowerCase().startsWith(query) ? 1 : 0
+        const bStartsWith = b.name.toLowerCase().startsWith(query) ? 1 : 0
+        if (aStartsWith !== bStartsWith) return bStartsWith - aStartsWith
+        return a.name.localeCompare(b.name)
+      })
+      .slice(0, limit)
+
+    return ok(config, filtered)
   }
 
   if (method === "get" && path.startsWith("/clients/")) {
@@ -171,9 +213,54 @@ const mockAdapter: AxiosAdapter = async (config) => {
   if (method === "post" && path === "/payments") {
     const payload = parseBody<PaymentFormValues>(config)
     if (!payload) return notFound(config)
-    const created = { id: generateId(), clientName: "New Client", ...payload }
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const created = { id: generateId(), clientName: client.name, ...payload }
     payments.push(created)
     return ok(config, created, 201)
+  }
+
+  if (method === "get" && path === "/internal-users") {
+    return ok(config, internalUsers)
+  }
+
+  if (method === "get" && path.startsWith("/internal-users/")) {
+    const id = path.split("/")[2]
+    const user = internalUsers.find((item) => item.id === id)
+    return user ? ok(config, user) : notFound(config)
+  }
+
+  if (method === "post" && path === "/internal-users") {
+    const payload = parseBody<InternalUserFormValues>(config)
+    if (!payload) return notFound(config)
+    const created = { id: `iu-${generateId()}`, ...payload }
+    internalUsers.push(created)
+    return ok(config, created, 201)
+  }
+
+  if (method === "put" && path.startsWith("/internal-users/")) {
+    const id = path.split("/")[2]
+    const payload = parseBody<InternalUserFormValues>(config)
+    const index = internalUsers.findIndex((item) => item.id === id)
+    if (index === -1 || !payload) return notFound(config)
+    internalUsers[index] = { ...internalUsers[index], ...payload }
+    return ok(config, internalUsers[index])
+  }
+
+  if (method === "delete" && path.startsWith("/internal-users/")) {
+    const id = path.split("/")[2]
+    const index = internalUsers.findIndex((item) => item.id === id)
+    if (index === -1) return notFound(config)
+    internalUsers.splice(index, 1)
+    return ok(config, null)
   }
 
   if (method === "get" && path === "/tickets") {
@@ -195,12 +282,46 @@ const mockAdapter: AxiosAdapter = async (config) => {
   if (method === "post" && path === "/tickets") {
     const payload = parseBody<TicketFormValues>(config)
     if (!payload) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const assigneeUser = payload.assignedUserId ? getAssignableTicketUser(payload.assignedUserId) : null
+    if (payload.assignedUserId && !assigneeUser) {
+      return {
+        data: { message: "Assigned internal user is not active or not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const isBilling = payload.category === "billing"
+    const technician = !isBilling && payload.assignedTechnicianId ? getAssignableTechnician(payload.assignedTechnicianId) : null
+    if (!isBilling && payload.assignedTechnicianId && !technician) {
+      return {
+        data: { message: "Assigned technician is not active or not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
     const createdAt = new Date().toISOString()
     const created = {
       id: generateId(),
-      clientName: "New Client",
+      clientName: client.name,
       createdAt,
       ...payload,
+      assignedUserName: assigneeUser?.name ?? "Sin asignar",
+      assignedTechnicianId: isBilling ? "" : payload.assignedTechnicianId,
+      assignedTechnicianName: technician?.name ?? "Sin asignar",
       history: [
         {
           id: `h-${generateId()}`,
@@ -220,6 +341,37 @@ const mockAdapter: AxiosAdapter = async (config) => {
     const payload = parseBody<TicketFormValues>(config)
     const index = tickets.findIndex((item) => item.id === id)
     if (index === -1 || !payload) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const assigneeUser = payload.assignedUserId ? getAssignableTicketUser(payload.assignedUserId) : null
+    if (payload.assignedUserId && !assigneeUser) {
+      return {
+        data: { message: "Assigned internal user is not active or not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const isBilling = payload.category === "billing"
+    const technician = !isBilling && payload.assignedTechnicianId ? getAssignableTechnician(payload.assignedTechnicianId) : null
+    if (!isBilling && payload.assignedTechnicianId && !technician) {
+      return {
+        data: { message: "Assigned technician is not active or not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
     const previousStatus = tickets[index].status
     const nextHistory = [...tickets[index].history]
     if (previousStatus !== payload.status) {
@@ -230,7 +382,14 @@ const mockAdapter: AxiosAdapter = async (config) => {
         createdAt: new Date().toISOString(),
       })
     }
-    tickets[index] = { ...tickets[index], ...payload }
+    tickets[index] = {
+      ...tickets[index],
+      ...payload,
+      clientName: client.name,
+      assignedUserName: assigneeUser?.name ?? "Sin asignar",
+      assignedTechnicianId: isBilling ? "" : payload.assignedTechnicianId,
+      assignedTechnicianName: technician?.name ?? "Sin asignar",
+    }
     tickets[index].history = nextHistory
     return ok(config, tickets[index])
   }
@@ -276,11 +435,31 @@ const mockAdapter: AxiosAdapter = async (config) => {
   if (method === "post" && path === "/visits") {
     const payload = parseBody<VisitFormValues>(config)
     if (!payload) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const technician = payload.technicianId ? getAssignableTechnician(payload.technicianId) : null
+    if (payload.technicianId && !technician) {
+      return {
+        data: { message: "Assigned technician is not active or not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
     const created = {
       id: generateId(),
-      clientName: "New Client",
-      technicianName: "New Technician",
+      clientName: client.name,
       ...payload,
+      technicianName: technician?.name ?? "Sin asignar",
     }
     visits.push(created)
     return ok(config, created, 201)
@@ -291,7 +470,27 @@ const mockAdapter: AxiosAdapter = async (config) => {
     const payload = parseBody<VisitFormValues>(config)
     const index = visits.findIndex((item) => item.id === id)
     if (index === -1 || !payload) return notFound(config)
-    visits[index] = { ...visits[index], ...payload }
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const technician = payload.technicianId ? getAssignableTechnician(payload.technicianId) : null
+    if (payload.technicianId && !technician) {
+      return {
+        data: { message: "Assigned technician is not active or not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    visits[index] = { ...visits[index], ...payload, clientName: client.name, technicianName: technician?.name ?? "Sin asignar" }
     return ok(config, visits[index])
   }
 

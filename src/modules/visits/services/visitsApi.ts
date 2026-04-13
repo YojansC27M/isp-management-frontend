@@ -2,7 +2,7 @@ import api from "@/api/axios"
 import type { Visit, VisitFormValues } from "../types/visit"
 
 export const getVisits = async () => {
-  const { data } = await api.get<Visit[]>("/visits")
+  const { data } = await api.get<Visit[]>("/visits", { cancelKey: "list" })
   return data
 }
 
@@ -22,6 +22,7 @@ export const updateVisit = async (id: string, payload: VisitFormValues) => {
 }
 
 export const findTechnicianConflict = async (payload: Pick<VisitFormValues, "technicianId" | "scheduledDate" | "scheduledTime">) => {
+  if (!payload.technicianId.trim()) return null
   const visits = await getVisits()
   const conflict = visits.find(
     (visit) =>

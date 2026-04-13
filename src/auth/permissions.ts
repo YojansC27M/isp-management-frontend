@@ -19,6 +19,8 @@ export const roleLabels: Record<Role, string> = {
 
 export const rolePermissions: Record<Role, Permission[]> = {
   admin: [
+    "internal_users.read",
+    "internal_users.write",
     "clients.read",
     "clients.write",
     "plans.read",
@@ -41,6 +43,8 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "client_portal.write",
   ],
   staff: [
+    "internal_users.read",
+    "internal_users.write",
     "clients.read",
     "clients.write",
     "plans.read",
@@ -53,7 +57,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "roles.read",
     "audit.read",
   ],
-  support: ["clients.read", "tickets.read", "tickets.write", "visits.read", "visits.write"],
+  support: ["internal_users.read", "clients.read", "tickets.read", "tickets.write", "visits.read", "visits.write"],
   billing: ["clients.read", "payments.read", "payments.write", "invoices.read", "invoices.write", "reports.read"],
   technician: ["clients.read", "tickets.read", "visits.read", "visits.write"],
   client: ["client_portal.read", "client_portal.write"],

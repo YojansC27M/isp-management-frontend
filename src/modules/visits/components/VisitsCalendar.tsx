@@ -27,7 +27,7 @@ const statusLabel: Record<VisitStatus, string> = {
 const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
   const events = visits.map((visit) => ({
     id: visit.id,
-    title: `${visit.clientName} - ${visit.technicianName}`,
+    title: `${visit.clientName} - ${visit.technicianName || "Sin asignar"}`,
     start: `${visit.scheduledDate}T${visit.scheduledTime}`,
     allDay: false,
     backgroundColor: statusColors[visit.status],

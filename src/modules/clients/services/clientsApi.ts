@@ -2,7 +2,17 @@ import api from "@/api/axios"
 import type { Client, ClientFormValues } from "../types/client"
 
 export const getClients = async () => {
-  const { data } = await api.get<Client[]>("/clients")
+  const { data } = await api.get<Client[]>("/clients", { cancelKey: "list" })
+  return data
+}
+
+export const searchClients = async (query: string, limit = 20) => {
+  const normalized = query.trim()
+  if (normalized.length < 2) return []
+  const { data } = await api.get<Client[]>("/clients/search", {
+    params: { q: normalized, limit },
+    cancelKey: `search:${normalized}:${limit}`,
+  })
   return data
 }
 
