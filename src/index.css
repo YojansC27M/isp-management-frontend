@@ -161,6 +161,15 @@
   }
 }
 
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @layer utilities {
   .animate-fade-up {
     animation: fade-up 420ms ease-out both;
@@ -183,6 +192,10 @@
 
   .animate-soft-pulse {
     animation: soft-pulse 2.2s ease-in-out infinite;
+  }
+
+  .animate-toast-progress {
+    animation: toast-progress linear forwards;
   }
 }
 

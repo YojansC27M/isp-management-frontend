@@ -1,4 +1,5 @@
 import DataTableShell from "@/components/shared/DataTableShell"
+import { useI18n } from "@/i18n/i18nContext"
 import type { Ticket, TicketPriority, TicketStatus } from "../types/ticket"
 
 interface TicketsTableProps {
@@ -21,27 +22,28 @@ const priorityClasses: Record<TicketPriority, string> = {
   high: "bg-rose-100 text-rose-800",
 }
 
-const categoryLabel = (value: Ticket["category"]) => {
-  if (value === "technical") return "Tecnico"
-  if (value === "billing") return "Facturacion"
-  return "Instalacion"
-}
-
 const TicketsTable = ({ tickets, onView, onEdit, canManage }: TicketsTableProps) => {
+  const { t } = useI18n()
+  const categoryLabel = (value: Ticket["category"]) => {
+    if (value === "technical") return t("tickets.category.technical")
+    if (value === "billing") return t("tickets.category.billing")
+    return t("tickets.category.installation")
+  }
+
   return (
     <DataTableShell>
         <table className="w-full min-w-[1200px] border-collapse text-left text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-semibold">Titulo</th>
-              <th className="px-4 py-3 font-semibold">Cliente</th>
-              <th className="px-4 py-3 font-semibold">Responsable</th>
-              <th className="px-4 py-3 font-semibold">Tecnico asignado</th>
-              <th className="px-4 py-3 font-semibold">Categoria</th>
-              <th className="px-4 py-3 font-semibold">Prioridad</th>
-              <th className="px-4 py-3 font-semibold">Estado</th>
-              <th className="px-4 py-3 font-semibold">Creado</th>
-              <th className="px-4 py-3 font-semibold">Acciones</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.title")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.client")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.assignee")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.technician")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.category")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.priority")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.status")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.created")}</th>
+              <th className="px-4 py-3 font-semibold">{t("tickets.table.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -49,17 +51,17 @@ const TicketsTable = ({ tickets, onView, onEdit, canManage }: TicketsTableProps)
               <tr key={ticket.id} className="border-t border-border/60">
                 <td className="px-4 py-3 font-medium text-foreground">{ticket.title}</td>
                 <td className="px-4 py-3 text-muted-foreground">{ticket.clientName}</td>
-                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedUserName || "Sin asignar"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedTechnicianName || "Sin asignar"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedUserName || t("tickets.unassigned")}</td>
+                <td className="px-4 py-3 text-muted-foreground">{ticket.assignedTechnicianName || t("tickets.unassigned")}</td>
                 <td className="px-4 py-3 text-muted-foreground">{categoryLabel(ticket.category)}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${priorityClasses[ticket.priority]}`}>
-                    {ticket.priority}
+                    {t(`tickets.priority.${ticket.priority}`)}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[ticket.status]}`}>
-                    {ticket.status.replace("_", " ")}
+                    {t(`tickets.status.${ticket.status}`)}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{ticket.createdAt}</td>
@@ -67,20 +69,20 @@ const TicketsTable = ({ tickets, onView, onEdit, canManage }: TicketsTableProps)
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
-                      onClick={() => onView(ticket.id)}
-                    >
-                      Ver
-                    </button>
-                    <button
+                    className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
+                    onClick={() => onView(ticket.id)}
+                  >
+                    {t("tickets.table.view")}
+                  </button>
+                  <button
                       type="button"
                       className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => onEdit(ticket.id)}
-                      disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para gestionar tickets." : undefined}
-                    >
-                      Editar
-                    </button>
+                    onClick={() => onEdit(ticket.id)}
+                    disabled={!canManage}
+                    title={!canManage ? t("tickets.permissionManage") : undefined}
+                  >
+                    {t("tickets.table.edit")}
+                  </button>
                   </div>
                 </td>
               </tr>

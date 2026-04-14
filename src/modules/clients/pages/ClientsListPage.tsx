@@ -9,19 +9,15 @@ import PageHeader from "@/components/shared/PageHeader"
 import { useCan } from "@/auth/usePermission"
 import { getErrorMessage } from "@/lib/errors"
 import { useUI } from "@/ui/uiContext"
+import { useI18n } from "@/i18n/i18nContext"
 import ClientsTable from "../components/ClientsTable"
 import { createClient, deleteClient, getClients } from "../services/clientsApi"
 import type { Client, ClientFormValues, ClientStatus } from "../types/client"
 
-const statusOptions: { label: string; value: ClientStatus }[] = [
-  { label: "Activo", value: "active" },
-  { label: "Suspendido", value: "suspended" },
-  { label: "Inactivo", value: "inactive" },
-]
-
 const inputId = (field: string) => `clients-list-${field}`
 
 const ClientsListPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { notify, confirm } = useUI()
   const [search, setSearch] = useState("")
@@ -32,6 +28,11 @@ const ClientsListPage = () => {
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState("")
   const canManageClients = useCan("clients.write")
+  const statusOptions: { label: string; value: ClientStatus }[] = [
+    { label: t("clients.status.active"), value: "active" },
+    { label: t("clients.status.suspended"), value: "suspended" },
+    { label: t("clients.status.inactive"), value: "inactive" },
+  ]
 
   const loadClients = useCallback(async () => {
     setLoading(true)
@@ -40,11 +41,11 @@ const ClientsListPage = () => {
       const data = await getClients()
       setClients(data)
     } catch (err) {
-      setError(getErrorMessage(err, "No fue posible cargar clientes."))
+      setError(getErrorMessage(err, t("clients.loadErrorTitle")))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadClients()
@@ -68,18 +69,18 @@ const ClientsListPage = () => {
   const handleDelete = async (id: string) => {
     if (!canManageClients) return
     const accepted = await confirm({
-      title: "Eliminar cliente",
-      description: "Esta accion no se puede deshacer.",
-      confirmLabel: "Eliminar",
+      title: t("clients.deleteTitle"),
+      description: t("clients.deleteDescription"),
+      confirmLabel: t("clients.deleteConfirm"),
     })
     if (!accepted) return
     try {
       await deleteClient(id)
       await loadClients()
-      notify({ title: "Cliente eliminado", type: "success" })
+      notify({ title: t("clients.deleted"), type: "success" })
     } catch (err) {
       notify({
-        title: "No se pudo eliminar el cliente",
+        title: t("clients.deleteErrorTitle"),
         description: getErrorMessage(err, "Intenta nuevamente."),
         type: "error",
       })
@@ -102,7 +103,7 @@ const ClientsListPage = () => {
       const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
 
       if (lines.length < 2) {
-        notify({ title: "El CSV no tiene filas para importar.", type: "error" })
+        notify({ title: t("clients.importNoRows"), type: "error" })
         return
       }
 
@@ -111,8 +112,8 @@ const ClientsListPage = () => {
       const missing = required.filter((key) => !headers.includes(key))
       if (missing.length > 0) {
         notify({
-          title: "CSV invalido",
-          description: `Faltan columnas: ${missing.join(", ")}`,
+          title: t("clients.importInvalid"),
+          description: t("clients.importMissingColumns", { columns: missing.join(", ") }),
           type: "error",
         })
         return
@@ -143,13 +144,13 @@ const ClientsListPage = () => {
         await Promise.all(records.map((record) => createClient(record)))
         await loadClients()
         notify({
-          title: "Importacion completada",
-          description: `${records.length} clientes creados.`,
+          title: t("clients.importDone"),
+          description: t("clients.importDoneDescription", { count: records.length }),
           type: "success",
         })
       } catch (err) {
         notify({
-          title: "No se pudo completar la importacion",
+          title: t("clients.importFail"),
           description: getErrorMessage(err, "Verifica el archivo e intenta nuevamente."),
           type: "error",
         })
@@ -162,8 +163,8 @@ const ClientsListPage = () => {
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Clientes"
-        description="Administra clientes, estado de servicio y planes."
+        title={t("clients.title")}
+        description={t("clients.description")}
         actions={
           <>
             <label
@@ -173,14 +174,14 @@ const ClientsListPage = () => {
                   : "border-border bg-card text-muted-foreground hover:bg-muted/40"
               }`}
             >
-              {importing ? "Importando..." : "Importar CSV"}
+              {importing ? t("clients.importing") : t("clients.importCsv")}
               <input
                 type="file"
                 accept=".csv,text/csv"
                 className="hidden"
-                title={!canManageClients ? "Tu perfil no tiene permiso para importar clientes." : undefined}
+                title={!canManageClients ? t("clients.permissionImport") : undefined}
                 disabled={importing || !canManageClients}
-                aria-label="Seleccionar archivo CSV para importar clientes"
+                aria-label={t("clients.importAria")}
                 onChange={async (event) => {
                   const file = event.target.files?.[0]
                   if (!file) return
@@ -192,9 +193,9 @@ const ClientsListPage = () => {
             <Button
               onClick={() => navigate("/clients/new")}
               disabled={!canManageClients}
-              title={!canManageClients ? "Tu perfil no tiene permiso para crear clientes." : undefined}
+              title={!canManageClients ? t("clients.permissionCreate") : undefined}
             >
-              Crear cliente
+              {t("clients.create")}
             </Button>
           </>
         }
@@ -204,19 +205,19 @@ const ClientsListPage = () => {
         <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end">
           <div className="grid gap-1.5">
             <Label htmlFor={inputId("search")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Buscar
+              {t("clients.search")}
             </Label>
             <Input
               id={inputId("search")}
               type="search"
-              placeholder="Nombre, documento o IP..."
+              placeholder={t("clients.searchPlaceholder")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("status")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Estado
+              {t("clients.status")}
             </Label>
             <select
               id={inputId("status")}
@@ -224,7 +225,7 @@ const ClientsListPage = () => {
               onChange={(event) => setStatusFilter(event.target.value as ClientStatus | "")}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todos</option>
+              <option value="">{t("clients.all")}</option>
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -234,7 +235,7 @@ const ClientsListPage = () => {
           </label>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("plan")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Plan
+              {t("clients.plan")}
             </Label>
             <select
               id={inputId("plan")}
@@ -242,7 +243,7 @@ const ClientsListPage = () => {
               onChange={(event) => setPlanFilter(event.target.value)}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todos</option>
+              <option value="">{t("clients.all")}</option>
               {plans.map((plan) => (
                 <option key={plan} value={plan}>
                   {plan}
@@ -251,17 +252,17 @@ const ClientsListPage = () => {
             </select>
           </label>
           <Button variant="outline" onClick={clearFilters}>
-            Limpiar
+            {t("clients.clear")}
           </Button>
         </div>
       </FilterPanel>
 
       {loading ? (
-        <StateMessage variant="loading" title="Cargando clientes..." />
+        <StateMessage variant="loading" title={t("clients.loading")} />
       ) : error ? (
-        <StateMessage variant="error" title="Error al cargar clientes" description={error} />
+        <StateMessage variant="error" title={t("clients.loadErrorTitle")} description={error} />
       ) : filteredClients.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron clientes." description="Prueba ajustando los filtros." />
+        <StateMessage variant="empty" title={t("clients.emptyTitle")} description={t("clients.emptyDescription")} />
       ) : (
         <ClientsTable
           clients={filteredClients}

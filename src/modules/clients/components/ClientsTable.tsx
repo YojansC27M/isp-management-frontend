@@ -1,4 +1,5 @@
 import DataTableShell from "@/components/shared/DataTableShell"
+import { useI18n } from "@/i18n/i18nContext"
 import type { Client, ClientStatus } from "../types/client"
 
 interface ClientsTableProps {
@@ -15,63 +16,65 @@ const statusClasses: Record<ClientStatus, string> = {
 }
 
 const ClientsTable = ({ clients, onEdit, onDelete, canManage }: ClientsTableProps) => {
+  const { t } = useI18n()
+
   return (
     <DataTableShell>
-        <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-          <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Nombre</th>
-              <th className="px-4 py-3 font-semibold">Documento</th>
-              <th className="px-4 py-3 font-semibold">Teléfono</th>
-              <th className="px-4 py-3 font-semibold">Correo</th>
-              <th className="px-4 py-3 font-semibold">Plan</th>
-              <th className="px-4 py-3 font-semibold">IP</th>
-              <th className="px-4 py-3 font-semibold">Estado</th>
-              <th className="px-4 py-3 font-semibold">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id} className="border-t border-border/60">
-                <td className="px-4 py-3 font-medium text-foreground">{client.name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{client.document}</td>
-                <td className="px-4 py-3 text-muted-foreground">{client.phone}</td>
-                <td className="px-4 py-3 text-muted-foreground">{client.email}</td>
-                <td className="px-4 py-3 text-muted-foreground">{client.plan}</td>
-                <td className="px-4 py-3 text-muted-foreground">{client.ipAddress}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[client.status]}`}
+      <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+        <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+          <tr>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.name")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.document")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.phone")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.email")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.plan")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.ip")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.status")}</th>
+            <th className="px-4 py-3 font-semibold">{t("clients.table.actions")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map((client) => (
+            <tr key={client.id} className="border-t border-border/60">
+              <td className="px-4 py-3 font-medium text-foreground">{client.name}</td>
+              <td className="px-4 py-3 text-muted-foreground">{client.document}</td>
+              <td className="px-4 py-3 text-muted-foreground">{client.phone}</td>
+              <td className="px-4 py-3 text-muted-foreground">{client.email}</td>
+              <td className="px-4 py-3 text-muted-foreground">{client.plan}</td>
+              <td className="px-4 py-3 text-muted-foreground">{client.ipAddress}</td>
+              <td className="px-4 py-3">
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[client.status]}`}
+                >
+                  {t(`clients.status.${client.status}`)}
+                </span>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => onEdit(client.id)}
+                    disabled={!canManage}
+                    title={!canManage ? t("clients.permissionEdit") : undefined}
                   >
-                    {client.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => onEdit(client.id)}
-                      disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para editar clientes." : undefined}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => onDelete(client.id)}
-                      disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para eliminar clientes." : undefined}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    {t("clients.table.edit")}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => onDelete(client.id)}
+                    disabled={!canManage}
+                    title={!canManage ? t("clients.permissionDelete") : undefined}
+                  >
+                    {t("clients.table.delete")}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </DataTableShell>
   )
 }

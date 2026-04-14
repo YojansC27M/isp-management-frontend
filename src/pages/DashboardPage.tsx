@@ -3,27 +3,31 @@ import { useNavigate } from "react-router-dom"
 import { Activity, AlertTriangle, ArrowUpRight, CalendarClock, Signal, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useI18n } from "@/i18n/i18nContext"
 
 const metrics = [
-  { label: "Clientes activos", value: "2,458", trend: "+4.2%", icon: Users, positive: true },
-  { label: "Tickets abiertos", value: "37", trend: "-8.5%", icon: AlertTriangle, positive: true },
-  { label: "Visitas hoy", value: "14", trend: "+2.1%", icon: CalendarClock, positive: true },
-  { label: "Latencia promedio", value: "18 ms", trend: "-1.4 ms", icon: Signal, positive: true },
+  { labelKey: "dashboard.metric.activeClients", value: "2,458", trend: "+4.2%", icon: Users, positive: true },
+  { labelKey: "dashboard.metric.openTickets", value: "37", trend: "-8.5%", icon: AlertTriangle, positive: true },
+  { labelKey: "dashboard.metric.visitsToday", value: "14", trend: "+2.1%", icon: CalendarClock, positive: true },
+  { labelKey: "dashboard.metric.avgLatency", value: "18 ms", trend: "-1.4 ms", icon: Signal, positive: true },
 ]
 
-const incidents = [
-  { title: "Router North POP", detail: "Consumo de RAM sobre 86%", severity: "Alta" },
-  { title: "Ticket #1021", detail: "Intermitencia en sector Centro", severity: "Media" },
-  { title: "Cobro vencido", detail: "42 cuentas por vencer en 3 dias", severity: "Baja" },
+type IncidentSeverity = keyof typeof severityTone
+
+const incidents: Array<{ titleKey: string; detailKey: string; severity: IncidentSeverity }> = [
+  { titleKey: "dashboard.incident.routerNorth", detailKey: "dashboard.incident.routerNorthDetail", severity: "high" },
+  { titleKey: "dashboard.incident.ticket1021", detailKey: "dashboard.incident.ticket1021Detail", severity: "medium" },
+  { titleKey: "dashboard.incident.overdueBilling", detailKey: "dashboard.incident.overdueBillingDetail", severity: "low" },
 ]
 
 const severityTone = {
-  Alta: "bg-rose-100 text-rose-700",
-  Media: "bg-amber-100 text-amber-700",
-  Baja: "bg-emerald-100 text-emerald-700",
+  high: "bg-rose-100 text-rose-700",
+  medium: "bg-amber-100 text-amber-700",
+  low: "bg-emerald-100 text-emerald-700",
 } as const
 
 const DashboardPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
 
   const currentDateLabel = useMemo(() => {
@@ -42,40 +46,44 @@ const DashboardPage = () => {
         <div className="pointer-events-none absolute -left-16 bottom-0 h-40 w-40 rounded-full bg-emerald-300/20 blur-2xl" />
         <div className="relative grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-100">Centro de operaciones</p>
-            <h1 className="mt-3 text-3xl font-semibold">Panel de control ISP</h1>
+            <p className="text-xs uppercase tracking-[0.3em] text-cyan-100">{t("dashboard.heroTag")}</p>
+            <h1 className="mt-3 text-3xl font-semibold">{t("dashboard.heroTitle")}</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-100/90">
-              Monitorea red, soporte y facturacion desde una sola consola, con foco en decisiones rapidas.
+              {t("dashboard.heroDescription")}
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Button className="bg-card text-foreground hover:bg-muted" onClick={() => navigate("/monitoring")}>
-                Ir a monitoreo
+                {t("dashboard.goMonitoring")}
               </Button>
-              <Button variant="outline" className="border-white/30 text-white hover:bg-card/10" onClick={() => navigate("/tickets")}>
-                Revisar tickets
+              <Button
+                variant="outline"
+                className="border-white/45 bg-white/5 text-white hover:bg-white/15 focus-visible:ring-white/40 dark:border-white/40 dark:bg-slate-900/20 dark:hover:bg-slate-900/35"
+                onClick={() => navigate("/tickets")}
+              >
+                {t("dashboard.reviewTickets")}
               </Button>
             </div>
           </div>
           <div className="rounded-xl border border-white/20 bg-card/10 p-4 backdrop-blur">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-cyan-100">Estado de la operacion</p>
+              <p className="text-sm font-medium text-cyan-100">{t("dashboard.operationStatus")}</p>
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2.5 py-1 text-xs font-semibold text-emerald-100">
                 <span className="h-2 w-2 rounded-full bg-emerald-300 animate-soft-pulse" />
-                En linea
+                {t("dashboard.online")}
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-100/80 capitalize">{currentDateLabel}</p>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-lg bg-card/10 p-2">
-                <p className="text-xs text-cyan-100/90">Routers</p>
+                <p className="text-xs text-cyan-100/90">{t("dashboard.routers")}</p>
                 <p className="text-lg font-semibold">12</p>
               </div>
               <div className="rounded-lg bg-card/10 p-2">
-                <p className="text-xs text-cyan-100/90">Up Time</p>
+                <p className="text-xs text-cyan-100/90">{t("dashboard.uptime")}</p>
                 <p className="text-lg font-semibold">99.8%</p>
               </div>
               <div className="rounded-lg bg-card/10 p-2">
-                <p className="text-xs text-cyan-100/90">Alertas</p>
+                <p className="text-xs text-cyan-100/90">{t("dashboard.alerts")}</p>
                 <p className="text-lg font-semibold">3</p>
               </div>
             </div>
@@ -87,10 +95,10 @@ const DashboardPage = () => {
         {metrics.map((metric) => {
           const Icon = metric.icon
           return (
-            <Card key={metric.label} className="border-border bg-card/90 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <Card key={metric.labelKey} className="border-border bg-card/90 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{metric.label}</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t(metric.labelKey)}</CardTitle>
                   <span className="rounded-lg bg-sky-100 p-1.5 text-sky-700">
                     <Icon className="h-4 w-4" />
                   </span>
@@ -117,10 +125,10 @@ const DashboardPage = () => {
       <section className="animate-fade-up-delay-2 grid gap-4 xl:grid-cols-[1.3fr_1fr]">
         <Card className="border-border bg-card">
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Actividad de red por hora</CardTitle>
+            <CardTitle>{t("dashboard.networkActivity")}</CardTitle>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
               <Activity className="h-3.5 w-3.5" />
-              Ultimos picos
+              {t("dashboard.latestPeaks")}
             </span>
           </CardHeader>
           <CardContent>
@@ -149,21 +157,21 @@ const DashboardPage = () => {
 
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle>Alertas y pendientes</CardTitle>
+            <CardTitle>{t("dashboard.pendingAlerts")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
             {incidents.map((incident) => (
               <article
-                key={incident.title}
+                key={incident.titleKey}
                 className="rounded-lg border border-border bg-muted/40 p-3 transition hover:border-border hover:bg-card"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">{incident.title}</h3>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${severityTone[incident.severity as keyof typeof severityTone]}`}>
-                    {incident.severity}
+                  <h3 className="text-sm font-semibold text-foreground">{t(incident.titleKey)}</h3>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${severityTone[incident.severity]}`}>
+                    {t(`dashboard.severity.${incident.severity}`)}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{incident.detail}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t(incident.detailKey)}</p>
               </article>
             ))}
           </CardContent>

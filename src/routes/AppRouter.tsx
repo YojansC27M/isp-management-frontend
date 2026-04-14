@@ -3,13 +3,17 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import MainLayout from "../layouts/MainLayout"
 import ProtectedRoute from "@/auth/ProtectedRoute"
 import PermissionRoute from "@/auth/PermissionRoute"
+import NavigationBootstrap from "@/auth/components/NavigationBootstrap"
 import StateMessage from "@/components/feedback/StateMessage"
 import { useEffect } from "react"
 import { useUI } from "@/ui/uiContext"
-import { getClientToken } from "@/auth/session"
-
+import { getAuthToken, getClientToken } from "@/auth/session"
+import { useAuthStore } from "@/store/authStore"
+import { useI18n } from "@/i18n/i18nContext"
 const LoginPage = lazy(() => import("../pages/LoginPage"))
 const DashboardPage = lazy(() => import("../pages/DashboardPage"))
+const ProfilePage = lazy(() => import("../modules/account/pages/ProfilePage"))
+const PasswordSecurityPage = lazy(() => import("../modules/account/pages/PasswordSecurityPage"))
 const UnauthorizedPage = lazy(() => import("@/auth/UnauthorizedPage"))
 const ClientsListPage = lazy(() => import("../modules/clients/pages/ClientsListPage"))
 const InternalUsersListPage = lazy(() => import("../modules/internal-users/pages/InternalUsersListPage"))
@@ -41,11 +45,14 @@ const ClientDashboardPage = lazy(() => import("../modules/client-portal/pages/Cl
 const ClientPaymentsPage = lazy(() => import("../modules/client-portal/pages/ClientPaymentsPage"))
 const ClientTicketsPage = lazy(() => import("../modules/client-portal/pages/ClientTicketsPage"))
 
-const RouteFallback = () => (
-  <div className="mx-auto w-full max-w-6xl px-6 py-8">
-    <StateMessage variant="loading" title="Cargando módulo..." />
-  </div>
-)
+const RouteFallback = () => {
+  const { t } = useI18n()
+  return (
+    <div className="mx-auto w-full max-w-6xl px-6 py-8">
+      <StateMessage variant="loading" title={t("common.loadingModule")} />
+    </div>
+  )
+}
 
 const suspenseNode = (node: ReactNode) => <Suspense fallback={<RouteFallback />}>{node}</Suspense>
 
@@ -85,17 +92,42 @@ const ClientProtectedRoute = ({ children }: ClientProtectedRouteProps) => {
   return <>{children}</>
 }
 
+const RootRoute = () => {
+  const token = useAuthStore((state) => state.token) ?? getAuthToken()
+  if (token) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return suspenseNode(<LoginPage />)
+}
+
 const AppRouter = () => {
   return (
     <BrowserRouter>
+      <NavigationBootstrap />
       <RouteStateNotifier />
       <Routes>
-        <Route path="/" element={suspenseNode(<LoginPage />)} />
+        <Route path="/" element={<RootRoute />} />
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <MainLayout>{suspenseNode(<DashboardPage />)}</MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account/profile"
+          element={
+            <ProtectedRoute>
+              <MainLayout>{suspenseNode(<ProfilePage />)}</MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account/security"
+          element={
+            <ProtectedRoute>
+              <MainLayout>{suspenseNode(<PasswordSecurityPage />)}</MainLayout>
             </ProtectedRoute>
           }
         />
@@ -325,5 +357,6 @@ const AppRouter = () => {
 }
 
 export default AppRouter
+
 
 

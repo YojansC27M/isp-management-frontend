@@ -1,1 +1,0 @@
-import{a as t}from"./axios-DAvZ4md-.js";const n=async()=>{const{data:a}=await t.get("/clients-map",{cancelKey:"list"});return a},c=async a=>{const{data:e}=await t.get("/clients-map",{params:a,cancelKey:"filtered-list"});return e};export{c as a,n as g};

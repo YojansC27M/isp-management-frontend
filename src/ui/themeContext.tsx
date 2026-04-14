@@ -19,8 +19,6 @@ interface ThemeContextValue {
 }
 
 const STORAGE_KEY = "corma-theme-mode"
-const THEME_SEQUENCE: ThemeMode[] = ["system", "light", "dark"]
-
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 const getSystemTheme = (): ResolvedTheme =>
@@ -36,6 +34,7 @@ const getInitialMode = (): ThemeMode => {
 
 const applyThemeClass = (theme: ResolvedTheme) => {
   document.documentElement.classList.toggle("dark", theme === "dark")
+  document.documentElement.style.colorScheme = theme
 }
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
@@ -63,12 +62,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   }, [themeMode])
 
   const cycleThemeMode = useCallback(() => {
-    setThemeMode((currentThemeMode) => {
-      const currentIndex = THEME_SEQUENCE.indexOf(currentThemeMode)
-      const nextIndex = (currentIndex + 1) % THEME_SEQUENCE.length
-      return THEME_SEQUENCE[nextIndex]
-    })
-  }, [])
+    setThemeMode(resolvedTheme === "dark" ? "light" : "dark")
+  }, [resolvedTheme])
 
   const value = useMemo(
     () => ({ themeMode, resolvedTheme, setThemeMode, cycleThemeMode }),

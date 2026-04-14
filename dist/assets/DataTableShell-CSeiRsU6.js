@@ -1,1 +1,0 @@
-import{j as r,p as a}from"./index-C9baHdcr.js";const d=({children:e,className:o})=>r.jsx("div",{className:a("overflow-hidden rounded-xl border border-border bg-card",o),children:r.jsx("div",{className:"overflow-x-auto",children:e})});export{d as D};

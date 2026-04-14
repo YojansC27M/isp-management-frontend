@@ -1,5 +1,5 @@
 import type { FormEvent } from "react"
-import { useState } from "react"
+import { useLayoutEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,17 +9,25 @@ import { appRoles, getRolePermissions, getRoleStatusMap, isRoleEnabled, roleLabe
 import type { Role } from "@/auth/types"
 import { useAuthStore } from "@/store/authStore"
 import { useUI } from "@/ui/uiContext"
+import { useTheme } from "@/ui/themeContext"
+import { useI18n } from "@/i18n/i18nContext"
 
 const LoginPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [selectedRole, setSelectedRole] = useState<Role>("admin")
+  const { t } = useI18n()
   const { notify } = useUI()
+  const { setThemeMode } = useTheme()
   const setToken = useAuthStore((state) => state.setToken)
   const setUser = useAuthStore((state) => state.setUser)
   const setPermissions = useAuthStore((state) => state.setPermissions)
   const message = (location.state as { message?: string } | null)?.message
   const roleStatusMap = getRoleStatusMap()
+
+  useLayoutEffect(() => {
+    setThemeMode("system")
+  }, [setThemeMode])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -32,8 +40,8 @@ const LoginPage = () => {
       if (email === "admin@isp.com" && password === "123456") {
         if (!isRoleEnabled(selectedRole)) {
           notify({
-            title: "Perfil inactivo",
-            description: `El perfil ${roleLabels[selectedRole]} esta inactivo y no puede iniciar sesion.`,
+            title: t("login.inactiveProfileTitle"),
+            description: t("login.inactiveProfileDescription", { role: roleLabels[selectedRole] }),
             type: "error",
           })
           return
@@ -49,16 +57,16 @@ const LoginPage = () => {
         setToken("mock-admin-token")
         setUser(user)
         setPermissions(user.permissions)
-        navigate("/dashboard")
+        navigate("/dashboard", { replace: true })
         return
       }
-      notify({ title: "Credenciales invalidas", type: "error" })
+      notify({ title: t("login.invalidCredentials"), type: "error" })
       return
     }
 
     notify({
-      title: "Backend no configurado",
-      description: "Conecta tu API para autenticacion real.",
+      title: t("login.backendNotConfigured"),
+      description: t("login.backendNotConfiguredDesc"),
       type: "info",
     })
   }
@@ -69,16 +77,16 @@ const LoginPage = () => {
       <div className="relative flex min-h-screen items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center text-foreground dark:text-white">
-            <p className="text-sm uppercase tracking-[0.3em] text-sky-200">ISP Management</p>
-            <h1 className="mt-3 text-3xl font-semibold">Centraliza tu operacion</h1>
+            <p className="text-sm uppercase tracking-[0.3em] text-sky-200">{t("login.brand")}</p>
+            <h1 className="mt-3 text-3xl font-semibold">{t("login.heroTitle")}</h1>
             <p className="mt-2 text-sm text-muted-foreground dark:text-slate-200/80">
-              Controla clientes, servicios y soporte desde un solo lugar.
+              {t("login.heroDescription")}
             </p>
           </div>
           <Card className="border-border bg-card/95 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
             <CardHeader>
-              <CardTitle>Inicia sesion</CardTitle>
-              <CardDescription>Ingresa tus credenciales para continuar.</CardDescription>
+              <CardTitle>{t("login.title")}</CardTitle>
+              <CardDescription>{t("login.description")}</CardDescription>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -88,16 +96,16 @@ const LoginPage = () => {
                   </div>
                 )}
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Correo</Label>
-                  <Input id="email" name="email" type="email" placeholder="admin@isp.com" required />
+                  <Label htmlFor="email">{t("login.email")}</Label>
+                  <Input id="email" name="email" type="email" placeholder={t("login.placeholderEmail")} required />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="password">Contrasena</Label>
-                  <Input id="password" name="password" type="password" placeholder="123456" required />
+                  <Label htmlFor="password">{t("login.password")}</Label>
+                  <Input id="password" name="password" type="password" placeholder={t("login.placeholderPassword")} required />
                 </div>
                 {import.meta.env.VITE_USE_MOCKS === "true" && (
                   <div className="grid gap-2">
-                    <Label htmlFor="role">Rol local</Label>
+                    <Label htmlFor="role">{t("login.role")}</Label>
                     <select
                       id="role"
                       value={selectedRole}
@@ -120,12 +128,12 @@ const LoginPage = () => {
                   </div>
                 )}
                 <Button type="submit" className="mt-2 w-full">
-                  Ingresar
+                  {t("login.submit")}
                 </Button>
               </form>
             </CardContent>
             <CardFooter className="justify-center">
-              <span className="text-xs text-muted-foreground">Acceso seguro con monitoreo en tiempo real.</span>
+              <span className="text-xs text-muted-foreground">{t("login.secureFooter")}</span>
             </CardFooter>
           </Card>
         </div>

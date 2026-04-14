@@ -1,4 +1,5 @@
 import DataTableShell from "@/components/shared/DataTableShell"
+import { useI18n } from "@/i18n/i18nContext"
 import type { InternalUser, InternalUserStatus } from "../types/internalUser"
 
 interface InternalUsersTableProps {
@@ -14,28 +15,30 @@ const statusClasses: Record<InternalUserStatus, string> = {
   inactive: "bg-muted text-muted-foreground",
 }
 
-const roleLabels: Record<InternalUser["role"], string> = {
-  staff: "Staff",
-  admin: "Administrador",
-  technician: "Tecnico",
-  support: "Soporte",
-}
-
 const InternalUsersTable = ({ users, loadByTechnicianId, canManage, onEdit, onDelete }: InternalUsersTableProps) => {
+  const { t } = useI18n()
+
+  const roleLabels: Record<InternalUser["role"], string> = {
+    staff: t("internalUsers.role.staff"),
+    admin: t("internalUsers.role.admin"),
+    technician: t("internalUsers.role.technician"),
+    support: t("internalUsers.role.support"),
+  }
+
   return (
     <DataTableShell>
       <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
         <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-4 py-3 font-semibold">Nombre</th>
-            <th className="px-4 py-3 font-semibold">Correo</th>
-            <th className="px-4 py-3 font-semibold">Telefono</th>
-            <th className="px-4 py-3 font-semibold">Rol</th>
-            <th className="px-4 py-3 font-semibold">Estado</th>
-            <th className="px-4 py-3 font-semibold">Zonas</th>
-            <th className="px-4 py-3 font-semibold">Habilidades</th>
-            <th className="px-4 py-3 font-semibold">Carga actual</th>
-            <th className="px-4 py-3 font-semibold">Acciones</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.name")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.email")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.phone")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.role")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.status")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.zones")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.skills")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.load")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -50,7 +53,7 @@ const InternalUsersTable = ({ users, loadByTechnicianId, canManage, onEdit, onDe
                 <td className="px-4 py-3 text-muted-foreground">{roleLabels[user.role]}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[user.status]}`}>
-                    {user.status === "active" ? "Activo" : "Inactivo"}
+                    {t(`internalUsers.status.${user.status}`)}
                   </span>
                 </td>
                 <td className="max-w-[220px] truncate px-4 py-3 text-muted-foreground" title={coverage}>
@@ -69,18 +72,18 @@ const InternalUsersTable = ({ users, loadByTechnicianId, canManage, onEdit, onDe
                       className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
                       onClick={() => onEdit(user.id)}
                       disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para editar usuarios internos." : undefined}
+                      title={!canManage ? t("internalUsers.permissionEdit") : undefined}
                     >
-                      Editar
+                      {t("internalUsers.table.edit")}
                     </button>
                     <button
                       type="button"
                       className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                       onClick={() => onDelete(user.id)}
                       disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para eliminar usuarios internos." : undefined}
+                      title={!canManage ? t("internalUsers.permissionDelete") : undefined}
                     >
-                      Eliminar
+                      {t("internalUsers.table.delete")}
                     </button>
                   </div>
                 </td>

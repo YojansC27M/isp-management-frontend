@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 
 export interface InvoiceAutomationSettings {
   cutDay: number
@@ -19,6 +20,7 @@ interface InvoiceAutomationPanelProps {
 const inputId = (field: string) => `invoice-automation-${field}`
 
 const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canManage }: InvoiceAutomationPanelProps) => {
+  const { t } = useI18n()
   const [settings, setSettings] = useState(initialSettings)
 
   const previewNumber = useMemo(() => {
@@ -29,18 +31,18 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
     <section className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Automatizacion de facturacion</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Configura fecha de corte y numeracion correlativa visible en la UI.</p>
+          <h2 className="text-base font-semibold text-foreground">{t("invoices.automation.title")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("invoices.automation.description")}</p>
         </div>
         <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-          Proxima factura: {previewNumber}
+          {t("invoices.automation.nextInvoice", { number: previewNumber })}
         </span>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto_auto] md:items-end">
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("cutDay")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Dia de corte
+            {t("invoices.automation.cutDay")}
           </Label>
           <Input
             id={inputId("cutDay")}
@@ -56,7 +58,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("prefix")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Prefijo
+            {t("invoices.automation.prefix")}
           </Label>
           <Input
             id={inputId("prefix")}
@@ -69,7 +71,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("nextCorrelative")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Siguiente correlativo
+            {t("invoices.automation.nextCorrelative")}
           </Label>
           <Input
             id={inputId("nextCorrelative")}
@@ -89,16 +91,16 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
           variant="outline"
           onClick={() => onRunSimulation(settings)}
           disabled={!canManage}
-          title={!canManage ? "Tu perfil no tiene permiso para configurar facturacion." : undefined}
+          title={!canManage ? t("invoices.permissionManageSettings") : undefined}
         >
-          Simular generacion
+          {t("invoices.automation.runSimulation")}
         </Button>
         <Button
           onClick={() => onSave(settings)}
           disabled={!canManage}
-          title={!canManage ? "Tu perfil no tiene permiso para configurar facturacion." : undefined}
+          title={!canManage ? t("invoices.permissionManageSettings") : undefined}
         >
-          Guardar ajustes
+          {t("invoices.automation.saveSettings")}
         </Button>
       </div>
     </section>

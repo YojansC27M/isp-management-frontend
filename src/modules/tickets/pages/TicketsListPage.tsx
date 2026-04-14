@@ -11,23 +11,12 @@ import TicketsTable from "../components/TicketsTable"
 import { getTickets } from "../services/ticketsApi"
 import type { Ticket, TicketPriority, TicketStatus } from "../types/ticket"
 import { getErrorMessage } from "@/lib/errors"
-
-const statusOptions: { label: string; value: TicketStatus }[] = [
-  { label: "Abierto", value: "open" },
-  { label: "En progreso", value: "in_progress" },
-  { label: "Resuelto", value: "resolved" },
-  { label: "Cerrado", value: "closed" },
-]
-
-const priorityOptions: { label: string; value: TicketPriority }[] = [
-  { label: "Baja", value: "low" },
-  { label: "Media", value: "medium" },
-  { label: "Alta", value: "high" },
-]
+import { useI18n } from "@/i18n/i18nContext"
 
 const inputId = (field: string) => `tickets-list-${field}`
 
 const TicketsListPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "">("")
@@ -36,6 +25,17 @@ const TicketsListPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const canManageTickets = useCan("tickets.write")
+  const statusOptions: { label: string; value: TicketStatus }[] = [
+    { label: t("tickets.status.open"), value: "open" },
+    { label: t("tickets.status.in_progress"), value: "in_progress" },
+    { label: t("tickets.status.resolved"), value: "resolved" },
+    { label: t("tickets.status.closed"), value: "closed" },
+  ]
+  const priorityOptions: { label: string; value: TicketPriority }[] = [
+    { label: t("tickets.priority.low"), value: "low" },
+    { label: t("tickets.priority.medium"), value: "medium" },
+    { label: t("tickets.priority.high"), value: "high" },
+  ]
 
   const loadTickets = useCallback(async () => {
     setLoading(true)
@@ -44,11 +44,11 @@ const TicketsListPage = () => {
       const data = await getTickets()
       setTickets(data)
     } catch (err) {
-      setError(getErrorMessage(err, "No fue posible cargar los tickets."))
+      setError(getErrorMessage(err, t("tickets.loadErrorTitle")))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadTickets()
@@ -70,15 +70,15 @@ const TicketsListPage = () => {
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Tickets de soporte"
-        description="Gestiona incidencias y seguimiento tecnico."
+        title={t("tickets.title")}
+        description={t("tickets.description")}
         actions={
           <Button
             onClick={() => navigate("/tickets/new")}
             disabled={!canManageTickets}
-            title={!canManageTickets ? "Tu perfil no tiene permiso para crear tickets." : undefined}
+            title={!canManageTickets ? t("tickets.permissionCreate") : undefined}
           >
-            Crear ticket
+            {t("tickets.create")}
           </Button>
         }
       />
@@ -87,19 +87,19 @@ const TicketsListPage = () => {
         <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr] md:items-end">
           <div className="grid gap-1.5">
             <Label htmlFor={inputId("search")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Buscar
+              {t("tickets.search")}
             </Label>
             <Input
               id={inputId("search")}
               type="search"
-              placeholder="Titulo, cliente, responsable o tecnico..."
+              placeholder={t("tickets.searchPlaceholder")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("status")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Estado
+              {t("tickets.filterStatus")}
             </Label>
             <select
               id={inputId("status")}
@@ -107,7 +107,7 @@ const TicketsListPage = () => {
               onChange={(event) => setStatusFilter(event.target.value as TicketStatus | "")}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todos</option>
+              <option value="">{t("tickets.all")}</option>
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -117,7 +117,7 @@ const TicketsListPage = () => {
           </label>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("priority")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Prioridad
+              {t("tickets.filterPriority")}
             </Label>
             <select
               id={inputId("priority")}
@@ -125,7 +125,7 @@ const TicketsListPage = () => {
               onChange={(event) => setPriorityFilter(event.target.value as TicketPriority | "")}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todas</option>
+              <option value="">{t("tickets.all")}</option>
               {priorityOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -137,11 +137,11 @@ const TicketsListPage = () => {
       </FilterPanel>
 
       {loading ? (
-        <StateMessage variant="loading" title="Cargando tickets..." />
+        <StateMessage variant="loading" title={t("tickets.loading")} />
       ) : error ? (
-        <StateMessage variant="error" title="Error al cargar tickets" description={error} />
+        <StateMessage variant="error" title={t("tickets.loadErrorTitle")} description={error} />
       ) : filteredTickets.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron tickets." />
+        <StateMessage variant="empty" title={t("tickets.emptyTitle")} />
       ) : (
         <TicketsTable
           tickets={filteredTickets}

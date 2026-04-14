@@ -1,4 +1,5 @@
 import DataTableShell from "@/components/shared/DataTableShell"
+import { useI18n } from "@/i18n/i18nContext"
 import type { Plan } from "../types/plan"
 
 interface PlansTableProps {
@@ -9,17 +10,18 @@ interface PlansTableProps {
 }
 
 const PlansTable = ({ plans, onEdit, onDelete, canManage }: PlansTableProps) => {
+  const { t } = useI18n()
   return (
     <DataTableShell>
         <table className="w-full min-w-[780px] border-collapse text-left text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-semibold">Nombre</th>
-              <th className="px-4 py-3 text-right font-semibold">Descarga</th>
-              <th className="px-4 py-3 text-right font-semibold">Subida</th>
-              <th className="px-4 py-3 text-right font-semibold">Precio</th>
-              <th className="px-4 py-3 font-semibold">Tipo</th>
-              <th className="px-4 py-3 font-semibold">Acciones</th>
+              <th className="px-4 py-3 font-semibold">{t("plans.table.name")}</th>
+              <th className="px-4 py-3 text-right font-semibold">{t("plans.table.download")}</th>
+              <th className="px-4 py-3 text-right font-semibold">{t("plans.table.upload")}</th>
+              <th className="px-4 py-3 text-right font-semibold">{t("plans.table.price")}</th>
+              <th className="px-4 py-3 font-semibold">{t("plans.table.type")}</th>
+              <th className="px-4 py-3 font-semibold">{t("plans.table.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -37,18 +39,18 @@ const PlansTable = ({ plans, onEdit, onDelete, canManage }: PlansTableProps) => 
                       className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
                       onClick={() => onEdit(plan.id)}
                       disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para editar planes." : undefined}
+                      title={!canManage ? t("plans.permissionEdit") : undefined}
                     >
-                      Editar
+                      {t("plans.table.edit")}
                     </button>
                     <button
                       type="button"
                       className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                       onClick={() => onDelete(plan.id)}
                       disabled={!canManage}
-                      title={!canManage ? "Tu perfil no tiene permiso para eliminar planes." : undefined}
+                      title={!canManage ? t("plans.permissionDelete") : undefined}
                     >
-                      Eliminar
+                      {t("plans.table.delete")}
                     </button>
                   </div>
                 </td>

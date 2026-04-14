@@ -8,7 +8,10 @@ import {
   useState,
   type ReactNode,
 } from "react"
+import { CheckCircle2, Info, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getCurrentLocale } from "@/i18n/locale"
+import { translateWithLocale } from "@/i18n/translations"
 
 type ToastType = "success" | "error" | "info"
 
@@ -43,17 +46,29 @@ interface UIContextValue {
 const UIContext = createContext<UIContextValue | null>(null)
 
 const toastTypeClasses: Record<ToastType, string> = {
-  success: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  error: "border-rose-200 bg-rose-50 text-rose-900",
-  info: "border-sky-200 bg-sky-50 text-sky-900",
+  success: "border-emerald-500/35 bg-emerald-500/10",
+  error: "border-rose-500/35 bg-rose-500/10",
+  info: "border-sky-500/35 bg-sky-500/10",
+}
+
+const toastTypeIcon: Record<ToastType, typeof CheckCircle2> = {
+  success: CheckCircle2,
+  error: TriangleAlert,
+  info: Info,
+}
+
+const toastTypeIconClasses: Record<ToastType, string> = {
+  success: "text-emerald-500",
+  error: "text-rose-500",
+  info: "text-sky-500",
 }
 
 const initialConfirmState: ConfirmState = {
   open: false,
   title: "",
   description: "",
-  confirmLabel: "Confirmar",
-  cancelLabel: "Cancelar",
+  confirmLabel: translateWithLocale(getCurrentLocale(), "common.confirm"),
+  cancelLabel: translateWithLocale(getCurrentLocale(), "common.cancel"),
 }
 
 export const UIProvider = ({ children }: { children: ReactNode }) => {
@@ -85,8 +100,8 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       open: true,
       title: options.title,
       description: options.description ?? "",
-      confirmLabel: options.confirmLabel ?? "Confirmar",
-      cancelLabel: options.cancelLabel ?? "Cancelar",
+      confirmLabel: options.confirmLabel ?? translateWithLocale(getCurrentLocale(), "common.confirm"),
+      cancelLabel: options.cancelLabel ?? translateWithLocale(getCurrentLocale(), "common.cancel"),
     })
 
     return new Promise<boolean>((resolve) => {
@@ -131,17 +146,43 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     <UIContext.Provider value={value}>
       {children}
 
-      <div className="pointer-events-none fixed right-4 top-4 z-[60] grid max-w-sm gap-2" aria-live="polite" aria-atomic="true">
-        {toasts.map((toast) => (
-          <article
-            key={toast.id}
-            className={`pointer-events-auto rounded-xl border p-3 shadow-lg ${toastTypeClasses[toast.type]}`}
-            role={toast.type === "error" ? "alert" : "status"}
-          >
-            <p className="text-sm font-semibold">{toast.title}</p>
-            {toast.description && <p className="mt-1 text-xs opacity-90">{toast.description}</p>}
-          </article>
-        ))}
+      <div
+        className="pointer-events-none fixed bottom-4 right-4 z-[60] grid w-[min(24rem,calc(100vw-2rem))] gap-3"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {toasts.map((toast) => {
+          const ToastIcon = toastTypeIcon[toast.type]
+          return (
+            <article
+              key={toast.id}
+              className={`pointer-events-auto relative overflow-hidden rounded-2xl border p-3 shadow-[0_18px_45px_-24px_hsl(var(--foreground)/0.65)] ring-1 ring-border/50 backdrop-blur-md ${toastTypeClasses[toast.type]} animate-fade-up`}
+              role={toast.type === "error" ? "alert" : "status"}
+            >
+              <div className="flex items-start gap-2.5">
+                <div className={`mt-0.5 ${toastTypeIconClasses[toast.type]}`}>
+                  <ToastIcon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{toast.title}</p>
+                  {toast.description && <p className="mt-1 text-xs text-muted-foreground">{toast.description}</p>}
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-black/5 dark:bg-white/10">
+                <div
+                  className={`h-full origin-left animate-toast-progress ${
+                    toast.type === "success"
+                      ? "bg-emerald-500/80"
+                      : toast.type === "error"
+                        ? "bg-rose-500/80"
+                        : "bg-sky-500/80"
+                  }`}
+                  style={{ animationDuration: `${toast.durationMs}ms` }}
+                />
+              </div>
+            </article>
+          )
+        })}
       </div>
 
       {confirmState.open && (

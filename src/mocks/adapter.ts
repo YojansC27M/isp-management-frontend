@@ -80,6 +80,18 @@ const matches = (value: string, query: string) => value.toLowerCase().includes(q
 
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000)}`
 
+const mockNavigationConfig = {
+  modules: [
+    { id: "dashboard" },
+    { id: "internal-users" },
+    { id: "clients", items: ["clients-list", "clients-map"] },
+    { id: "commercial", items: ["plans", "payments", "invoices"] },
+    { id: "support", items: ["tickets", "visits"] },
+    { id: "operations", items: ["monitoring", "reports"] },
+    { id: "security", items: ["access-control", "security-audit"] },
+  ],
+}
+
 const getAssignableTechnician = (id: string) => {
   return internalUsers.find((user) => user.id === id && user.role === "technician" && user.status === "active")
 }
@@ -100,6 +112,10 @@ const getExistingClient = (id: string) => {
 const mockAdapter: AxiosAdapter = async (config) => {
   const method = (config.method ?? "get").toLowerCase()
   const path = getPath(config.url)
+
+  if (method === "get" && path === "/auth/navigation") {
+    return ok(config, mockNavigationConfig)
+  }
 
   if (method === "get" && path === "/clients") {
     return ok(config, clients)

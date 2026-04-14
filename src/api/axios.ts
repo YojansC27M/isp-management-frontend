@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { normalizeApiError } from "@/api/apiError"
 import { getAuthToken, getClientToken } from "@/auth/session"
+import { getCurrentLocale } from "@/i18n/locale"
 import mockAdapter from "@/mocks/adapter"
 
 type DomainName =
@@ -174,6 +175,9 @@ api.interceptors.request.use(
       config.headers = config.headers ?? {}
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    config.headers = config.headers ?? {}
+    config.headers["Accept-Language"] = getCurrentLocale()
 
     return config
   },

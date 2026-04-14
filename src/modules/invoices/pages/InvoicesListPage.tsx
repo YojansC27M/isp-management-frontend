@@ -10,6 +10,7 @@ import InvoiceFilters from "../components/InvoiceFilters"
 import InvoicesTable from "../components/InvoicesTable"
 import { downloadInvoicePdf, getInvoices } from "../services/invoicesApi"
 import type { Invoice, InvoiceFiltersValues } from "../types/invoice"
+import { useI18n } from "@/i18n/i18nContext"
 
 const SETTINGS_KEY = "invoice_automation_settings"
 
@@ -39,6 +40,7 @@ const readSettings = (): InvoiceAutomationSettings => {
 }
 
 const InvoicesListPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { notify } = useUI()
   const [filters, setFilters] = useState<InvoiceFiltersValues>(initialFilters)
@@ -57,11 +59,11 @@ const InvoicesListPage = () => {
       const data = await getInvoices()
       setInvoices(data)
     } catch (err) {
-      setError(getErrorMessage(err, "No fue posible cargar las facturas."))
+      setError(getErrorMessage(err, t("invoices.loadErrorTitle")))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadInvoices()
@@ -98,7 +100,7 @@ const InvoicesListPage = () => {
       window.URL.revokeObjectURL(url)
     } catch (err) {
       notify({
-        title: "No se pudo descargar el PDF",
+        title: t("invoices.downloadErrorTitle"),
         description: getErrorMessage(err, "Intenta nuevamente en unos segundos."),
         type: "error",
       })
@@ -112,8 +114,8 @@ const InvoicesListPage = () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextSettings))
     setSettings(nextSettings)
     notify({
-      title: "Ajustes guardados",
-      description: "La configuracion de corte y numeracion fue actualizada.",
+      title: t("invoices.settingsSavedTitle"),
+      description: t("invoices.settingsSavedDescription"),
       type: "success",
     })
   }
@@ -121,15 +123,15 @@ const InvoicesListPage = () => {
   const runSimulation = (nextSettings: InvoiceAutomationSettings) => {
     if (!canManageInvoices) return
     notify({
-      title: "Simulacion ejecutada",
-      description: `Se generarian ${filteredInvoices.length} facturas con prefijo ${nextSettings.prefix}.`,
+      title: t("invoices.simulationTitle"),
+      description: t("invoices.simulationDescription", { count: filteredInvoices.length, prefix: nextSettings.prefix }),
       type: "info",
     })
   }
 
   return (
     <div className="grid gap-6">
-      <PageHeader title="Facturas" description="Controla facturacion, numeracion y estado de pagos." />
+      <PageHeader title={t("invoices.title")} description={t("invoices.description")} />
 
       <InvoiceAutomationPanel
         initialSettings={settings}
@@ -141,16 +143,16 @@ const InvoicesListPage = () => {
       <InvoiceFilters values={filters} onChange={setFilters} onApply={handleApplyFilters} onClear={handleClearFilters} />
 
       {loading ? (
-        <StateMessage variant="loading" title="Cargando facturas..." />
+        <StateMessage variant="loading" title={t("invoices.loading")} />
       ) : error ? (
-        <StateMessage variant="error" title="Error al cargar facturas" description={error} />
+        <StateMessage variant="error" title={t("invoices.loadErrorTitle")} description={error} />
       ) : filteredInvoices.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron facturas." />
+        <StateMessage variant="empty" title={t("invoices.emptyTitle")} />
       ) : (
         <InvoicesTable invoices={filteredInvoices} onView={(id) => navigate(`/invoices/${id}`)} onDownload={handleDownload} />
       )}
 
-      {downloadingId && <p className="text-xs text-muted-foreground">Descargando factura...</p>}
+      {downloadingId && <p className="text-xs text-muted-foreground">{t("invoices.downloading")}</p>}
     </div>
   )
 }

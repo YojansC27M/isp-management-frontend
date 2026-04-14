@@ -11,16 +11,12 @@ import { getErrorMessage } from "@/lib/errors"
 import PaymentsTable from "../components/PaymentsTable"
 import { getPayments } from "../services/paymentsApi"
 import type { Payment, PaymentStatus } from "../types/payment"
-
-const statusOptions: { label: string; value: PaymentStatus }[] = [
-  { label: "Pendiente", value: "pending" },
-  { label: "Pagado", value: "paid" },
-  { label: "Vencido", value: "overdue" },
-]
+import { useI18n } from "@/i18n/i18nContext"
 
 const inputId = (field: string) => `payments-list-${field}`
 
 const PaymentsListPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "">("")
@@ -28,6 +24,11 @@ const PaymentsListPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const canManagePayments = useCan("payments.write")
+  const statusOptions: { label: string; value: PaymentStatus }[] = [
+    { label: t("payments.status.pending"), value: "pending" },
+    { label: t("payments.status.paid"), value: "paid" },
+    { label: t("payments.status.overdue"), value: "overdue" },
+  ]
 
   const loadPayments = useCallback(async () => {
     setLoading(true)
@@ -36,11 +37,11 @@ const PaymentsListPage = () => {
       const data = await getPayments()
       setPayments(data)
     } catch (err) {
-      setError(getErrorMessage(err, "No fue posible cargar los pagos."))
+      setError(getErrorMessage(err, t("payments.loadErrorTitle")))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadPayments()
@@ -58,15 +59,15 @@ const PaymentsListPage = () => {
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Pagos"
-        description="Controla pagos y estado de cuenta de tus clientes."
+        title={t("payments.title")}
+        description={t("payments.description")}
         actions={
           <Button
             onClick={() => navigate("/payments/new")}
             disabled={!canManagePayments}
-            title={!canManagePayments ? "Tu perfil no tiene permiso para registrar pagos." : undefined}
+            title={!canManagePayments ? t("payments.permissionCreate") : undefined}
           >
-            Registrar pago
+            {t("payments.create")}
           </Button>
         }
       />
@@ -75,19 +76,19 @@ const PaymentsListPage = () => {
         <div className="grid gap-3 md:grid-cols-[2fr_1fr] md:items-end">
           <div className="grid gap-1.5">
             <Label htmlFor={inputId("search")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Buscar
+              {t("payments.search")}
             </Label>
             <Input
               id={inputId("search")}
               type="search"
-              placeholder="Cliente o factura..."
+              placeholder={t("payments.searchPlaceholder")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("status")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Estado
+              {t("payments.filterStatus")}
             </Label>
             <select
               id={inputId("status")}
@@ -95,7 +96,7 @@ const PaymentsListPage = () => {
               onChange={(event) => setStatusFilter(event.target.value as PaymentStatus | "")}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todos</option>
+              <option value="">{t("payments.all")}</option>
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -107,11 +108,11 @@ const PaymentsListPage = () => {
       </FilterPanel>
 
       {loading ? (
-        <StateMessage variant="loading" title="Cargando pagos..." />
+        <StateMessage variant="loading" title={t("payments.loading")} />
       ) : error ? (
-        <StateMessage variant="error" title="Error al cargar pagos" description={error} />
+        <StateMessage variant="error" title={t("payments.loadErrorTitle")} description={error} />
       ) : filteredPayments.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron pagos." />
+        <StateMessage variant="empty" title={t("payments.emptyTitle")} />
       ) : (
         <PaymentsTable
           payments={filteredPayments}

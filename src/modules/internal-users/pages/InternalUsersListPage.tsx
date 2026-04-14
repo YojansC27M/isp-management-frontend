@@ -12,21 +12,16 @@ import { readSecurityAudit, writeSecurityAudit } from "@/auth/auditLog"
 import { getErrorMessage } from "@/lib/errors"
 import { useAuthStore } from "@/store/authStore"
 import { useUI } from "@/ui/uiContext"
+import { useI18n } from "@/i18n/i18nContext"
 import InternalUsersTable from "../components/InternalUsersTable"
 import { deleteInternalUser, getInternalUsers } from "../services/internalUsersApi"
 import { getTechnicianAssignmentOptions } from "../services/technicianAssignment"
 import type { InternalUser, InternalUserRole, InternalUserStatus } from "../types/internalUser"
 
-const roleLabels: Record<InternalUserRole, string> = {
-  staff: "Staff",
-  admin: "Administrador",
-  technician: "Tecnico",
-  support: "Soporte",
-}
-
 const inputId = (field: string) => `internal-users-list-${field}`
 
 const InternalUsersListPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { notify, confirm } = useUI()
   const [search, setSearch] = useState("")
@@ -38,6 +33,12 @@ const InternalUsersListPage = () => {
   const [error, setError] = useState("")
   const canManageInternalUsers = useCan("internal_users.write")
   const actor = useAuthStore((state) => state.user)
+  const roleLabels: Record<InternalUserRole, string> = {
+    staff: t("internalUsers.role.staff"),
+    admin: t("internalUsers.role.admin"),
+    technician: t("internalUsers.role.technician"),
+    support: t("internalUsers.role.support"),
+  }
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -55,11 +56,11 @@ const InternalUsersListPage = () => {
         }, {}),
       )
     } catch (err) {
-      setError(getErrorMessage(err, "No fue posible cargar usuarios internos."))
+      setError(getErrorMessage(err, t("internalUsers.loadErrorTitle")))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadUsers()
@@ -78,9 +79,9 @@ const InternalUsersListPage = () => {
   const handleDelete = async (id: string) => {
     if (!canManageInternalUsers) return
     const accepted = await confirm({
-      title: "Eliminar usuario interno",
-      description: "Esta accion no se puede deshacer.",
-      confirmLabel: "Eliminar",
+      title: t("internalUsers.deleteTitle"),
+      description: t("internalUsers.deleteDescription"),
+      confirmLabel: t("internalUsers.deleteConfirm"),
     })
     if (!accepted) return
 
@@ -90,19 +91,19 @@ const InternalUsersListPage = () => {
       const entry: SecurityAuditEntry = {
         id: `${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         createdAt: new Date().toISOString(),
-        actorName: actor?.name ?? "Usuario local",
+        actorName: actor?.name ?? t("internalUsers.localUser"),
         actorRole: actor?.role ?? "admin",
         targetRole: "all",
         action: "internal_user_delete",
-        details: `Se elimino el usuario interno ${removed?.name ?? id}.`,
+        details: t("internalUsers.auditDeletedDetails", { name: removed?.name ?? id }),
       }
       const nextAudit = [entry, ...readSecurityAudit()].slice(0, 50)
       writeSecurityAudit(nextAudit)
       await loadUsers()
-      notify({ title: "Usuario eliminado", type: "success" })
+      notify({ title: t("internalUsers.deleted"), type: "success" })
     } catch (err) {
       notify({
-        title: "No se pudo eliminar el usuario",
+        title: t("internalUsers.deleteErrorTitle"),
         description: getErrorMessage(err, "Intenta nuevamente."),
         type: "error",
       })
@@ -112,15 +113,15 @@ const InternalUsersListPage = () => {
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Usuarios internos"
-        description="Administra personal interno, perfiles tecnicos y disponibilidad operativa."
+        title={t("internalUsers.title")}
+        description={t("internalUsers.description")}
         actions={
           <Button
             onClick={() => navigate("/internal-users/new")}
             disabled={!canManageInternalUsers}
-            title={!canManageInternalUsers ? "Tu perfil no tiene permiso para crear usuarios internos." : undefined}
+            title={!canManageInternalUsers ? t("internalUsers.permissionCreate") : undefined}
           >
-            Crear usuario interno
+            {t("internalUsers.create")}
           </Button>
         }
       />
@@ -129,19 +130,19 @@ const InternalUsersListPage = () => {
         <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr] md:items-end">
           <div className="grid gap-1.5">
             <Label htmlFor={inputId("search")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Buscar
+              {t("internalUsers.search")}
             </Label>
             <Input
               id={inputId("search")}
               type="search"
-              placeholder="Nombre, correo o telefono..."
+              placeholder={t("internalUsers.searchPlaceholder")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("role")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Rol
+              {t("internalUsers.filterRole")}
             </Label>
             <select
               id={inputId("role")}
@@ -149,7 +150,7 @@ const InternalUsersListPage = () => {
               onChange={(event) => setRoleFilter(event.target.value as InternalUserRole | "")}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todos</option>
+              <option value="">{t("internalUsers.all")}</option>
               {Object.entries(roleLabels).map(([role, label]) => (
                 <option key={role} value={role}>
                   {label}
@@ -159,7 +160,7 @@ const InternalUsersListPage = () => {
           </label>
           <label className="grid gap-1.5">
             <Label htmlFor={inputId("status")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Estado
+              {t("internalUsers.filterStatus")}
             </Label>
             <select
               id={inputId("status")}
@@ -167,20 +168,20 @@ const InternalUsersListPage = () => {
               onChange={(event) => setStatusFilter(event.target.value as InternalUserStatus | "")}
               className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground"
             >
-              <option value="">Todos</option>
-              <option value="active">Activo</option>
-              <option value="inactive">Inactivo</option>
+              <option value="">{t("internalUsers.all")}</option>
+              <option value="active">{t("internalUsers.status.active")}</option>
+              <option value="inactive">{t("internalUsers.status.inactive")}</option>
             </select>
           </label>
         </div>
       </FilterPanel>
 
       {loading ? (
-        <StateMessage variant="loading" title="Cargando usuarios internos..." />
+        <StateMessage variant="loading" title={t("internalUsers.loading")} />
       ) : error ? (
-        <StateMessage variant="error" title="Error al cargar usuarios internos" description={error} />
+        <StateMessage variant="error" title={t("internalUsers.loadErrorTitle")} description={error} />
       ) : filteredUsers.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron usuarios internos." />
+        <StateMessage variant="empty" title={t("internalUsers.emptyTitle")} />
       ) : (
         <InternalUsersTable
           users={filteredUsers}

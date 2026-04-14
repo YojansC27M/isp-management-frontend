@@ -9,11 +9,13 @@ import FilterPanel from "@/components/shared/FilterPanel"
 import PageHeader from "@/components/shared/PageHeader"
 import { getErrorMessage } from "@/lib/errors"
 import { useUI } from "@/ui/uiContext"
+import { useI18n } from "@/i18n/i18nContext"
 import PlansTable from "../components/PlansTable"
 import { deletePlan, getPlans } from "../services/plansApi"
 import type { Plan } from "../types/plan"
 
 const PlansListPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { confirm, notify } = useUI()
   const [search, setSearch] = useState("")
@@ -29,11 +31,11 @@ const PlansListPage = () => {
       const data = await getPlans()
       setPlans(data)
     } catch (err) {
-      setError(getErrorMessage(err, "No fue posible cargar los planes."))
+      setError(getErrorMessage(err, t("plans.loadErrorTitle")))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadPlans()
@@ -47,18 +49,18 @@ const PlansListPage = () => {
   const handleDelete = async (id: string) => {
     if (!canManagePlans) return
     const accepted = await confirm({
-      title: "Eliminar plan",
-      description: "Se eliminara del catalogo local.",
-      confirmLabel: "Eliminar",
+      title: t("plans.deleteTitle"),
+      description: t("plans.deleteDescription"),
+      confirmLabel: t("plans.deleteConfirm"),
     })
     if (!accepted) return
     try {
       await deletePlan(id)
       await loadPlans()
-      notify({ title: "Plan eliminado", type: "success" })
+      notify({ title: t("plans.deleted"), type: "success" })
     } catch (err) {
       notify({
-        title: "No se pudo eliminar el plan",
+        title: t("plans.deleteErrorTitle"),
         description: getErrorMessage(err, "Intenta nuevamente."),
         type: "error",
       })
@@ -70,15 +72,15 @@ const PlansListPage = () => {
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Planes de servicio"
-        description="Administra planes residenciales y empresariales."
+        title={t("plans.title")}
+        description={t("plans.description")}
         actions={
           <Button
             onClick={() => navigate("/plans/new")}
             disabled={!canManagePlans}
-            title={!canManagePlans ? "Tu perfil no tiene permiso para crear planes." : undefined}
+            title={!canManagePlans ? t("plans.permissionCreate") : undefined}
           >
-            Crear plan
+            {t("plans.create")}
           </Button>
         }
       />
@@ -86,12 +88,12 @@ const PlansListPage = () => {
       <FilterPanel>
         <div className="grid gap-1.5 md:max-w-sm">
           <Label htmlFor={searchInputId} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Buscar
+            {t("plans.search")}
           </Label>
           <Input
             id={searchInputId}
             type="search"
-            placeholder="Nombre del plan..."
+            placeholder={t("plans.searchPlaceholder")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -99,11 +101,11 @@ const PlansListPage = () => {
       </FilterPanel>
 
       {loading ? (
-        <StateMessage variant="loading" title="Cargando planes..." />
+        <StateMessage variant="loading" title={t("plans.loading")} />
       ) : error ? (
-        <StateMessage variant="error" title="Error al cargar planes" description={error} />
+        <StateMessage variant="error" title={t("plans.loadErrorTitle")} description={error} />
       ) : filteredPlans.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron planes." />
+        <StateMessage variant="empty" title={t("plans.emptyTitle")} />
       ) : (
         <PlansTable
           plans={filteredPlans}

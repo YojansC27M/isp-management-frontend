@@ -1,8 +1,10 @@
-﻿import FullCalendar from "@fullcalendar/react"
+import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import esLocale from "@fullcalendar/core/locales/es"
+import enGbLocale from "@fullcalendar/core/locales/en-gb"
+import { useI18n } from "@/i18n/i18nContext"
 import type { Visit, VisitStatus } from "../types/visit"
 
 interface VisitsCalendarProps {
@@ -17,17 +19,12 @@ const statusColors: Record<VisitStatus, string> = {
   canceled: "#dc2626",
 }
 
-const statusLabel: Record<VisitStatus, string> = {
-  scheduled: "Programada",
-  in_progress: "En progreso",
-  completed: "Completada",
-  canceled: "Cancelada",
-}
-
 const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
+  const { locale, t } = useI18n()
+
   const events = visits.map((visit) => ({
     id: visit.id,
-    title: `${visit.clientName} - ${visit.technicianName || "Sin asignar"}`,
+    title: `${visit.clientName} - ${visit.technicianName || t("visits.unassigned")}`,
     start: `${visit.scheduledDate}T${visit.scheduledTime}`,
     allDay: false,
     backgroundColor: statusColors[visit.status],
@@ -44,6 +41,7 @@ const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
       <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          locales={[esLocale, enGbLocale]}
           initialView="timeGridWeek"
           timeZone="America/Bogota"
           firstDay={1}
@@ -52,17 +50,17 @@ const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
           eventTimeFormat={{ hour: "2-digit", minute: "2-digit", meridiem: false }}
           slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
           dayHeaderFormat={{ weekday: "short", day: "numeric", month: "numeric" }}
-          locale={esLocale}
+          locale={locale === "es" ? "es" : "en-gb"}
           headerToolbar={{
             left: "prev,next today",
             center: "title",
             right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
           buttonText={{
-            today: "Hoy",
-            month: "Mes",
-            week: "Semana",
-            day: "Dia",
+            today: t("visits.calendar.today"),
+            month: t("visits.calendar.month"),
+            week: t("visits.calendar.week"),
+            day: t("visits.calendar.day"),
           }}
           events={events}
           eventClassNames={(arg) => ["visit-event", `visit-event--${arg.event.extendedProps.status as VisitStatus}`]}
@@ -78,7 +76,7 @@ const VisitsCalendar = ({ visits, onView }: VisitsCalendarProps) => {
         {Object.entries(statusColors).map(([status, color]) => (
           <span key={status} className="inline-flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-            {statusLabel[status as VisitStatus]}
+            {t(`visits.status.${status}`)}
           </span>
         ))}
       </section>
