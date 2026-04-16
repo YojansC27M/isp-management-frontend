@@ -9,6 +9,8 @@ import type { Ticket, TicketComment } from "@/modules/tickets/types/ticket"
 import type { Visit } from "@/modules/visits/types/visit"
 import type { ClientInvoice, ClientPayment, ClientProfile, ClientTicket } from "@/modules/client-portal/types/clientPortal"
 import type { InternalUser } from "@/modules/internal-users/types/internalUser"
+import type { ManagedRouter, RouterHealth } from "@/modules/routers/types/router"
+import type { SystemSettings } from "@/modules/system-settings/types/systemSettings"
 
 export const clients: Client[] = [
   {
@@ -393,6 +395,69 @@ export const clientPortalPayments: ClientPayment[] = [
 export const clientPortalTickets: ClientTicket[] = [
   { id: "cp-t1", title: "Slow speed at night", status: "open", createdAt: "2024-10-01" },
 ]
+
+export const managedRouters: ManagedRouter[] = [
+  {
+    id: "router-1",
+    name: "Core Router",
+    ip: "10.0.0.1",
+    port: 8728,
+    username: "admin",
+    passwordMasked: "********",
+    zone: "Centro",
+    location: "Data Center",
+    latitude: 4.65,
+    longitude: -74.06,
+    status: "online",
+    lastCheckedAt: new Date().toISOString(),
+  },
+  {
+    id: "router-2",
+    name: "Edge Router North",
+    ip: "10.0.1.1",
+    port: 8728,
+    username: "netops",
+    passwordMasked: "********",
+    zone: "Norte",
+    location: "North POP",
+    latitude: 4.73,
+    longitude: -74.03,
+    status: "offline",
+    lastCheckedAt: new Date().toISOString(),
+  },
+]
+
+export const routerHealthById: Record<string, RouterHealth> = {
+  "router-1": {
+    cpuUsage: 41,
+    ramUsage: 63,
+    uptime: "24d 11h",
+    interfacesUp: 8,
+    interfacesDown: 1,
+    throughput: "1.8 Gbps",
+  },
+  "router-2": {
+    cpuUsage: 0,
+    ramUsage: 0,
+    uptime: "0d 0h",
+    interfacesUp: 0,
+    interfacesDown: 9,
+    throughput: "0 Mbps",
+  },
+}
+
+export const systemSettings: SystemSettings = {
+  companyName: "Corma Networks S.A.S.",
+  tradeName: "Corma ISP",
+  taxId: "901.234.567-8",
+  billingEmail: "facturacion@corma.net",
+  billingPhone: "+57 601 555 2200",
+  address: "Av. 19 #102-33, Bogota",
+  currency: "COP",
+  timezone: "America/Bogota",
+  invoicePrefix: "COR",
+  logoUrl: "https://placehold.co/240x120/png?text=Corma+ISP",
+}
 
 export const internalUsers: InternalUser[] = [
   {

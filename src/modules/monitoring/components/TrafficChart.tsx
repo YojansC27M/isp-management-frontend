@@ -1,4 +1,8 @@
+﻿import { useI18n } from "@/i18n/i18nContext"
+
 const TrafficChart = () => {
+  const { t } = useI18n()
+
   const data = [
     { label: "08:00", rx: 40, tx: 30 },
     { label: "10:00", rx: 55, tx: 45 },
@@ -9,7 +13,7 @@ const TrafficChart = () => {
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <h3 className="text-sm font-semibold text-foreground">Tráfico (RX vs TX)</h3>
+      <h3 className="text-sm font-semibold text-foreground">{t("monitoring.traffic.title")}</h3>
       <div className="mt-4 grid gap-3">
         {data.map((point) => (
           <div key={point.label} className="grid grid-cols-[70px_1fr] items-center gap-3">

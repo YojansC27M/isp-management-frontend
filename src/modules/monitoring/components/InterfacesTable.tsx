@@ -1,3 +1,4 @@
+import { useI18n } from "@/i18n/i18nContext"
 import type { InterfaceStatus, InterfaceStatusType } from "../types/monitoring"
 
 interface InterfacesTableProps {
@@ -10,14 +11,16 @@ const statusClasses: Record<InterfaceStatusType, string> = {
 }
 
 const InterfacesTable = ({ interfaces }: InterfacesTableProps) => {
+  const { t } = useI18n()
+
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[620px] border-collapse text-left text-sm">
           <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-semibold">Interfaz</th>
-              <th className="px-4 py-3 font-semibold">Estado</th>
+              <th className="px-4 py-3 font-semibold">{t("monitoring.interfaces.name")}</th>
+              <th className="px-4 py-3 font-semibold">{t("monitoring.interfaces.status")}</th>
               <th className="px-4 py-3 font-semibold">RX</th>
               <th className="px-4 py-3 font-semibold">TX</th>
             </tr>

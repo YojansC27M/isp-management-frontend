@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { useCan } from "@/auth/usePermission"
+import { useI18n } from "@/i18n/i18nContext"
 import type { ClientMapItem } from "../types/clientMap"
 
 interface ClientMapPopupProps {
@@ -10,6 +11,7 @@ interface ClientMapPopupProps {
 const ClientMapPopup = ({ client }: ClientMapPopupProps) => {
   const navigate = useNavigate()
   const canManageClients = useCan("clients.write")
+  const { t } = useI18n()
 
   return (
     <section className="rounded-xl border border-border bg-card p-4">
@@ -22,30 +24,30 @@ const ClientMapPopup = ({ client }: ClientMapPopupProps) => {
           variant="outline"
           onClick={() => navigate(`/clients/${client.id}/edit`)}
           disabled={!canManageClients}
-          title={!canManageClients ? "Tu perfil no tiene permiso para editar clientes." : undefined}
+          title={!canManageClients ? t("clientsMap.popup.permissionEdit") : undefined}
         >
-          Ver cliente
+          {t("clientsMap.popup.viewClient")}
         </Button>
       </div>
       <dl className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Telefono</dt>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.phone")}</dt>
           <dd>{client.phone}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Plan</dt>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.plan")}</dt>
           <dd>{client.plan}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Estado</dt>
-          <dd className="capitalize">{client.status}</dd>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.status")}</dt>
+          <dd className="capitalize">{t(`clients.status.${client.status}`)}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Zona</dt>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.zone")}</dt>
           <dd>{client.zone}</dd>
         </div>
         <div className="sm:col-span-2">
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Tecnico asignado</dt>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.assignedTechnician")}</dt>
           <dd>{client.technicianName}</dd>
         </div>
       </dl>

@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import ClientAutocompleteField, { type ClientSummary } from "@/modules/clients/components/ClientAutocompleteField"
 import TechnicianAssignmentField from "@/modules/internal-users/components/TechnicianAssignmentField"
 import {
@@ -33,17 +34,17 @@ type VisitFormState = {
 type FormErrors = Partial<Record<keyof VisitFormState, string>>
 type FocusableField = keyof VisitFormState
 
-const typeOptions: { label: string; value: VisitType }[] = [
-  { label: "Instalacion", value: "installation" },
-  { label: "Mantenimiento", value: "maintenance" },
-  { label: "Soporte", value: "support" },
+const typeOptions: { key: string; value: VisitType }[] = [
+  { key: "visits.form.type.installation", value: "installation" },
+  { key: "visits.form.type.maintenance", value: "maintenance" },
+  { key: "visits.form.type.support", value: "support" },
 ]
 
-const statusOptions: { label: string; value: VisitStatus }[] = [
-  { label: "Programada", value: "scheduled" },
-  { label: "En progreso", value: "in_progress" },
-  { label: "Completada", value: "completed" },
-  { label: "Cancelada", value: "canceled" },
+const statusOptions: { key: string; value: VisitStatus }[] = [
+  { key: "visits.status.scheduled", value: "scheduled" },
+  { key: "visits.status.in_progress", value: "in_progress" },
+  { key: "visits.status.completed", value: "completed" },
+  { key: "visits.status.canceled", value: "canceled" },
 ]
 
 const selectClass =
@@ -56,6 +57,7 @@ const inputId = (field: string) => `visit-form-${field}`
 const errorId = (field: string) => `visit-form-${field}-error`
 
 const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFormProps) => {
+  const { t } = useI18n()
   const [values, setValues] = useState<VisitFormState>({
     clientId: initialValues.clientId,
     technicianId: initialValues.technicianId,
@@ -132,17 +134,17 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
   }
 
   const selectedTechnicianName = useMemo(() => {
-    return assignmentOptions.find((item) => item.id === values.technicianId)?.name ?? "Sin asignar"
-  }, [assignmentOptions, values.technicianId])
+    return assignmentOptions.find((item) => item.id === values.technicianId)?.name ?? t("visits.unassigned")
+  }, [assignmentOptions, t, values.technicianId])
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.clientId.trim()) nextErrors.clientId = "Debes seleccionar un cliente"
-    if (!values.zone.trim()) nextErrors.zone = "La zona es obligatoria"
-    if (!values.type) nextErrors.type = "El tipo es obligatorio"
-    if (!values.scheduledDate) nextErrors.scheduledDate = "La fecha programada es obligatoria"
-    if (!values.scheduledTime) nextErrors.scheduledTime = "La hora programada es obligatoria"
-    if (!values.status) nextErrors.status = "El estado es obligatorio"
+    if (!values.clientId.trim()) nextErrors.clientId = t("visits.form.error.clientRequired")
+    if (!values.zone.trim()) nextErrors.zone = t("visits.form.error.zoneRequired")
+    if (!values.type) nextErrors.type = t("visits.form.error.typeRequired")
+    if (!values.scheduledDate) nextErrors.scheduledDate = t("visits.form.error.dateRequired")
+    if (!values.scheduledTime) nextErrors.scheduledTime = t("visits.form.error.timeRequired")
+    if (!values.status) nextErrors.status = t("visits.form.error.statusRequired")
     setErrors(nextErrors)
     return nextErrors
   }
@@ -190,7 +192,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     <form onSubmit={handleSubmit} className="grid max-w-3xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("clientId")}>Cliente</Label>
+          <Label htmlFor={inputId("clientId")}>{t("tickets.table.client")}</Label>
           <ClientAutocompleteField
             id={inputId("clientId")}
             name="clientId"
@@ -204,7 +206,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
         </label>
 
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("zone")}>Zona</Label>
+          <Label htmlFor={inputId("zone")}>{t("visits.filter.zone")}</Label>
           <Input
             id={inputId("zone")}
             name="zone"
@@ -230,7 +232,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
         </div>
 
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("type")}>Tipo</Label>
+          <Label htmlFor={inputId("type")}>{t("visits.detail.type")}</Label>
           <select
             id={inputId("type")}
             name="type"
@@ -241,17 +243,17 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
             aria-invalid={Boolean(errors.type)}
             aria-describedby={describedBy("type")}
           >
-            <option value="">Selecciona un tipo</option>
+            <option value="">{t("visits.form.selectType")}</option>
             {typeOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
           {errors.type && <span id={errorId("type")} className="text-xs text-rose-600" role="alert">{errors.type}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("scheduledDate")}>Fecha programada</Label>
+          <Label htmlFor={inputId("scheduledDate")}>{t("visits.form.scheduledDate")}</Label>
           <Input
             id={inputId("scheduledDate")}
             name="scheduledDate"
@@ -265,7 +267,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
           {errors.scheduledDate && <span id={errorId("scheduledDate")} className="text-xs text-rose-600" role="alert">{errors.scheduledDate}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("scheduledTime")}>Hora programada</Label>
+          <Label htmlFor={inputId("scheduledTime")}>{t("visits.form.scheduledTime")}</Label>
           <Input
             id={inputId("scheduledTime")}
             name="scheduledTime"
@@ -279,7 +281,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
           {errors.scheduledTime && <span id={errorId("scheduledTime")} className="text-xs text-rose-600" role="alert">{errors.scheduledTime}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("status")}>Estado</Label>
+          <Label htmlFor={inputId("status")}>{t("visits.filter.status")}</Label>
           <select
             id={inputId("status")}
             name="status"
@@ -290,22 +292,22 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
             aria-invalid={Boolean(errors.status)}
             aria-describedby={describedBy("status")}
           >
-            <option value="">Selecciona un estado</option>
+            <option value="">{t("visits.form.selectStatus")}</option>
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
           {errors.status && <span id={errorId("status")} className="text-xs text-rose-600" role="alert">{errors.status}</span>}
         </label>
         <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("notes")}>Notas</Label>
+          <Label htmlFor={inputId("notes")}>{t("visits.detail.notes")}</Label>
           <textarea id={inputId("notes")} name="notes" rows={4} value={values.notes} onChange={handleChange("notes")} className={textareaClass} />
         </label>
       </div>
       <div className="flex items-center gap-2 pt-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{submitLabel === "Guardar" ? t("common.save") : submitLabel}</Button>
       </div>
     </form>
   )

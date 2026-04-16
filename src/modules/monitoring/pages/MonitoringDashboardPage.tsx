@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import StateMessage from "@/components/feedback/StateMessage"
+import { useI18n } from "@/i18n/i18nContext"
 import { getErrorMessage } from "@/lib/errors"
 import InterfacesTable from "../components/InterfacesTable"
 import RouterCard from "../components/RouterCard"
@@ -12,6 +13,7 @@ const CPU_THRESHOLD = 85
 const RAM_THRESHOLD = 85
 
 const MonitoringDashboardPage = () => {
+  const { t } = useI18n()
   const [routers, setRouters] = useState<Router[]>([])
   const [selectedRouterId, setSelectedRouterId] = useState<string | null>(null)
   const [metrics, setMetrics] = useState<RouterMetrics | null>(null)
@@ -31,25 +33,28 @@ const MonitoringDashboardPage = () => {
         setSelectedRouterId(data[0].id)
       }
     } catch (err) {
-      setRoutersError(getErrorMessage(err, "No fue posible cargar los routers."))
+      setRoutersError(getErrorMessage(err, t("monitoring.loadRoutersErrorDefault")))
     } finally {
       setLoadingRouters(false)
     }
-  }, [selectedRouterId])
+  }, [selectedRouterId, t])
 
-  const loadDetails = useCallback(async (routerId: string) => {
-    setLoadingDetails(true)
-    setDetailsError("")
-    try {
-      const [metricsData, interfacesData] = await Promise.all([getRouterMetrics(routerId), getRouterInterfaces(routerId)])
-      setMetrics(metricsData)
-      setInterfaces(interfacesData)
-    } catch (err) {
-      setDetailsError(getErrorMessage(err, "No fue posible cargar las metricas del router."))
-    } finally {
-      setLoadingDetails(false)
-    }
-  }, [])
+  const loadDetails = useCallback(
+    async (routerId: string) => {
+      setLoadingDetails(true)
+      setDetailsError("")
+      try {
+        const [metricsData, interfacesData] = await Promise.all([getRouterMetrics(routerId), getRouterInterfaces(routerId)])
+        setMetrics(metricsData)
+        setInterfaces(interfacesData)
+      } catch (err) {
+        setDetailsError(getErrorMessage(err, t("monitoring.loadMetricsErrorDefault")))
+      } finally {
+        setLoadingDetails(false)
+      }
+    },
+    [t]
+  )
 
   useEffect(() => {
     loadRouters()
@@ -71,16 +76,16 @@ const MonitoringDashboardPage = () => {
   return (
     <div className="grid gap-6">
       <header>
-        <h1 className="text-2xl font-semibold text-foreground">Monitoreo de red</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Supervisa routers, interfaces y consumo en tiempo real.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("monitoring.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("monitoring.description")}</p>
       </header>
 
       {loadingRouters ? (
-        <StateMessage variant="loading" title="Cargando routers..." />
+        <StateMessage variant="loading" title={t("monitoring.loadingRouters")} />
       ) : routersError ? (
-        <StateMessage variant="error" title="Error al cargar routers" description={routersError} />
+        <StateMessage variant="error" title={t("monitoring.loadRoutersErrorTitle")} description={routersError} />
       ) : routers.length === 0 ? (
-        <StateMessage variant="empty" title="No se encontraron routers." />
+        <StateMessage variant="empty" title={t("monitoring.emptyRouters")} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {routers.map((router) => (
@@ -93,31 +98,31 @@ const MonitoringDashboardPage = () => {
         <section className="grid gap-4">
           <h2 className="text-lg font-semibold text-foreground">{selectedRouter.name}</h2>
           {loadingDetails ? (
-            <StateMessage variant="loading" title="Cargando metricas del router..." />
+            <StateMessage variant="loading" title={t("monitoring.loadingMetrics")} />
           ) : detailsError ? (
-            <StateMessage variant="error" title="Error en metricas del router" description={detailsError} />
+            <StateMessage variant="error" title={t("monitoring.loadMetricsErrorTitle")} description={detailsError} />
           ) : metrics ? (
             <>
               {showThresholdAlert && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                  Alerta: consumo alto de recursos detectado en este router.
+                  {t("monitoring.thresholdAlert")}
                 </div>
               )}
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <StatsCard label="Uso de CPU" value={`${metrics.cpuUsage}%`} />
-                <StatsCard label="Uso de RAM" value={`${metrics.ramUsage}%`} />
-                <StatsCard label="Tiempo en linea" value={metrics.uptime} />
-                <StatsCard label="Trafico total" value={metrics.totalTraffic} />
+                <StatsCard label={t("monitoring.stats.cpu")} value={`${metrics.cpuUsage}%`} />
+                <StatsCard label={t("monitoring.stats.ram")} value={`${metrics.ramUsage}%`} />
+                <StatsCard label={t("monitoring.stats.uptime")} value={metrics.uptime} />
+                <StatsCard label={t("monitoring.stats.traffic")} value={metrics.totalTraffic} />
               </div>
               <TrafficChart />
               {interfaces.length === 0 ? (
-                <StateMessage variant="empty" title="No se encontraron interfaces." />
+                <StateMessage variant="empty" title={t("monitoring.emptyInterfaces")} />
               ) : (
                 <InterfacesTable interfaces={interfaces} />
               )}
             </>
           ) : (
-            <StateMessage variant="empty" title="No hay metricas disponibles." />
+            <StateMessage variant="empty" title={t("monitoring.emptyMetrics")} />
           )}
         </section>
       )}

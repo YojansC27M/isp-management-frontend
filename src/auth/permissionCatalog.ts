@@ -10,6 +10,34 @@ export interface PermissionDefinition {
 
 export const permissionCatalog: PermissionDefinition[] = [
   {
+    permission: "system_settings.read",
+    module: "Configuracion ISP",
+    action: "read",
+    label: "Ver configuracion del sistema",
+    description: "Puede consultar los parametros globales de la plataforma ISP.",
+  },
+  {
+    permission: "system_settings.write",
+    module: "Configuracion ISP",
+    action: "write",
+    label: "Gestionar configuracion del sistema",
+    description: "Puede editar informacion de empresa, facturacion, zona horaria y logo.",
+  },
+  {
+    permission: "routers.read",
+    module: "Routers",
+    action: "read",
+    label: "Ver routers",
+    description: "Puede consultar inventario y estado de routers.",
+  },
+  {
+    permission: "routers.write",
+    module: "Routers",
+    action: "write",
+    label: "Gestionar routers",
+    description: "Puede crear, editar, eliminar y probar conexion de routers.",
+  },
+  {
     permission: "internal_users.read",
     module: "Usuarios internos",
     action: "read",

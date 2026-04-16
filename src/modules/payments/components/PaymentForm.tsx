@@ -1,8 +1,9 @@
-﻿import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import ClientAutocompleteField from "@/modules/clients/components/ClientAutocompleteField"
 import type { PaymentFormValues, PaymentMethod, PaymentStatus } from "../types/payment"
 
@@ -24,17 +25,17 @@ type PaymentFormState = {
 type FormErrors = Partial<Record<keyof PaymentFormState, string>>
 type FocusableField = keyof PaymentFormState
 
-const methodOptions: { label: string; value: PaymentMethod }[] = [
-  { label: "Efectivo", value: "cash" },
-  { label: "Transferencia", value: "transfer" },
-  { label: "Tarjeta", value: "card" },
-  { label: "PSE", value: "pse" },
+const methodOptions: { key: string; value: PaymentMethod }[] = [
+  { key: "payments.form.method.cash", value: "cash" },
+  { key: "payments.form.method.transfer", value: "transfer" },
+  { key: "payments.form.method.card", value: "card" },
+  { key: "payments.form.method.pse", value: "pse" },
 ]
 
-const statusOptions: { label: string; value: PaymentStatus }[] = [
-  { label: "Pendiente", value: "pending" },
-  { label: "Pagado", value: "paid" },
-  { label: "Vencido", value: "overdue" },
+const statusOptions: { key: string; value: PaymentStatus }[] = [
+  { key: "payments.status.pending", value: "pending" },
+  { key: "payments.status.paid", value: "paid" },
+  { key: "payments.status.overdue", value: "overdue" },
 ]
 
 const selectClass =
@@ -43,7 +44,8 @@ const selectClass =
 const inputId = (field: string) => `payment-form-${field}`
 const errorId = (field: string) => `payment-form-${field}-error`
 
-const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PaymentFormProps) => {
+const PaymentForm = ({ initialValues, onSubmit, submitLabel }: PaymentFormProps) => {
+  const { t } = useI18n()
   const [values, setValues] = useState<PaymentFormState>({
     clientId: initialValues.clientId,
     invoiceNumber: initialValues.invoiceNumber,
@@ -76,13 +78,13 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.clientId.trim()) nextErrors.clientId = "Debes seleccionar un cliente"
-    if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = "El numero de factura es obligatorio"
+    if (!values.clientId.trim()) nextErrors.clientId = t("payments.form.error.clientRequired")
+    if (!values.invoiceNumber.trim()) nextErrors.invoiceNumber = t("payments.form.error.invoiceRequired")
     const amount = Number(values.amount)
-    if (!values.amount || Number.isNaN(amount) || amount <= 0) nextErrors.amount = "El monto debe ser mayor a 0"
-    if (!values.paymentMethod) nextErrors.paymentMethod = "El metodo de pago es obligatorio"
-    if (!values.paymentDate) nextErrors.paymentDate = "La fecha de pago es obligatoria"
-    if (!values.status) nextErrors.status = "El estado es obligatorio"
+    if (!values.amount || Number.isNaN(amount) || amount <= 0) nextErrors.amount = t("payments.form.error.amount")
+    if (!values.paymentMethod) nextErrors.paymentMethod = t("payments.form.error.methodRequired")
+    if (!values.paymentDate) nextErrors.paymentDate = t("payments.form.error.dateRequired")
+    if (!values.status) nextErrors.status = t("payments.form.error.statusRequired")
     setErrors(nextErrors)
     return nextErrors
   }
@@ -113,7 +115,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
     <form onSubmit={handleSubmit} className="grid max-w-2xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("clientId")}>Cliente</Label>
+          <Label htmlFor={inputId("clientId")}>{t("payments.table.client")}</Label>
           <ClientAutocompleteField
             id={inputId("clientId")}
             name="clientId"
@@ -126,7 +128,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
           {errors.clientId && <span id={errorId("clientId")} className="text-xs text-rose-600" role="alert">{errors.clientId}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("invoiceNumber")}>Numero de factura</Label>
+          <Label htmlFor={inputId("invoiceNumber")}>{t("payments.account.table.invoice")}</Label>
           <Input
             id={inputId("invoiceNumber")}
             name="invoiceNumber"
@@ -139,7 +141,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
           {errors.invoiceNumber && <span id={errorId("invoiceNumber")} className="text-xs text-rose-600" role="alert">{errors.invoiceNumber}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("amount")}>Monto</Label>
+          <Label htmlFor={inputId("amount")}>{t("payments.table.amount")}</Label>
           <Input
             id={inputId("amount")}
             name="amount"
@@ -155,7 +157,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
           {errors.amount && <span id={errorId("amount")} className="text-xs text-rose-600" role="alert">{errors.amount}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("paymentMethod")}>Metodo de pago</Label>
+          <Label htmlFor={inputId("paymentMethod")}>{t("payments.table.method")}</Label>
           <select
             id={inputId("paymentMethod")}
             name="paymentMethod"
@@ -166,17 +168,17 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
             aria-invalid={Boolean(errors.paymentMethod)}
             aria-describedby={describedBy("paymentMethod")}
           >
-            <option value="">Selecciona un metodo</option>
+            <option value="">{t("payments.form.selectMethod")}</option>
             {methodOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
           {errors.paymentMethod && <span id={errorId("paymentMethod")} className="text-xs text-rose-600" role="alert">{errors.paymentMethod}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("paymentDate")}>Fecha de pago</Label>
+          <Label htmlFor={inputId("paymentDate")}>{t("payments.table.date")}</Label>
           <Input
             id={inputId("paymentDate")}
             name="paymentDate"
@@ -190,7 +192,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
           {errors.paymentDate && <span id={errorId("paymentDate")} className="text-xs text-rose-600" role="alert">{errors.paymentDate}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("status")}>Estado</Label>
+          <Label htmlFor={inputId("status")}>{t("payments.table.status")}</Label>
           <select
             id={inputId("status")}
             name="status"
@@ -201,10 +203,10 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
             aria-invalid={Boolean(errors.status)}
             aria-describedby={describedBy("status")}
           >
-            <option value="">Selecciona un estado</option>
+            <option value="">{t("payments.form.selectStatus")}</option>
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -212,7 +214,7 @@ const PaymentForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Payme
         </label>
       </div>
       <div className="flex items-center gap-2 pt-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{submitLabel ?? t("common.save")}</Button>
       </div>
     </form>
   )

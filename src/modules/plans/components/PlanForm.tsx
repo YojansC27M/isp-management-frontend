@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import type { PlanFormValues, PlanType } from "../types/plan"
 
 interface PlanFormProps {
@@ -22,18 +23,14 @@ type PlanFormState = {
 type FormErrors = Partial<Record<keyof PlanFormState, string>>
 type FocusableField = keyof PlanFormState
 
-const typeOptions: { label: string; value: PlanType }[] = [
-  { label: "Residencial", value: "residential" },
-  { label: "Empresarial", value: "business" },
-]
-
 const selectClass =
   "h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
 
 const inputId = (field: string) => `plan-form-${field}`
 const errorId = (field: string) => `plan-form-${field}-error`
 
-const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanFormProps) => {
+const PlanForm = ({ initialValues, onSubmit, submitLabel }: PlanFormProps) => {
+  const { t } = useI18n()
   const [values, setValues] = useState<PlanFormState>({
     name: initialValues.name,
     downloadSpeed: initialValues.downloadSpeed ? String(initialValues.downloadSpeed) : "",
@@ -64,14 +61,18 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio"
+    if (!values.name.trim()) nextErrors.name = t("plans.form.error.nameRequired")
     const download = Number(values.downloadSpeed)
-    if (!values.downloadSpeed || Number.isNaN(download) || download <= 0) nextErrors.downloadSpeed = "La velocidad de descarga debe ser mayor a 0"
+    if (!values.downloadSpeed || Number.isNaN(download) || download <= 0) {
+      nextErrors.downloadSpeed = t("plans.form.error.downloadSpeed")
+    }
     const upload = Number(values.uploadSpeed)
-    if (!values.uploadSpeed || Number.isNaN(upload) || upload <= 0) nextErrors.uploadSpeed = "La velocidad de subida debe ser mayor a 0"
+    if (!values.uploadSpeed || Number.isNaN(upload) || upload <= 0) {
+      nextErrors.uploadSpeed = t("plans.form.error.uploadSpeed")
+    }
     const price = Number(values.price)
-    if (!values.price || Number.isNaN(price) || price <= 0) nextErrors.price = "El precio debe ser mayor a 0"
-    if (!values.type) nextErrors.type = "El tipo es obligatorio"
+    if (!values.price || Number.isNaN(price) || price <= 0) nextErrors.price = t("plans.form.error.price")
+    if (!values.type) nextErrors.type = t("plans.form.error.typeRequired")
     setErrors(nextErrors)
     return nextErrors
   }
@@ -101,7 +102,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
     <form onSubmit={handleSubmit} className="grid max-w-2xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("name")}>Nombre</Label>
+          <Label htmlFor={inputId("name")}>{t("plans.form.name")}</Label>
           <Input
             id={inputId("name")}
             name="name"
@@ -114,7 +115,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
           {errors.name && <span id={errorId("name")} className="text-xs text-rose-600" role="alert">{errors.name}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("downloadSpeed")}>Velocidad de descarga (Mbps)</Label>
+          <Label htmlFor={inputId("downloadSpeed")}>{t("plans.form.downloadSpeed")}</Label>
           <Input
             id={inputId("downloadSpeed")}
             name="downloadSpeed"
@@ -130,7 +131,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
           {errors.downloadSpeed && <span id={errorId("downloadSpeed")} className="text-xs text-rose-600" role="alert">{errors.downloadSpeed}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("uploadSpeed")}>Velocidad de subida (Mbps)</Label>
+          <Label htmlFor={inputId("uploadSpeed")}>{t("plans.form.uploadSpeed")}</Label>
           <Input
             id={inputId("uploadSpeed")}
             name="uploadSpeed"
@@ -146,7 +147,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
           {errors.uploadSpeed && <span id={errorId("uploadSpeed")} className="text-xs text-rose-600" role="alert">{errors.uploadSpeed}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("price")}>Precio mensual</Label>
+          <Label htmlFor={inputId("price")}>{t("plans.form.price")}</Label>
           <Input
             id={inputId("price")}
             name="price"
@@ -162,7 +163,7 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
           {errors.price && <span id={errorId("price")} className="text-xs text-rose-600" role="alert">{errors.price}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("type")}>Tipo</Label>
+          <Label htmlFor={inputId("type")}>{t("plans.form.type")}</Label>
           <select
             id={inputId("type")}
             name="type"
@@ -173,18 +174,15 @@ const PlanForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: PlanForm
             aria-invalid={Boolean(errors.type)}
             aria-describedby={describedBy("type")}
           >
-            <option value="">Selecciona un tipo</option>
-            {typeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value="">{t("plans.form.selectType")}</option>
+            <option value="residential">{t("plans.form.type.residential")}</option>
+            <option value="business">{t("plans.form.type.business")}</option>
           </select>
           {errors.type && <span id={errorId("type")} className="text-xs text-rose-600" role="alert">{errors.type}</span>}
         </label>
       </div>
       <div className="flex items-center gap-2 pt-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{submitLabel ?? t("common.save")}</Button>
       </div>
     </form>
   )

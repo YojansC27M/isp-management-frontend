@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import StateMessage from "@/components/feedback/StateMessage"
+import { useI18n } from "@/i18n/i18nContext"
 import { useCan } from "@/auth/usePermission"
 import { getErrorMessage } from "@/lib/errors"
 import { useUI } from "@/ui/uiContext"
@@ -9,22 +10,10 @@ import TicketComments from "../components/TicketComments"
 import { addComment, getTicketById, getTicketComments } from "../services/ticketsApi"
 import type { Ticket, TicketComment, TicketCommentVisibility, TicketHistoryEntry } from "../types/ticket"
 
-const statusLabel = (value: Ticket["status"]) => {
-  if (value === "open") return "Abierto"
-  if (value === "in_progress") return "En progreso"
-  if (value === "resolved") return "Resuelto"
-  return "Cerrado"
-}
-
-const categoryLabel = (value: Ticket["category"]) => {
-  if (value === "technical") return "Tecnico"
-  if (value === "billing") return "Facturacion"
-  return "Instalacion"
-}
-
 const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { notify } = useUI()
   const canManageTickets = useCan("tickets.write")
   const [ticket, setTicket] = useState<Ticket | null>(null)
@@ -44,14 +33,14 @@ const TicketDetailPage = () => {
         setComments(commentsData)
         setHistory(ticketData.history)
       } catch (err) {
-        setError(getErrorMessage(err, "No fue posible cargar el ticket."))
+        setError(getErrorMessage(err, t("tickets.detail.loadErrorDefault")))
       } finally {
         setLoading(false)
       }
     }
 
     loadTicket()
-  }, [id])
+  }, [id, t])
 
   const handleAddComment = async (ticketId: string, message: string, visibility: TicketCommentVisibility) => {
     try {
@@ -72,15 +61,15 @@ const TicketDetailPage = () => {
             id: `h-${Date.now()}`,
             ticketId,
             createdAt,
-            message: "Se agrego una nota interna.",
+            message: t("tickets.detail.internalNote"),
           },
           ...current,
         ])
       }
     } catch (err) {
       notify({
-        title: "No se pudo guardar el comentario",
-        description: getErrorMessage(err, "Intenta nuevamente."),
+        title: t("tickets.detail.commentErrorTitle"),
+        description: getErrorMessage(err, t("tickets.detail.commentErrorDesc")),
         type: "error",
       })
     }
@@ -88,9 +77,9 @@ const TicketDetailPage = () => {
 
   const historyItems = useMemo(() => [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [history])
 
-  if (loading) return <StateMessage variant="loading" title="Cargando ticket..." />
-  if (error) return <StateMessage variant="error" title="Error al cargar ticket" description={error} />
-  if (!ticket) return <StateMessage variant="empty" title="Ticket no encontrado." />
+  if (loading) return <StateMessage variant="loading" title={t("tickets.detail.loading")} />
+  if (error) return <StateMessage variant="error" title={t("tickets.detail.loadErrorTitle")} description={error} />
+  if (!ticket) return <StateMessage variant="empty" title={t("tickets.detail.notFound")} />
 
   return (
     <div className="grid gap-6">
@@ -100,26 +89,26 @@ const TicketDetailPage = () => {
           <p className="mt-1 text-sm text-muted-foreground">{ticket.clientName}</p>
         </div>
         <Button variant="outline" onClick={() => navigate("/tickets")}>
-          Volver a Tickets
+          {t("tickets.detail.back")}
         </Button>
       </header>
 
       <section className="rounded-xl border border-border bg-card p-4">
         <p className="text-sm text-muted-foreground">{ticket.description}</p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span className="rounded-full bg-muted px-2.5 py-1">Estado: {statusLabel(ticket.status)}</span>
-          <span className="rounded-full bg-muted px-2.5 py-1">Prioridad: {ticket.priority}</span>
-          <span className="rounded-full bg-muted px-2.5 py-1">Categoria: {categoryLabel(ticket.category)}</span>
-          <span className="rounded-full bg-muted px-2.5 py-1">Responsable: {ticket.assignedUserName || "Sin asignar"}</span>
-          <span className="rounded-full bg-muted px-2.5 py-1">Tecnico: {ticket.assignedTechnicianName || "Sin asignar"}</span>
-          <span className="rounded-full bg-muted px-2.5 py-1">Creado: {ticket.createdAt}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{t("tickets.detail.status")}: {t(`tickets.status.${ticket.status}`)}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{t("tickets.detail.priority")}: {t(`tickets.priority.${ticket.priority}`)}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{t("tickets.detail.category")}: {t(`tickets.category.${ticket.category}`)}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{t("tickets.detail.owner")}: {ticket.assignedUserName || t("tickets.unassigned")}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{t("tickets.detail.technician")}: {ticket.assignedTechnicianName || t("tickets.unassigned")}</span>
+          <span className="rounded-full bg-muted px-2.5 py-1">{t("tickets.detail.created")}: {ticket.createdAt}</span>
         </div>
       </section>
 
       <section className="rounded-xl border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold text-foreground">Historial del ticket</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t("tickets.detail.history")}</h3>
         {historyItems.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No hay cambios registrados.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("tickets.detail.historyEmpty")}</p>
         ) : (
           <ul className="mt-3 grid gap-2">
             {historyItems.map((item) => (

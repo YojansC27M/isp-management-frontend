@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet"
+import { useI18n } from "@/i18n/i18nContext"
 import { cn } from "@/lib/utils"
 import ClientMapPopup from "./ClientMapPopup"
 import type { ClientMapItem, ClientMapStatus } from "../types/clientMap"
@@ -14,13 +15,8 @@ const markerColors: Record<ClientMapStatus, string> = {
   inactive: "#64748b",
 }
 
-const statusLabel: Record<ClientMapStatus, string> = {
-  active: "Activo",
-  suspended: "Suspendido",
-  inactive: "Inactivo",
-}
-
 const ClientsMapView = ({ clients }: ClientsMapViewProps) => {
+  const { t } = useI18n()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const selectedClient = useMemo(() => clients.find((client) => client.id === selectedId) ?? null, [clients, selectedId])
@@ -52,9 +48,15 @@ const ClientsMapView = ({ clients }: ClientsMapViewProps) => {
                 <Popup>
                   <div className="grid gap-1">
                     <strong>{client.name}</strong>
-                    <span className="text-xs text-muted-foreground">Plan: {client.plan}</span>
-                    <span className="text-xs text-muted-foreground">Zona: {client.zone}</span>
-                    <span className="text-xs text-muted-foreground">Estado: {statusLabel[client.status]}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("clientsMap.popup.plan")}: {client.plan}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("clientsMap.popup.zone")}: {client.zone}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("clientsMap.popup.status")}: {t(`clients.status.${client.status}`)}
+                    </span>
                   </div>
                 </Popup>
               </CircleMarker>
@@ -79,7 +81,7 @@ const ClientsMapView = ({ clients }: ClientsMapViewProps) => {
               <strong className="text-sm text-foreground">{client.name}</strong>
             </div>
             <div className="text-xs text-muted-foreground">{client.zone}</div>
-            <div className="text-xs text-muted-foreground">{statusLabel[client.status]}</div>
+            <div className="text-xs text-muted-foreground">{t(`clients.status.${client.status}`)}</div>
           </button>
         ))}
       </section>

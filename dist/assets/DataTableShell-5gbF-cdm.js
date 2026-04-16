@@ -1,0 +1,1 @@
+import{j as r,t as a}from"./index-CTMnMdSq.js";const d=({children:e,className:o})=>r.jsx("div",{className:a("overflow-hidden rounded-xl border border-border bg-card",o),children:r.jsx("div",{className:"overflow-x-auto",children:e})});export{d as D};

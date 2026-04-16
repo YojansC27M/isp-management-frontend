@@ -7,6 +7,8 @@ import type { VisitFormValues } from "@/modules/visits/types/visit"
 import type { ClientMapFiltersValues } from "@/modules/clients-map/types/clientMap"
 import type { ReportsFiltersValues } from "@/modules/reports/types/report"
 import type { InternalUserFormValues } from "@/modules/internal-users/types/internalUser"
+import type { ManagedRouter, RouterFormValues, RouterStatus } from "@/modules/routers/types/router"
+import type { SystemSettingsFormValues } from "@/modules/system-settings/types/systemSettings"
 import {
   accountStatusByClientId,
   clientPortalInvoices,
@@ -22,10 +24,13 @@ import {
   plans,
   reportMetrics,
   revenueData,
+  routerHealthById,
   routerInterfacesById,
+  managedRouters,
   routerMetricsById,
   routers,
   statusDistribution,
+  systemSettings,
   ticketComments,
   tickets,
   visits,
@@ -87,8 +92,8 @@ const mockNavigationConfig = {
     { id: "clients", items: ["clients-list", "clients-map"] },
     { id: "commercial", items: ["plans", "payments", "invoices"] },
     { id: "support", items: ["tickets", "visits"] },
-    { id: "operations", items: ["monitoring", "reports"] },
-    { id: "security", items: ["access-control", "security-audit"] },
+    { id: "operations", items: ["routers", "monitoring", "reports"] },
+    { id: "security", items: ["settings-system", "access-control", "security-audit"] },
   ],
 }
 
@@ -108,6 +113,23 @@ const getAssignableTicketUser = (id: string) => {
 const getExistingClient = (id: string) => {
   return clients.find((client) => client.id === id)
 }
+
+const normalizeRouterStatus = (ip: string): RouterStatus => (ip.endsWith(".1") ? "online" : "offline")
+
+const toManagedRouter = (id: string, payload: RouterFormValues, previous?: (typeof managedRouters)[number]): ManagedRouter => ({
+  id,
+  name: payload.name,
+  ip: payload.ip,
+  port: payload.port,
+  username: payload.username,
+  passwordMasked: payload.password ? "*".repeat(Math.max(8, payload.password.length)) : previous?.passwordMasked ?? "********",
+  zone: payload.zone,
+  location: payload.location,
+  latitude: payload.latitude,
+  longitude: payload.longitude,
+  status: normalizeRouterStatus(payload.ip),
+  lastCheckedAt: new Date().toISOString(),
+})
 
 const mockAdapter: AxiosAdapter = async (config) => {
   const method = (config.method ?? "get").toLowerCase()
@@ -512,6 +534,115 @@ const mockAdapter: AxiosAdapter = async (config) => {
 
   if (method === "get" && path === "/monitoring/routers") {
     return ok(config, routers)
+  }
+
+  if (method === "get" && path === "/settings/system") {
+    return ok(config, systemSettings)
+  }
+
+  if (method === "put" && path === "/settings/system") {
+    const payload = parseBody<SystemSettingsFormValues>(config)
+    if (!payload) return notFound(config)
+    Object.assign(systemSettings, payload)
+    return ok(config, systemSettings)
+  }
+
+  if (method === "post" && path === "/settings/system/logo") {
+    const payload = parseBody<{ fileName?: string }>(config)
+    const fileLabel = payload?.fileName ? encodeURIComponent(payload.fileName) : "logo"
+    systemSettings.logoUrl = `https://placehold.co/240x120/png?text=${fileLabel}`
+    return ok(config, { logoUrl: systemSettings.logoUrl })
+  }
+
+  if (method === "get" && path === "/routers") {
+    const search = getParam(config, "search").trim().toLowerCase()
+    const statusFilter = getParam(config, "status").trim()
+    const zoneFilter = getParam(config, "zone").trim().toLowerCase()
+    const filtered = managedRouters.filter((router) => {
+      const searchMatch =
+        !search ||
+        [router.name, router.ip, router.username, router.location, router.zone]
+          .join(" ")
+          .toLowerCase()
+          .includes(search)
+      const statusMatch = !statusFilter || router.status === statusFilter
+      const zoneMatch = !zoneFilter || router.zone.toLowerCase().includes(zoneFilter)
+      return searchMatch && statusMatch && zoneMatch
+    })
+    return ok(config, filtered)
+  }
+
+  if (method === "get" && path.startsWith("/routers/") && path.endsWith("/health")) {
+    const routerId = path.split("/")[2]
+    return ok(config, routerHealthById[routerId] ?? null)
+  }
+
+  if (method === "get" && path.startsWith("/routers/")) {
+    const routerId = path.split("/")[2]
+    const router = managedRouters.find((item) => item.id === routerId)
+    return router ? ok(config, router) : notFound(config)
+  }
+
+  if (method === "post" && path === "/routers/test-connection") {
+    const payload = parseBody<RouterFormValues>(config)
+    if (!payload) return notFound(config)
+    const success = payload.ip.endsWith(".1") || payload.ip.endsWith(".10") || payload.ip.endsWith(".254")
+    const latency = success ? 8 + Math.floor(Math.random() * 20) : null
+    return ok(config, {
+      success,
+      message: success ? "Conexion API RouterOS validada." : "No fue posible establecer sesion con el router.",
+      latencyMs: latency,
+      checkedAt: new Date().toISOString(),
+    })
+  }
+
+  if (method === "post" && path.startsWith("/routers/") && path.endsWith("/test-connection")) {
+    const routerId = path.split("/")[2]
+    const router = managedRouters.find((item) => item.id === routerId)
+    if (!router) return notFound(config)
+    const success = router.status === "online"
+    const latency = success ? 9 + Math.floor(Math.random() * 15) : null
+    router.lastCheckedAt = new Date().toISOString()
+    return ok(config, {
+      success,
+      message: success ? "Conexion al router confirmada." : "Router sin respuesta o con credenciales invalidas.",
+      latencyMs: latency,
+      checkedAt: router.lastCheckedAt,
+    })
+  }
+
+  if (method === "post" && path === "/routers") {
+    const payload = parseBody<RouterFormValues>(config)
+    if (!payload) return notFound(config)
+    const created = toManagedRouter(`router-${generateId()}`, payload)
+    managedRouters.unshift(created)
+    routerHealthById[created.id] = {
+      cpuUsage: 0,
+      ramUsage: 0,
+      uptime: "0d 0h",
+      interfacesUp: 0,
+      interfacesDown: 0,
+      throughput: "0 Mbps",
+    }
+    return ok(config, created, 201)
+  }
+
+  if (method === "put" && path.startsWith("/routers/")) {
+    const routerId = path.split("/")[2]
+    const payload = parseBody<RouterFormValues>(config)
+    const index = managedRouters.findIndex((item) => item.id === routerId)
+    if (index === -1 || !payload) return notFound(config)
+    managedRouters[index] = toManagedRouter(routerId, payload, managedRouters[index])
+    return ok(config, managedRouters[index])
+  }
+
+  if (method === "delete" && path.startsWith("/routers/")) {
+    const routerId = path.split("/")[2]
+    const index = managedRouters.findIndex((item) => item.id === routerId)
+    if (index === -1) return notFound(config)
+    managedRouters.splice(index, 1)
+    delete routerHealthById[routerId]
+    return ok(config, null)
   }
 
   if (method === "get" && path.includes("/monitoring/routers/") && path.endsWith("/metrics")) {

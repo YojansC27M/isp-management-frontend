@@ -1,4 +1,5 @@
 import StateMessage from "@/components/feedback/StateMessage"
+import { useI18n } from "@/i18n/i18nContext"
 import type { ClientPayment } from "../types/clientPortal"
 
 interface ClientPaymentsTableProps {
@@ -6,8 +7,10 @@ interface ClientPaymentsTableProps {
 }
 
 const ClientPaymentsTable = ({ payments }: ClientPaymentsTableProps) => {
+  const { t } = useI18n()
+
   if (payments.length === 0) {
-    return <StateMessage variant="empty" title="No se encontraron pagos." />
+    return <StateMessage variant="empty" title={t("clientPortal.payments.emptyTitle")} />
   }
 
   return (
@@ -15,9 +18,9 @@ const ClientPaymentsTable = ({ payments }: ClientPaymentsTableProps) => {
       <table className="w-full text-sm">
         <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-4 py-3">Monto</th>
-            <th className="px-4 py-3">Fecha</th>
-            <th className="px-4 py-3">Metodo</th>
+            <th className="px-4 py-3">{t("payments.table.amount")}</th>
+            <th className="px-4 py-3">{t("payments.table.date")}</th>
+            <th className="px-4 py-3">{t("payments.table.method")}</th>
           </tr>
         </thead>
         <tbody>

@@ -1,18 +1,13 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react"
 import type { KeyboardEvent } from "react"
 import { Input } from "@/components/ui/input"
+import { useI18n } from "@/i18n/i18nContext"
 import { useDebouncedValue } from "@/lib/useDebouncedValue"
 import { cn } from "@/lib/utils"
 import { getClientById, searchClients } from "../services/clientsApi"
 import type { Client } from "../types/client"
 
 type ClientSummary = Pick<Client, "id" | "name" | "document" | "phone" | "plan" | "status">
-
-const statusLabel: Record<Client["status"], string> = {
-  active: "Activo",
-  suspended: "Suspendido",
-  inactive: "Inactivo",
-}
 
 const statusClassName: Record<Client["status"], string> = {
   active: "text-emerald-700 bg-emerald-100",
@@ -42,7 +37,7 @@ const ClientAutocompleteField = forwardRef<HTMLInputElement, ClientAutocompleteF
       name,
       value,
       disabled = false,
-      placeholder = "Busca por nombre, documento o telefono",
+      placeholder,
       ariaDescribedBy,
       ariaInvalid,
       className,
@@ -51,6 +46,7 @@ const ClientAutocompleteField = forwardRef<HTMLInputElement, ClientAutocompleteF
     },
     ref,
   ) => {
+    const { t } = useI18n()
     const [query, setQuery] = useState("")
     const [selectedClient, setSelectedClient] = useState<ClientSummary | null>(null)
     const [options, setOptions] = useState<ClientSummary[]>([])
@@ -197,7 +193,7 @@ const ClientAutocompleteField = forwardRef<HTMLInputElement, ClientAutocompleteF
             ref={ref}
             disabled={disabled}
             value={query}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t("clients.form.autocomplete.placeholder")}
             autoComplete="off"
             aria-invalid={ariaInvalid}
             aria-describedby={ariaDescribedBy}
@@ -226,9 +222,9 @@ const ClientAutocompleteField = forwardRef<HTMLInputElement, ClientAutocompleteF
               className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => commitSelection(null)}
-              aria-label="Limpiar cliente seleccionado"
+              aria-label={t("clients.form.autocomplete.clearAria")}
             >
-              Limpiar
+              {t("common.cancel")}
             </button>
           )}
         </div>
@@ -236,10 +232,10 @@ const ClientAutocompleteField = forwardRef<HTMLInputElement, ClientAutocompleteF
         {isOpen && !disabled && (
           <div className="absolute z-20 mt-1.5 w-full rounded-lg border border-border bg-card p-1.5 shadow-lg">
             <div className="max-h-56 space-y-1 overflow-auto pr-1">
-              {!shouldSearch && <p className="px-2 py-1.5 text-xs text-muted-foreground">Escribe al menos 2 caracteres</p>}
-              {shouldSearch && loading && <p className="px-2 py-1.5 text-xs text-muted-foreground">Buscando clientes...</p>}
+              {!shouldSearch && <p className="px-2 py-1.5 text-xs text-muted-foreground">{t("clients.form.autocomplete.minChars")}</p>}
+              {shouldSearch && loading && <p className="px-2 py-1.5 text-xs text-muted-foreground">{t("clients.form.autocomplete.searching")}</p>}
               {shouldSearch && !loading && visibleOptions.length === 0 && (
-                <p className="px-2 py-1.5 text-xs text-muted-foreground">No se encontraron clientes para tu busqueda.</p>
+                <p className="px-2 py-1.5 text-xs text-muted-foreground">{t("clients.form.autocomplete.empty")}</p>
               )}
 
               {visibleOptions.map((client, index) => (
@@ -256,11 +252,11 @@ const ClientAutocompleteField = forwardRef<HTMLInputElement, ClientAutocompleteF
                   <div className="flex items-center justify-between gap-2">
                     <strong className="text-sm text-foreground">{client.name}</strong>
                     <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", statusClassName[client.status])}>
-                      {statusLabel[client.status]}
+                      {t(`clients.status.${client.status}`)}
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {client.document} · {client.phone} · {client.plan}
+                    {client.document} - {client.phone} - {client.plan}
                   </p>
                 </button>
               ))}
@@ -276,4 +272,3 @@ ClientAutocompleteField.displayName = "ClientAutocompleteField"
 
 export type { ClientSummary }
 export default ClientAutocompleteField
-

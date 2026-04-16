@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import type { ClientFormValues, ClientStatus } from "../types/client"
 
 interface ClientFormProps {
@@ -14,10 +15,10 @@ interface ClientFormProps {
 type FormErrors = Partial<Record<keyof ClientFormValues, string>>
 type FocusableField = keyof ClientFormValues
 
-const statusOptions: { label: string; value: ClientStatus }[] = [
-  { label: "Activo", value: "active" },
-  { label: "Suspendido", value: "suspended" },
-  { label: "Inactivo", value: "inactive" },
+const statusOptions: { key: string; value: ClientStatus }[] = [
+  { key: "clients.status.active", value: "active" },
+  { key: "clients.status.suspended", value: "suspended" },
+  { key: "clients.status.inactive", value: "inactive" },
 ]
 
 const fieldClass =
@@ -26,7 +27,8 @@ const fieldClass =
 const errorId = (field: string) => `client-form-${field}-error`
 const inputId = (field: string) => `client-form-${field}`
 
-const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: ClientFormProps) => {
+const ClientForm = ({ initialValues, onSubmit, submitLabel }: ClientFormProps) => {
+  const { t } = useI18n()
   const [values, setValues] = useState<ClientFormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
   const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
@@ -54,16 +56,16 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio"
-    if (!values.document.trim()) nextErrors.document = "El documento es obligatorio"
-    if (!values.phone.trim()) nextErrors.phone = "El teléfono es obligatorio"
+    if (!values.name.trim()) nextErrors.name = t("clients.form.error.nameRequired")
+    if (!values.document.trim()) nextErrors.document = t("clients.form.error.documentRequired")
+    if (!values.phone.trim()) nextErrors.phone = t("clients.form.error.phoneRequired")
     if (!values.email.trim()) {
-      nextErrors.email = "El correo es obligatorio"
+      nextErrors.email = t("clients.form.error.emailRequired")
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = "El correo no es válido"
+      nextErrors.email = t("clients.form.error.emailInvalid")
     }
-    if (!values.ipAddress.trim()) nextErrors.ipAddress = "La IP es obligatoria"
-    if (!values.status) nextErrors.status = "El estado es obligatorio"
+    if (!values.ipAddress.trim()) nextErrors.ipAddress = t("clients.form.error.ipRequired")
+    if (!values.status) nextErrors.status = t("clients.form.error.statusRequired")
     setErrors(nextErrors)
     return nextErrors
   }
@@ -91,7 +93,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
     <form onSubmit={handleSubmit} className="grid max-w-3xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("name")}>Nombre</Label>
+          <Label htmlFor={inputId("name")}>{t("clients.table.name")}</Label>
           <Input
             id={inputId("name")}
             name="name"
@@ -104,7 +106,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
           {errors.name && <span id={errorId("name")} className="text-xs text-rose-600" role="alert">{errors.name}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("document")}>Documento</Label>
+          <Label htmlFor={inputId("document")}>{t("clients.table.document")}</Label>
           <Input
             id={inputId("document")}
             name="document"
@@ -117,11 +119,11 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
           {errors.document && <span id={errorId("document")} className="text-xs text-rose-600" role="alert">{errors.document}</span>}
         </label>
         <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("address")}>Dirección</Label>
+          <Label htmlFor={inputId("address")}>{t("clients.form.address")}</Label>
           <Input id={inputId("address")} name="address" value={values.address} onChange={handleTextChange("address")} />
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("phone")}>Teléfono</Label>
+          <Label htmlFor={inputId("phone")}>{t("clients.table.phone")}</Label>
           <Input
             id={inputId("phone")}
             name="phone"
@@ -134,7 +136,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
           {errors.phone && <span id={errorId("phone")} className="text-xs text-rose-600" role="alert">{errors.phone}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("email")}>Correo</Label>
+          <Label htmlFor={inputId("email")}>{t("clients.table.email")}</Label>
           <Input
             id={inputId("email")}
             name="email"
@@ -148,11 +150,11 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
           {errors.email && <span id={errorId("email")} className="text-xs text-rose-600" role="alert">{errors.email}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("plan")}>Plan</Label>
+          <Label htmlFor={inputId("plan")}>{t("clients.table.plan")}</Label>
           <Input id={inputId("plan")} name="plan" value={values.plan} onChange={handleTextChange("plan")} />
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("ipAddress")}>Dirección IP</Label>
+          <Label htmlFor={inputId("ipAddress")}>{t("clients.table.ip")}</Label>
           <Input
             id={inputId("ipAddress")}
             name="ipAddress"
@@ -165,7 +167,7 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
           {errors.ipAddress && <span id={errorId("ipAddress")} className="text-xs text-rose-600" role="alert">{errors.ipAddress}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("status")}>Estado</Label>
+          <Label htmlFor={inputId("status")}>{t("clients.table.status")}</Label>
           <select
             id={inputId("status")}
             name="status"
@@ -178,23 +180,23 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Client
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
           {errors.status && <span id={errorId("status")} className="text-xs text-rose-600" role="alert">{errors.status}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("latitude")}>Latitud</Label>
+          <Label htmlFor={inputId("latitude")}>{t("clients.form.latitude")}</Label>
           <Input id={inputId("latitude")} name="latitude" type="number" step="any" value={values.latitude ?? ""} onChange={handleNumberChange("latitude")} />
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("longitude")}>Longitud</Label>
+          <Label htmlFor={inputId("longitude")}>{t("clients.form.longitude")}</Label>
           <Input id={inputId("longitude")} name="longitude" type="number" step="any" value={values.longitude ?? ""} onChange={handleNumberChange("longitude")} />
         </label>
       </div>
       <div className="flex items-center gap-2 pt-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{submitLabel ?? t("common.save")}</Button>
       </div>
     </form>
   )

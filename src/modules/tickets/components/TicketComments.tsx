@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import type { TicketComment, TicketCommentVisibility } from "../types/ticket"
 
 interface TicketCommentsProps {
@@ -14,17 +15,13 @@ interface TicketCommentsProps {
 const textareaClass =
   "min-h-24 w-full rounded-lg border border-border bg-card px-2.5 py-2 text-sm text-muted-foreground outline-none focus:border-ring"
 
-const visibilityLabel: Record<TicketCommentVisibility, string> = {
-  public: "Publico",
-  internal: "Interno",
-}
-
 const visibilityStyles: Record<TicketCommentVisibility, string> = {
   public: "bg-blue-100 text-blue-700",
   internal: "bg-violet-100 text-violet-700",
 }
 
 const TicketComments = ({ ticketId, comments, onAddComment, canComment = true }: TicketCommentsProps) => {
+  const { t } = useI18n()
   const [message, setMessage] = useState("")
   const [visibility, setVisibility] = useState<TicketCommentVisibility>("public")
   const [filter, setFilter] = useState<TicketCommentVisibility | "all">("all")
@@ -52,40 +49,40 @@ const TicketComments = ({ ticketId, comments, onAddComment, canComment = true }:
     <div className="grid gap-4">
       <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-foreground">Comentarios</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("tickets.comments.title")}</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
               className={`rounded-md px-2.5 py-1 text-xs ${filter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
               onClick={() => setFilter("all")}
             >
-              Todos
+              {t("tickets.comments.filter.all")}
             </button>
             <button
               type="button"
               className={`rounded-md px-2.5 py-1 text-xs ${filter === "public" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
               onClick={() => setFilter("public")}
             >
-              Publicos
+              {t("tickets.comments.filter.public")}
             </button>
             <button
               type="button"
               className={`rounded-md px-2.5 py-1 text-xs ${filter === "internal" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
               onClick={() => setFilter("internal")}
             >
-              Internos
+              {t("tickets.comments.filter.internal")}
             </button>
           </div>
         </div>
         {visibleComments.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No hay comentarios para este filtro.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("tickets.comments.empty")}</p>
         ) : (
           <ul className="mt-3 grid gap-3">
             {visibleComments.map((comment) => (
               <li key={comment.id} className="rounded-lg border border-border bg-muted/40 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${visibilityStyles[comment.visibility]}`}>
-                    {visibilityLabel[comment.visibility]}
+                    {t(`tickets.comments.visibility.${comment.visibility}`)}
                   </span>
                   <span className="text-xs text-muted-foreground">{comment.createdAt}</span>
                 </div>
@@ -99,7 +96,7 @@ const TicketComments = ({ ticketId, comments, onAddComment, canComment = true }:
 
       <form onSubmit={handleSubmit} className="grid gap-2 rounded-xl border border-border bg-card p-4">
         <div className="grid gap-1.5 sm:max-w-xs">
-          <Label htmlFor="ticket-comment-visibility">Tipo de comentario</Label>
+          <Label htmlFor="ticket-comment-visibility">{t("tickets.comments.type")}</Label>
           <select
             id="ticket-comment-visibility"
             value={visibility}
@@ -107,11 +104,11 @@ const TicketComments = ({ ticketId, comments, onAddComment, canComment = true }:
             onChange={(event) => setVisibility(event.target.value as TicketCommentVisibility)}
             className="h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
           >
-            <option value="public">Publico (visible al cliente)</option>
-            <option value="internal">Interno (solo equipo)</option>
+            <option value="public">{t("tickets.comments.option.public")}</option>
+            <option value="internal">{t("tickets.comments.option.internal")}</option>
           </select>
         </div>
-        <Label htmlFor="ticket-comment-message">Agregar comentario</Label>
+        <Label htmlFor="ticket-comment-message">{t("tickets.comments.add")}</Label>
         <textarea
           id="ticket-comment-message"
           rows={3}
@@ -124,9 +121,9 @@ const TicketComments = ({ ticketId, comments, onAddComment, canComment = true }:
           <Button
             type="submit"
             disabled={submitting || !canComment}
-            title={!canComment ? "Tu perfil no tiene permiso para comentar en tickets." : undefined}
+            title={!canComment ? t("tickets.comments.permission") : undefined}
           >
-            {submitting ? "Guardando..." : "Enviar comentario"}
+            {submitting ? t("common.saving") : t("tickets.comments.send")}
           </Button>
         </div>
       </form>

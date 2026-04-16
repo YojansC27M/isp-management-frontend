@@ -116,13 +116,13 @@ const LoginPage = () => {
                         .filter((role) => role !== "client")
                         .map((role) => (
                           <option key={role} value={role} disabled={!roleStatusMap[role]}>
-                            {roleLabels[role]} {!roleStatusMap[role] ? "(Inactivo)" : ""}
+                            {roleLabels[role]} {!roleStatusMap[role] ? `(${t("login.roleInactive")})` : ""}
                           </option>
                         ))}
                     </select>
                     {!roleStatusMap[selectedRole] && (
                       <p className="text-xs text-rose-600">
-                        Este perfil esta inactivo. Activalo en Perfiles y permisos para permitir el acceso.
+                        {t("login.inactiveRoleHint")}
                       </p>
                     )}
                   </div>

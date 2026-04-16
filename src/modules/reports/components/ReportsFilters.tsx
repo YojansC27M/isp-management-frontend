@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import FilterPanel from "@/components/shared/FilterPanel"
+import { useI18n } from "@/i18n/i18nContext"
 import type { ReportsFiltersValues } from "../types/report"
 
 interface ReportsFiltersProps {
@@ -15,6 +16,8 @@ interface ReportsFiltersProps {
 const inputId = (field: string) => `reports-filters-${field}`
 
 const ReportsFilters = ({ values, onChange, onApply, onClear }: ReportsFiltersProps) => {
+  const { t } = useI18n()
+
   const handleInputChange = (field: keyof ReportsFiltersValues) => (event: ChangeEvent<HTMLInputElement>) => {
     onChange({
       ...values,
@@ -27,34 +30,44 @@ const ReportsFilters = ({ values, onChange, onApply, onClear }: ReportsFiltersPr
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_auto] md:items-end">
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("dateFrom")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Desde
+            {t("reports.filters.from")}
           </Label>
           <Input id={inputId("dateFrom")} type="date" value={values.dateFrom} onChange={handleInputChange("dateFrom")} />
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("dateTo")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Hasta
+            {t("reports.filters.to")}
           </Label>
           <Input id={inputId("dateTo")} type="date" value={values.dateTo} onChange={handleInputChange("dateTo")} />
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("zone")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Zona
+            {t("reports.filters.zone")}
           </Label>
-          <Input id={inputId("zone")} value={values.zone} onChange={handleInputChange("zone")} placeholder="Zona" />
+          <Input
+            id={inputId("zone")}
+            value={values.zone}
+            onChange={handleInputChange("zone")}
+            placeholder={t("reports.filters.zonePlaceholder")}
+          />
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("plan")} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Plan
+            {t("reports.filters.plan")}
           </Label>
-          <Input id={inputId("plan")} value={values.plan} onChange={handleInputChange("plan")} placeholder="Plan" />
+          <Input
+            id={inputId("plan")}
+            value={values.plan}
+            onChange={handleInputChange("plan")}
+            placeholder={t("reports.filters.planPlaceholder")}
+          />
         </label>
         <div className="flex items-center gap-2">
           <Button type="button" onClick={onApply}>
-            Aplicar
+            {t("reports.filters.apply")}
           </Button>
           <Button type="button" variant="outline" onClick={onClear}>
-            Limpiar
+            {t("reports.filters.clear")}
           </Button>
         </div>
       </div>

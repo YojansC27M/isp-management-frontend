@@ -101,7 +101,7 @@ const InvoicesListPage = () => {
     } catch (err) {
       notify({
         title: t("invoices.downloadErrorTitle"),
-        description: getErrorMessage(err, "Intenta nuevamente en unos segundos."),
+        description: getErrorMessage(err, t("invoices.downloadErrorDesc")),
         type: "error",
       })
     } finally {

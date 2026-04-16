@@ -26,9 +26,11 @@ El backend debe responder IDs válidos en `GET /auth/navigation`.
   - `tickets`
   - `visits`
 - `operations`:
+  - `routers`
   - `monitoring`
   - `reports`
 - `security`:
+  - `settings-system`
   - `access-control`
   - `security-audit`
 

@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import {
   INTERNAL_USER_ROLE_OPTIONS,
   TECHNICIAN_AVAILABILITY_PRESETS,
@@ -55,6 +56,7 @@ const toAvailabilitySlots = (ids: string[]) => {
 }
 
 const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: InternalUserFormProps) => {
+  const { t } = useI18n()
   const [values, setValues] = useState<InternalUserFormState>({
     name: initialValues.name,
     email: initialValues.email,
@@ -117,13 +119,13 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.name.trim()) nextErrors.name = "El nombre es obligatorio"
-    if (!values.email.trim()) nextErrors.email = "El correo es obligatorio"
-    if (!values.phone.trim()) nextErrors.phone = "El telefono es obligatorio"
+    if (!values.name.trim()) nextErrors.name = t("internalUsers.form.error.nameRequired")
+    if (!values.email.trim()) nextErrors.email = t("internalUsers.form.error.emailRequired")
+    if (!values.phone.trim()) nextErrors.phone = t("internalUsers.form.error.phoneRequired")
     if (values.role === "technician") {
-      if (splitCsv(values.coverageZones).length === 0) nextErrors.coverageZones = "Define al menos una zona de cobertura"
-      if (splitCsv(values.skills).length === 0) nextErrors.skills = "Define al menos una habilidad"
-      if (values.availabilityIds.length === 0) nextErrors.availabilityIds = "Selecciona al menos una franja de disponibilidad"
+      if (splitCsv(values.coverageZones).length === 0) nextErrors.coverageZones = t("internalUsers.form.error.coverageRequired")
+      if (splitCsv(values.skills).length === 0) nextErrors.skills = t("internalUsers.form.error.skillsRequired")
+      if (values.availabilityIds.length === 0) nextErrors.availabilityIds = t("internalUsers.form.error.availabilityRequired")
     }
     setErrors(nextErrors)
     return nextErrors
@@ -162,7 +164,7 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
     <form onSubmit={handleSubmit} className="grid max-w-4xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("name")}>Nombre completo</Label>
+          <Label htmlFor={inputId("name")}>{t("profile.name")}</Label>
           <Input
             id={inputId("name")}
             value={values.name}
@@ -174,7 +176,7 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
           {errors.name && <span id={errorId("name")} className="text-xs text-rose-600" role="alert">{errors.name}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("email")}>Correo</Label>
+          <Label htmlFor={inputId("email")}>{t("profile.email")}</Label>
           <Input
             id={inputId("email")}
             type="email"
@@ -187,7 +189,7 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
           {errors.email && <span id={errorId("email")} className="text-xs text-rose-600" role="alert">{errors.email}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("phone")}>Telefono</Label>
+          <Label htmlFor={inputId("phone")}>{t("internalUsers.table.phone")}</Label>
           <Input
             id={inputId("phone")}
             value={values.phone}
@@ -199,7 +201,7 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
           {errors.phone && <span id={errorId("phone")} className="text-xs text-rose-600" role="alert">{errors.phone}</span>}
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("role")}>Rol</Label>
+          <Label htmlFor={inputId("role")}>{t("internalUsers.table.role")}</Label>
           <select
             id={inputId("role")}
             className={selectClass}
@@ -209,13 +211,13 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
           >
             {INTERNAL_USER_ROLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(`internalUsers.role.${option.value}`)}
               </option>
             ))}
           </select>
         </label>
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("status")}>Estado</Label>
+          <Label htmlFor={inputId("status")}>{t("internalUsers.table.status")}</Label>
           <select
             id={inputId("status")}
             className={selectClass}
@@ -223,8 +225,8 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
             onChange={handleSelect("status")}
             ref={(node) => (fieldRefs.current.status = node)}
           >
-            <option value="active">Activo</option>
-            <option value="inactive">Inactivo</option>
+            <option value="active">{t("internalUsers.status.active")}</option>
+            <option value="inactive">{t("internalUsers.status.inactive")}</option>
           </select>
         </label>
       </div>
@@ -232,21 +234,21 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
       {values.role === "technician" && (
         <section className="grid gap-4 rounded-lg border border-border/80 bg-muted/20 p-4">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Perfil tecnico</h3>
-            <p className="text-xs text-muted-foreground">Configura zonas, franjas y habilidades para la asignacion inteligente.</p>
+            <h3 className="text-sm font-semibold text-foreground">{t("internalUsers.form.techProfileTitle")}</h3>
+            <p className="text-xs text-muted-foreground">{t("internalUsers.form.techProfileDesc")}</p>
           </div>
           <label className="grid gap-1.5">
-            <Label htmlFor={inputId("coverageZones")}>Zonas de cobertura</Label>
+            <Label htmlFor={inputId("coverageZones")}>{t("internalUsers.form.coverageZones")}</Label>
             <Input
               id={inputId("coverageZones")}
               value={values.coverageZones}
               onChange={handleChange("coverageZones")}
-              placeholder="Norte, Centro, Suba"
+              placeholder={t("internalUsers.form.coveragePlaceholder")}
               ref={(node) => (fieldRefs.current.coverageZones = node)}
               aria-invalid={Boolean(errors.coverageZones)}
               aria-describedby={describedBy("coverageZones")}
             />
-            <span className="text-xs text-muted-foreground">Ingresa las zonas separadas por coma.</span>
+            <span className="text-xs text-muted-foreground">{t("internalUsers.form.csvHint")}</span>
             {errors.coverageZones && (
               <span id={errorId("coverageZones")} className="text-xs text-rose-600" role="alert">
                 {errors.coverageZones}
@@ -254,21 +256,21 @@ const InternalUserForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: 
             )}
           </label>
           <label className="grid gap-1.5">
-            <Label htmlFor={inputId("skills")}>Habilidades</Label>
+            <Label htmlFor={inputId("skills")}>{t("internalUsers.table.skills")}</Label>
             <Input
               id={inputId("skills")}
               value={values.skills}
               onChange={handleChange("skills")}
-              placeholder="Fibra, Empalmes, Router MikroTik"
+              placeholder={t("internalUsers.form.skillsPlaceholder")}
               ref={(node) => (fieldRefs.current.skills = node)}
               aria-invalid={Boolean(errors.skills)}
               aria-describedby={describedBy("skills")}
             />
-            <span className="text-xs text-muted-foreground">Ingresa las habilidades separadas por coma.</span>
+            <span className="text-xs text-muted-foreground">{t("internalUsers.form.csvHint")}</span>
             {errors.skills && <span id={errorId("skills")} className="text-xs text-rose-600" role="alert">{errors.skills}</span>}
           </label>
           <div className="grid gap-2">
-            <Label htmlFor={inputId("availability")}>Disponibilidad</Label>
+            <Label htmlFor={inputId("availability")}>{t("technicianAssignment.availability")}</Label>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3" ref={(node) => (fieldRefs.current.availabilityIds = node)}>
               {TECHNICIAN_AVAILABILITY_PRESETS.map((slot) => {
                 const checked = values.availabilityIds.includes(slot.id)

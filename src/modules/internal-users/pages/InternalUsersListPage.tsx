@@ -104,7 +104,7 @@ const InternalUsersListPage = () => {
     } catch (err) {
       notify({
         title: t("internalUsers.deleteErrorTitle"),
-        description: getErrorMessage(err, "Intenta nuevamente."),
+        description: getErrorMessage(err, t("internalUsers.deleteErrorDesc")),
         type: "error",
       })
     }

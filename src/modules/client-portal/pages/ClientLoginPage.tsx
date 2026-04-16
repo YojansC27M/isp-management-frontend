@@ -1,13 +1,17 @@
-import { useState } from "react"
+ï»¿import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { login } from "../services/clientPortalApi"
 import { setClientToken } from "@/auth/session"
+import { useI18n } from "@/i18n/i18nContext"
+import { login } from "../services/clientPortalApi"
+
+const COMPLIANCE_BADGES = ["ISO 27001", "SOC 2", "PCI DSS"]
 
 const ClientLoginPage = () => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -19,17 +23,17 @@ const ClientLoginPage = () => {
     setError("")
 
     if (!email.trim()) {
-      setError("El correo es obligatorio")
+      setError(t("clientPortal.login.error.emailRequired"))
       return
     }
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("El correo no es válido")
+      setError(t("clientPortal.login.error.emailInvalid"))
       return
     }
 
     if (!password.trim()) {
-      setError("La contraseña es obligatoria")
+      setError(t("clientPortal.login.error.passwordRequired"))
       return
     }
 
@@ -39,11 +43,17 @@ const ClientLoginPage = () => {
       setClientToken(response.token)
       navigate("/client/dashboard")
     } catch {
-      setError("Inicio de sesión fallido")
+      setError(t("clientPortal.login.error.failed"))
     } finally {
       setLoading(false)
     }
   }
+
+  const benefits = [
+    t("clientPortal.login.benefitVisibility"),
+    t("clientPortal.login.benefitTraceability"),
+    t("clientPortal.login.benefitRoleAccess"),
+  ]
 
   return (
     <div className="relative min-h-screen bg-background text-foreground dark:bg-[#0b1020] dark:text-slate-100">
@@ -58,37 +68,27 @@ const ClientLoginPage = () => {
               <div className="flex items-center gap-4">
                 <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card/70 dark:border-slate-800/70 dark:bg-slate-900/70">
                   <span className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-sky-400/30 to-blue-700/30 blur" />
-                  <img src="/brand-mark.svg" alt="Corma Networks" className="relative h-10" />
+                  <img src="/brand-mark.svg" alt={t("clientPortal.login.brandName")} className="relative h-10" />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Portal Empresarial</p>
-                  <p className="text-lg font-semibold text-foreground dark:text-white">Corma Networks</p>
+                  <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">{t("clientPortal.login.brandPortal")}</p>
+                  <p className="text-lg font-semibold text-foreground dark:text-white">{t("clientPortal.login.brandName")}</p>
                 </div>
               </div>
-              <h1 className="text-4xl font-semibold leading-tight text-foreground dark:text-white">
-                Acceso seguro para clientes con controles de nivel empresarial.
-              </h1>
-              <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-                Supervisa facturación, estado del servicio y soporte en un entorno controlado para clientes premium.
-              </p>
+              <h1 className="text-4xl font-semibold leading-tight text-foreground dark:text-white">{t("clientPortal.login.heroTitle")}</h1>
+              <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">{t("clientPortal.login.heroDescription")}</p>
             </div>
 
             <div className="grid gap-4 rounded-2xl border border-border bg-card/70 p-6 shadow-lg shadow-foreground/10 dark:border-slate-800/70 dark:bg-slate-900/60 dark:shadow-slate-950/40">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Seguridad</p>
-                  <p className="text-sm font-medium text-foreground dark:text-slate-200">Aislamiento multi-tenant</p>
+                  <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{t("clientPortal.login.securityTitle")}</p>
+                  <p className="text-sm font-medium text-foreground dark:text-slate-200">{t("clientPortal.login.securitySubtitle")}</p>
                 </div>
-                <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-                  MFA habilitado
-                </span>
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">{t("clientPortal.login.securityBadge")}</span>
               </div>
               <div className="grid gap-3 text-sm text-muted-foreground dark:text-slate-300">
-                {[
-                  "Visibilidad centralizada de cuentas",
-                  "Trazabilidad para auditoría",
-                  "Acceso basado en roles",
-                ].map((item) => (
+                {benefits.map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <span className="mt-2 h-2 w-2 rounded-full bg-sky-400" />
                     <span>{item}</span>
@@ -96,7 +96,7 @@ const ClientLoginPage = () => {
                 ))}
               </div>
               <div className="flex flex-wrap gap-2 pt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                {["ISO 27001", "SOC 2", "PCI DSS"].map((item) => (
+                {COMPLIANCE_BADGES.map((item) => (
                   <span key={item} className="rounded-full border border-border bg-background/70 px-3 py-1 dark:border-slate-700/70 dark:bg-slate-950/60">
                     {item}
                   </span>
@@ -105,8 +105,8 @@ const ClientLoginPage = () => {
             </div>
 
             <div className="flex items-center gap-6 text-xs text-muted-foreground">
-              <span>Soporte: +1 (800) 555-0199</span>
-              <span>seguridad@corma.net</span>
+              <span>{t("clientPortal.login.supportPhone")}</span>
+              <span>{t("clientPortal.login.supportEmail")}</span>
             </div>
           </div>
 
@@ -114,20 +114,18 @@ const ClientLoginPage = () => {
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-sky-500/10 to-transparent" />
             <CardHeader className="gap-2 border-b border-border pb-6 dark:border-slate-800/60">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-foreground dark:text-white">Ingreso al portal de clientes</CardTitle>
-                <span className="rounded-full border border-border bg-background/70 px-3 py-1 dark:border-slate-700/70 dark:bg-slate-950/60 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Verificado
+                <CardTitle className="text-lg text-foreground dark:text-white">{t("clientPortal.login.cardTitle")}</CardTitle>
+                <span className="rounded-full border border-border bg-background/70 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground dark:border-slate-700/70 dark:bg-slate-950/60">
+                  {t("clientPortal.login.verified")}
                 </span>
               </div>
-              <CardDescription className="text-muted-foreground">
-                Usa tus credenciales corporativas para continuar.
-              </CardDescription>
+              <CardDescription className="text-muted-foreground">{t("clientPortal.login.cardDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="grid gap-5">
                 <div className="grid gap-2">
                   <Label htmlFor="client-email" className="text-foreground dark:text-slate-300">
-                    Correo
+                    {t("clientPortal.login.emailLabel")}
                   </Label>
                   <Input
                     id="client-email"
@@ -140,14 +138,14 @@ const ClientLoginPage = () => {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="client-password" className="text-foreground dark:text-slate-300">
-                    Contraseña
+                    {t("clientPortal.login.passwordLabel")}
                   </Label>
                   <Input
                     id="client-password"
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    placeholder="••••••"
+                    placeholder="******"
                     className="h-11 border-border bg-background text-foreground placeholder:text-muted-foreground dark:border-slate-700/70 dark:bg-slate-950/60 dark:text-slate-100"
                   />
                 </div>
@@ -157,23 +155,23 @@ const ClientLoginPage = () => {
                   disabled={loading}
                   className="h-11 w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/20 hover:from-sky-400 hover:to-blue-500"
                 >
-                  {loading ? "Ingresando..." : "Ingresar"}
+                  {loading ? t("clientPortal.login.signingIn") : t("clientPortal.login.signIn")}
                 </Button>
               </form>
               <div className="mt-6 grid gap-3 rounded-xl border border-border bg-muted/30 p-4 text-xs text-muted-foreground dark:border-slate-800/70 dark:bg-slate-950/60">
                 <div className="flex items-center justify-between">
-                  <span>Último acceso</span>
-                  <span className="text-foreground dark:text-slate-200">21 Ago, 09:45</span>
+                  <span>{t("clientPortal.login.lastAccess")}</span>
+                  <span className="text-foreground dark:text-slate-200">{t("clientPortal.login.lastAccessValue")}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Ubicación</span>
-                  <span className="text-foreground dark:text-slate-200">Bogotá, CO</span>
+                  <span>{t("clientPortal.login.location")}</span>
+                  <span className="text-foreground dark:text-slate-200">{t("clientPortal.login.locationValue")}</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col items-start gap-2 border-t border-border text-xs text-muted-foreground dark:border-slate-800/60">
-              <span>Protegido con cifrado de nivel empresarial.</span>
-              <span>¿Necesitas acceso? Contacta a tu gestor de cuenta.</span>
+              <span>{t("clientPortal.login.footerSecure")}</span>
+              <span>{t("clientPortal.login.footerContact")}</span>
             </CardFooter>
           </Card>
         </div>
@@ -183,5 +181,3 @@ const ClientLoginPage = () => {
 }
 
 export default ClientLoginPage
-
-

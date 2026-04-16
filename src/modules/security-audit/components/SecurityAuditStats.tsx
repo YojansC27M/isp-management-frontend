@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useI18n } from "@/i18n/i18nContext"
 import type { SecurityAuditStats as SecurityAuditStatsType } from "../types/securityAudit"
 
 interface SecurityAuditStatsProps {
@@ -6,11 +7,13 @@ interface SecurityAuditStatsProps {
 }
 
 const SecurityAuditStats = ({ stats }: SecurityAuditStatsProps) => {
+  const { t } = useI18n()
+
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Eventos totales</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">{t("securityAudit.stats.total")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold text-foreground">{stats.total}</p>
@@ -18,7 +21,7 @@ const SecurityAuditStats = ({ stats }: SecurityAuditStatsProps) => {
       </Card>
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Cambios hoy</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">{t("securityAudit.stats.today")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold text-foreground">{stats.todayCount}</p>
@@ -26,7 +29,7 @@ const SecurityAuditStats = ({ stats }: SecurityAuditStatsProps) => {
       </Card>
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Ultimos 7 dias</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">{t("securityAudit.stats.last7")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold text-foreground">{stats.last7Count}</p>
@@ -34,7 +37,7 @@ const SecurityAuditStats = ({ stats }: SecurityAuditStatsProps) => {
       </Card>
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Cambios sensibles</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">{t("securityAudit.stats.risky")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold text-foreground">{stats.riskyChanges}</p>
@@ -45,4 +48,3 @@ const SecurityAuditStats = ({ stats }: SecurityAuditStatsProps) => {
 }
 
 export default SecurityAuditStats
-

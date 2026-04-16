@@ -1,0 +1,1 @@
+import{j as e}from"./index-CTMnMdSq.js";const d=({label:r,value:t,className:s=""})=>e.jsxs("article",{className:`rounded-xl border border-border bg-card p-4 ${s}`.trim(),children:[e.jsx("p",{className:"text-xs font-semibold uppercase tracking-wide text-muted-foreground",children:r}),e.jsx("p",{className:"mt-2 text-2xl font-semibold text-foreground",children:t})]});export{d as K};

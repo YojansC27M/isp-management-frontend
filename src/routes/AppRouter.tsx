@@ -38,8 +38,12 @@ const ClientsMapPage = lazy(() => import("../modules/clients-map/pages/ClientsMa
 const InvoicesListPage = lazy(() => import("../modules/invoices/pages/InvoicesListPage"))
 const InvoiceDetailPage = lazy(() => import("../modules/invoices/pages/InvoiceDetailPage"))
 const ReportsDashboardPage = lazy(() => import("../modules/reports/pages/ReportsDashboardPage"))
+const RoutersListPage = lazy(() => import("../modules/routers/pages/RoutersListPage"))
+const RouterCreatePage = lazy(() => import("../modules/routers/pages/RouterCreatePage"))
+const RouterDetailPage = lazy(() => import("../modules/routers/pages/RouterDetailPage"))
 const AccessControlPage = lazy(() => import("../modules/access-control/pages/AccessControlPage"))
 const SecurityAuditPage = lazy(() => import("../modules/security-audit/pages/SecurityAuditPage"))
+const SystemSettingsPage = lazy(() => import("../modules/system-settings/pages/SystemSettingsPage"))
 const ClientLoginPage = lazy(() => import("../modules/client-portal/pages/ClientLoginPage"))
 const ClientDashboardPage = lazy(() => import("../modules/client-portal/pages/ClientDashboardPage"))
 const ClientPaymentsPage = lazy(() => import("../modules/client-portal/pages/ClientPaymentsPage"))
@@ -316,10 +320,42 @@ const AppRouter = () => {
           }
         />
         <Route
+          path="/routers"
+          element={
+            <PermissionRoute requiredPermissions={["routers.read"]}>
+              <MainLayout>{suspenseNode(<RoutersListPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/routers/new"
+          element={
+            <PermissionRoute requiredPermissions={["routers.write"]}>
+              <MainLayout>{suspenseNode(<RouterCreatePage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/routers/:id"
+          element={
+            <PermissionRoute requiredPermissions={["routers.read"]}>
+              <MainLayout>{suspenseNode(<RouterDetailPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
           path="/access-control"
           element={
             <PermissionRoute requiredPermissions={["roles.read"]}>
               <MainLayout>{suspenseNode(<AccessControlPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/settings/system"
+          element={
+            <PermissionRoute requiredPermissions={["system_settings.read"]}>
+              <MainLayout>{suspenseNode(<SystemSettingsPage />)}</MainLayout>
             </PermissionRoute>
           }
         />

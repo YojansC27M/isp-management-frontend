@@ -1,1 +1,0 @@
-import{q as s}from"./index-cvByACmx.js";const t=async()=>{const{data:e}=await s.get("/invoices",{cancelKey:"list"});return e},o=async e=>{const{data:a}=await s.get(`/invoices/${e}`);return a},c=async e=>(await s.get(`/invoices/${e}/pdf`,{responseType:"blob"})).data;export{o as a,c as d,t as g};

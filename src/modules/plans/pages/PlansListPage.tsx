@@ -61,7 +61,7 @@ const PlansListPage = () => {
     } catch (err) {
       notify({
         title: t("plans.deleteErrorTitle"),
-        description: getErrorMessage(err, "Intenta nuevamente."),
+        description: getErrorMessage(err, t("plans.deleteErrorDesc")),
         type: "error",
       })
     }

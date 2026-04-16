@@ -1,17 +1,19 @@
 import { readSecurityAudit, type SecurityAuditAction, type SecurityAuditEntry } from "@/auth/auditLog"
 import { appRoles, roleLabels } from "@/auth/permissions"
+import { getCurrentLocale } from "@/i18n/locale"
+import { translateWithLocale } from "@/i18n/translations"
 import type { SecurityAuditDateFilter, SecurityAuditFilters, SecurityAuditStats } from "../types/securityAudit"
 
-export const securityAuditActionLabels: Record<SecurityAuditAction, string> = {
-  save: "Guardar perfil",
-  save_all: "Guardar todos los perfiles",
-  toggle_role_status: "Cambio de estado de perfil",
-  reset_role: "Restaurar perfil",
-  reset_all: "Restaurar todos",
-  internal_user_create: "Crear usuario interno",
-  internal_user_update: "Actualizar usuario interno",
-  internal_user_delete: "Eliminar usuario interno",
-  technician_assignment: "Asignacion de tecnico",
+const securityAuditActionLabelKeys: Record<SecurityAuditAction, string> = {
+  save: "securityAudit.action.save",
+  save_all: "securityAudit.action.save_all",
+  toggle_role_status: "securityAudit.action.toggle_role_status",
+  reset_role: "securityAudit.action.reset_role",
+  reset_all: "securityAudit.action.reset_all",
+  internal_user_create: "securityAudit.action.internal_user_create",
+  internal_user_update: "securityAudit.action.internal_user_update",
+  internal_user_delete: "securityAudit.action.internal_user_delete",
+  technician_assignment: "securityAudit.action.technician_assignment",
 }
 
 export const securityAuditActionBadgeClass: Record<SecurityAuditAction, string> = {
@@ -29,10 +31,16 @@ export const securityAuditActionBadgeClass: Record<SecurityAuditAction, string> 
 export const loadSecurityAudit = () => readSecurityAudit()
 
 export const formatSecurityAuditDateTime = (isoDate: string) => {
-  return new Intl.DateTimeFormat("es-CO", {
+  const locale = getCurrentLocale() === "en" ? "en-US" : "es-CO"
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(isoDate))
+}
+
+export const getSecurityAuditActionLabel = (action: SecurityAuditAction) => {
+  const locale = getCurrentLocale()
+  return translateWithLocale(locale, securityAuditActionLabelKeys[action])
 }
 
 const isSameDay = (dateA: Date, dateB: Date) => {
@@ -71,8 +79,9 @@ export const filterSecurityAuditEntries = (entries: SecurityAuditEntry[], filter
 
     if (!term) return true
 
-    const targetLabel = entry.targetRole === "all" ? "Sistema" : roleLabels[entry.targetRole]
-    const haystack = [entry.details, entry.actorName, roleLabels[entry.actorRole], targetLabel, securityAuditActionLabels[entry.action]]
+    const targetLabel =
+      entry.targetRole === "all" ? translateWithLocale(getCurrentLocale(), "securityAudit.system") : roleLabels[entry.targetRole]
+    const haystack = [entry.details, entry.actorName, roleLabels[entry.actorRole], targetLabel, getSecurityAuditActionLabel(entry.action)]
       .join(" ")
       .toLowerCase()
     return haystack.includes(term)
@@ -109,9 +118,9 @@ export const exportSecurityAuditAsJson = (entries: SecurityAuditEntry[]) => {
 }
 
 export const getSecurityAuditActionOptions = () => {
-  return Object.entries(securityAuditActionLabels).map(([value, label]) => ({
-    value: value as SecurityAuditAction,
-    label,
+  return (Object.keys(securityAuditActionLabelKeys) as SecurityAuditAction[]).map((value) => ({
+    value,
+    label: getSecurityAuditActionLabel(value),
   }))
 }
 

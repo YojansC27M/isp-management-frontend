@@ -47,6 +47,7 @@ export const NAVIGATION_CATALOG: NavigationModuleDefinition[] = [
     id: "operations",
     label: "Operacion",
     items: [
+      { id: "routers", label: "Routers", href: "/routers", requiredPermissions: ["routers.read"] },
       { id: "monitoring", label: "Monitoreo", href: "/monitoring", requiredPermissions: ["monitoring.read"] },
       { id: "reports", label: "Reportes", href: "/reports", requiredPermissions: ["reports.read"] },
     ],
@@ -55,6 +56,12 @@ export const NAVIGATION_CATALOG: NavigationModuleDefinition[] = [
     id: "security",
     label: "Seguridad",
     items: [
+      {
+        id: "settings-system",
+        label: "Configuracion ISP",
+        href: "/settings/system",
+        requiredPermissions: ["system_settings.read"],
+      },
       { id: "access-control", label: "Perfiles y permisos", href: "/access-control", requiredPermissions: ["roles.read"] },
       { id: "security-audit", label: "Auditoria de seguridad", href: "/security-audit", requiredPermissions: ["audit.read"] },
     ],
@@ -69,4 +76,3 @@ export const NAVIGATION_ALLOWED_ITEMS_BY_MODULE = new Map(
     new Set((module.items ?? []).map((item) => item.id)),
   ]),
 )
-

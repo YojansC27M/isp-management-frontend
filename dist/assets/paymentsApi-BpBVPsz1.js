@@ -1,1 +1,0 @@
-import{q as s}from"./index-cvByACmx.js";const c=async()=>{const{data:t}=await s.get("/payments",{cancelKey:"list"});return t},e=async t=>{const{data:a}=await s.post("/payments",t);return a},o=async t=>{const{data:a}=await s.get(`/payments/account-status/${t}`,{cancelKey:`account-status:${t}`});return a};export{o as a,e as c,c as g};

@@ -81,7 +81,7 @@ const ClientsListPage = () => {
     } catch (err) {
       notify({
         title: t("clients.deleteErrorTitle"),
-        description: getErrorMessage(err, "Intenta nuevamente."),
+        description: getErrorMessage(err, t("clients.deleteErrorDesc")),
         type: "error",
       })
     }
@@ -151,7 +151,7 @@ const ClientsListPage = () => {
       } catch (err) {
         notify({
           title: t("clients.importFail"),
-          description: getErrorMessage(err, "Verifica el archivo e intenta nuevamente."),
+          description: getErrorMessage(err, t("clients.importFailDesc")),
           type: "error",
         })
       }

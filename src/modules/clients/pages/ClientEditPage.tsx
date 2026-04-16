@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/i18n/i18nContext"
 import ClientForm from "../components/ClientForm"
 import { getClientById, updateClient } from "../services/clientsApi"
 import type { ClientFormValues } from "../types/client"
@@ -8,6 +9,7 @@ import type { ClientFormValues } from "../types/client"
 const ClientEditPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [initialValues, setInitialValues] = useState<ClientFormValues | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -33,21 +35,21 @@ const ClientEditPage = () => {
     navigate("/clients")
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground">Cargando cliente...</p>
-  if (!initialValues) return <p className="text-sm text-muted-foreground">Cliente no encontrado.</p>
+  if (loading) return <p className="text-sm text-muted-foreground">{t("clients.editLoading")}</p>
+  if (!initialValues) return <p className="text-sm text-muted-foreground">{t("clients.editNotFound")}</p>
 
   return (
     <div className="grid gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Editar cliente</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Actualiza datos de contacto, plan y estado.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("clients.editTitle")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("clients.editDescription")}</p>
         </div>
         <Button variant="outline" onClick={() => navigate("/clients")}>
-          Volver a Clientes
+          {t("clients.backToList")}
         </Button>
       </header>
-      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Guardar cambios" />
+      <ClientForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel={t("profile.save")} />
     </div>
   )
 }

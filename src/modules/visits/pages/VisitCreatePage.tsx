@@ -6,6 +6,7 @@ import { readSecurityAudit, writeSecurityAudit } from "@/auth/auditLog"
 import { useAuthStore } from "@/store/authStore"
 import { useUI } from "@/ui/uiContext"
 import { getErrorMessage } from "@/lib/errors"
+import { useI18n } from "@/i18n/i18nContext"
 import VisitForm from "../components/VisitForm"
 import { createVisit, findTechnicianConflict } from "../services/visitsApi"
 import type { VisitFormValues } from "../types/visit"
@@ -23,6 +24,7 @@ const initialValues: VisitFormValues = {
 
 const VisitCreatePage = () => {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { notify } = useUI()
   const actor = useAuthStore((state) => state.user)
   const [conflictMessage, setConflictMessage] = useState("")
@@ -38,10 +40,10 @@ const VisitCreatePage = () => {
         })
 
         if (conflict) {
-          const message = `El tecnico ya tiene una visita en ese horario (${conflict.clientName}).`
+          const message = t("visits.create.conflictMessage", { clientName: conflict.clientName })
           setConflictMessage(message)
           notify({
-            title: "Conflicto de disponibilidad",
+            title: t("visits.create.conflictTitle"),
             description: message,
             type: "error",
           })
@@ -54,27 +56,27 @@ const VisitCreatePage = () => {
         const entry: SecurityAuditEntry = {
           id: `${Date.now()}-${Math.floor(Math.random() * 1000)}`,
           createdAt: new Date().toISOString(),
-          actorName: actor?.name ?? "Usuario local",
+          actorName: actor?.name ?? t("internalUsers.localUser"),
           actorRole: actor?.role ?? "admin",
           targetRole: "all",
           action: "technician_assignment",
-          details: `Se asigno ${created.technicianName} a la visita ${created.id}.`,
+          details: t("visits.create.auditAssigned", { technicianName: created.technicianName, id: created.id }),
         }
         const nextAudit = [entry, ...readSecurityAudit()].slice(0, 50)
         writeSecurityAudit(nextAudit)
       }
       notify({
-        title: created.technicianId ? "Visita programada" : "Visita creada sin asignacion",
+        title: created.technicianId ? t("visits.create.successAssigned") : t("visits.create.successUnassigned"),
         description: created.technicianId
-          ? "La agenda se actualizo correctamente."
-          : "No habia tecnico disponible para el contexto. Puedes asignarlo mas adelante.",
+          ? t("visits.create.successAssignedDesc")
+          : t("visits.create.successUnassignedDesc"),
         type: "success",
       })
       navigate("/visits")
     } catch (err) {
       notify({
-        title: "No fue posible programar la visita",
-        description: getErrorMessage(err, "Intenta nuevamente en unos segundos."),
+        title: t("visits.create.errorTitle"),
+        description: getErrorMessage(err, t("visits.create.errorDesc")),
         type: "error",
       })
     }
@@ -84,17 +86,17 @@ const VisitCreatePage = () => {
     <div className="grid gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Programar visita</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Asigna tecnico, horario y valida disponibilidad en agenda.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("visits.createTitle")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("visits.createDescription")}</p>
         </div>
         <Button variant="outline" onClick={() => navigate("/visits")}>
-          Volver a Visitas
+          {t("visits.create.back")}
         </Button>
       </header>
       {conflictMessage && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{conflictMessage}</div>
       )}
-      <VisitForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel="Programar visita" />
+      <VisitForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel={t("visits.create")} />
     </div>
   )
 }

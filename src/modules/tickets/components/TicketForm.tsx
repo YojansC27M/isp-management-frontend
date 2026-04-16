@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18nContext"
 import ClientAutocompleteField, { type ClientSummary } from "@/modules/clients/components/ClientAutocompleteField"
 import { getTicketAssigneeOptions, suggestTicketAssignee, type TicketAssigneeOption } from "@/modules/internal-users/services/ticketAssignee"
 import {
@@ -39,31 +40,24 @@ type ResponsibleOption = {
   meta: string
 }
 
-const categoryOptions: { label: string; value: TicketCategory }[] = [
-  { label: "Tecnico", value: "technical" },
-  { label: "Facturacion", value: "billing" },
-  { label: "Instalacion", value: "installation" },
+const categoryOptions: { key: string; value: TicketCategory }[] = [
+  { key: "tickets.category.technical", value: "technical" },
+  { key: "tickets.category.billing", value: "billing" },
+  { key: "tickets.category.installation", value: "installation" },
 ]
 
-const priorityOptions: { label: string; value: TicketPriority }[] = [
-  { label: "Baja", value: "low" },
-  { label: "Media", value: "medium" },
-  { label: "Alta", value: "high" },
+const priorityOptions: { key: string; value: TicketPriority }[] = [
+  { key: "tickets.priority.low", value: "low" },
+  { key: "tickets.priority.medium", value: "medium" },
+  { key: "tickets.priority.high", value: "high" },
 ]
 
-const statusOptions: { label: string; value: TicketStatus }[] = [
-  { label: "Abierto", value: "open" },
-  { label: "En progreso", value: "in_progress" },
-  { label: "Resuelto", value: "resolved" },
-  { label: "Cerrado", value: "closed" },
+const statusOptions: { key: string; value: TicketStatus }[] = [
+  { key: "tickets.status.open", value: "open" },
+  { key: "tickets.status.in_progress", value: "in_progress" },
+  { key: "tickets.status.resolved", value: "resolved" },
+  { key: "tickets.status.closed", value: "closed" },
 ]
-
-const roleLabel: Record<TicketAssigneeOption["role"], string> = {
-  support: "Soporte",
-  staff: "Staff",
-  admin: "Administrador",
-  technician: "Tecnico",
-}
 
 const selectClass =
   "h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
@@ -77,6 +71,7 @@ const errorId = (field: string) => `ticket-form-${field}-error`
 const isTechnicalCategory = (category: TicketCategory | "") => category === "technical" || category === "installation"
 
 const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: TicketFormProps) => {
+  const { t } = useI18n()
   const [values, setValues] = useState<TicketFormState>({
     clientId: initialValues.clientId,
     assignedUserId: initialValues.assignedUserId,
@@ -148,17 +143,20 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
         id: option.id,
         name: option.name,
         meta: option.availableForContext
-          ? `Tecnico de campo · carga ${option.currentLoad}`
-          : `${option.unavailableReason ?? "No disponible"} · carga ${option.currentLoad}`,
+          ? t("tickets.form.assigneeFieldTech", { load: option.currentLoad })
+          : t("tickets.form.assigneeFieldTechUnavailable", {
+              reason: option.unavailableReason ?? t("tickets.form.notAvailable"),
+              load: option.currentLoad,
+            }),
       }))
     }
 
     return assigneeOptions.map((option) => ({
       id: option.id,
       name: option.name,
-      meta: `${roleLabel[option.role]} · carga ${option.currentLoad}`,
+      meta: `${t(`internalUsers.role.${option.role}`)} · ${t("tickets.form.load", { load: option.currentLoad })}`,
     }))
-  }, [assigneeOptions, technicianOptions, values.category])
+  }, [assigneeOptions, t, technicianOptions, values.category])
 
   const selectedResponsibleId = useMemo(() => {
     if (!values.category) return ""
@@ -166,8 +164,8 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
   }, [values.assignedTechnicianId, values.assignedUserId, values.category])
 
   const selectedResponsibleName = useMemo(() => {
-    return responsibleOptions.find((item) => item.id === selectedResponsibleId)?.name ?? "Sin asignar"
-  }, [responsibleOptions, selectedResponsibleId])
+    return responsibleOptions.find((item) => item.id === selectedResponsibleId)?.name ?? t("tickets.unassigned")
+  }, [responsibleOptions, selectedResponsibleId, t])
 
   const handleChange = (field: keyof Omit<TicketFormState, "category" | "priority" | "status">) => {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -212,12 +210,12 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
 
   const validate = () => {
     const nextErrors: FormErrors = {}
-    if (!values.clientId.trim()) nextErrors.clientId = "Debes seleccionar un cliente"
-    if (!values.title.trim()) nextErrors.title = "El titulo es obligatorio"
-    if (!values.description.trim()) nextErrors.description = "La descripcion es obligatoria"
-    if (!values.category) nextErrors.category = "La categoria es obligatoria"
-    if (!values.priority) nextErrors.priority = "La prioridad es obligatoria"
-    if (!values.status) nextErrors.status = "El estado es obligatorio"
+    if (!values.clientId.trim()) nextErrors.clientId = t("tickets.form.error.clientRequired")
+    if (!values.title.trim()) nextErrors.title = t("tickets.form.error.titleRequired")
+    if (!values.description.trim()) nextErrors.description = t("tickets.form.error.descriptionRequired")
+    if (!values.category) nextErrors.category = t("tickets.form.error.categoryRequired")
+    if (!values.priority) nextErrors.priority = t("tickets.form.error.priorityRequired")
+    if (!values.status) nextErrors.status = t("tickets.form.error.statusRequired")
     setErrors(nextErrors)
     return nextErrors
   }
@@ -254,9 +252,9 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     onSubmit({
       clientId: values.clientId.trim(),
       assignedUserId: technical ? "" : values.assignedUserId.trim(),
-      assignedUserName: technical ? "Sin asignar" : selectedResponsibleName,
+      assignedUserName: technical ? t("tickets.unassigned") : selectedResponsibleName,
       assignedTechnicianId: technical ? values.assignedTechnicianId.trim() : "",
-      assignedTechnicianName: technical ? selectedResponsibleName : "Sin asignar",
+      assignedTechnicianName: technical ? selectedResponsibleName : t("tickets.unassigned"),
       title: values.title.trim(),
       description: values.description.trim(),
       category: values.category as TicketCategory,
@@ -271,7 +269,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     <form onSubmit={handleSubmit} className="grid max-w-3xl gap-4 rounded-xl border border-border bg-card p-5" noValidate>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("clientId")}>Cliente</Label>
+          <Label htmlFor={inputId("clientId")}>{t("tickets.table.client")}</Label>
           <ClientAutocompleteField
             id={inputId("clientId")}
             name="clientId"
@@ -285,7 +283,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
         </label>
 
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("category")}>Categoria</Label>
+          <Label htmlFor={inputId("category")}>{t("tickets.table.category")}</Label>
           <select
             id={inputId("category")}
             name="category"
@@ -296,10 +294,10 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
             aria-invalid={Boolean(errors.category)}
             aria-describedby={describedBy("category")}
           >
-            <option value="">Selecciona una categoria</option>
+            <option value="">{t("tickets.form.selectCategory")}</option>
             {categoryOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -309,14 +307,14 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
         {values.category && (
           <div className="grid gap-2 rounded-lg border border-border/80 bg-muted/20 p-3 md:col-span-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Label htmlFor={inputId("responsible")}>Persona responsable</Label>
+              <Label htmlFor={inputId("responsible")}>{t("tickets.form.responsible")}</Label>
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleAutoAssignResponsible}
                 disabled={loadingResponsible || autoAssigningResponsible}
               >
-                {autoAssigningResponsible ? "Asignando..." : "Asignar automaticamente"}
+                {autoAssigningResponsible ? t("tickets.form.assigning") : t("tickets.form.assignAutomatically")}
               </Button>
             </div>
 
@@ -327,7 +325,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
               className={selectClass}
               disabled={loadingResponsible}
             >
-              <option value="">Sin asignar</option>
+              <option value="">{t("tickets.unassigned")}</option>
               {responsibleOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name} - {option.meta}
@@ -337,14 +335,14 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
 
             <p className="text-xs text-muted-foreground">
               {isTechnicalCategory(values.category)
-                ? `Categoria tecnica: se asigna tecnico de campo por zona (${zone || "sin zona detectada"}), disponibilidad y carga.`
-                : "Categoria de facturacion: se prioriza Soporte, luego Staff y despues Administrador."}
+                ? t("tickets.form.techCategoryHint", { zone: zone || t("tickets.form.noZoneDetected") })
+                : t("tickets.form.billingCategoryHint")}
             </p>
           </div>
         )}
 
         <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("title")}>Titulo</Label>
+          <Label htmlFor={inputId("title")}>{t("tickets.table.title")}</Label>
           <Input
             id={inputId("title")}
             name="title"
@@ -358,7 +356,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
         </label>
 
         <label className="grid gap-1.5 md:col-span-2">
-          <Label htmlFor={inputId("description")}>Descripcion</Label>
+          <Label htmlFor={inputId("description")}>{t("tickets.form.description")}</Label>
           <textarea
             id={inputId("description")}
             name="description"
@@ -378,7 +376,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
         </label>
 
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("priority")}>Prioridad</Label>
+          <Label htmlFor={inputId("priority")}>{t("tickets.table.priority")}</Label>
           <select
             id={inputId("priority")}
             name="priority"
@@ -389,10 +387,10 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
             aria-invalid={Boolean(errors.priority)}
             aria-describedby={describedBy("priority")}
           >
-            <option value="">Selecciona una prioridad</option>
+            <option value="">{t("tickets.form.selectPriority")}</option>
             {priorityOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -400,7 +398,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
         </label>
 
         <label className="grid gap-1.5">
-          <Label htmlFor={inputId("status")}>Estado</Label>
+          <Label htmlFor={inputId("status")}>{t("tickets.table.status")}</Label>
           <select
             id={inputId("status")}
             name="status"
@@ -411,10 +409,10 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
             aria-invalid={Boolean(errors.status)}
             aria-describedby={describedBy("status")}
           >
-            <option value="">Selecciona un estado</option>
+            <option value="">{t("tickets.form.selectStatus")}</option>
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -423,7 +421,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
       </div>
 
       <div className="flex items-center gap-2 pt-2">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit">{submitLabel === "Guardar" ? t("common.save") : submitLabel}</Button>
       </div>
     </form>
   )
