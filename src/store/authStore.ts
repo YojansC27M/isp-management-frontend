@@ -8,12 +8,12 @@ import { normalizePermissions, normalizeUser } from "@/auth/validators"
 const USER_KEY = "auth_user"
 const PERMISSIONS_KEY = "auth_permissions"
 const NAVIGATION_KEY = "auth_navigation"
-const isBrowser = () => typeof window !== "undefined" && typeof localStorage !== "undefined"
+const isBrowser = () => typeof window !== "undefined" && typeof sessionStorage !== "undefined"
 
 const readStoredUser = (): User | null => {
   if (!isBrowser()) return null
   try {
-    const raw = localStorage.getItem(USER_KEY)
+    const raw = sessionStorage.getItem(USER_KEY)
     if (!raw) return null
     return normalizeUser(JSON.parse(raw))
   } catch {
@@ -24,7 +24,7 @@ const readStoredUser = (): User | null => {
 const readStoredPermissions = (): Permission[] => {
   if (!isBrowser()) return []
   try {
-    const raw = localStorage.getItem(PERMISSIONS_KEY)
+    const raw = sessionStorage.getItem(PERMISSIONS_KEY)
     if (!raw) return []
     return normalizePermissions(JSON.parse(raw))
   } catch {
@@ -65,7 +65,7 @@ const normalizeNavigationModules = (value: unknown): ServerNavigationModule[] | 
 const readStoredNavigation = (): ServerNavigationModule[] | null => {
   if (!isBrowser()) return null
   try {
-    const raw = localStorage.getItem(NAVIGATION_KEY)
+    const raw = sessionStorage.getItem(NAVIGATION_KEY)
     if (!raw) return null
     return normalizeNavigationModules(JSON.parse(raw))
   } catch {
@@ -102,24 +102,24 @@ export const useAuthStore = create<AuthState>((set) => ({
     const normalizedUser = normalizeUser(user)
 
     if (normalizedUser) {
-      localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+      sessionStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
     } else {
-      localStorage.removeItem(USER_KEY)
+      sessionStorage.removeItem(USER_KEY)
     }
     set({ user: normalizedUser })
   },
   setPermissions: (permissions) => {
     const normalized = normalizePermissions(permissions)
-    if (isBrowser()) localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(normalized))
+    if (isBrowser()) sessionStorage.setItem(PERMISSIONS_KEY, JSON.stringify(normalized))
     set({ permissions: normalized })
   },
   setNavigation: (navigation) => {
     const normalized = navigation ? normalizeNavigationModules(navigation) : null
     if (isBrowser()) {
       if (!normalized) {
-        localStorage.removeItem(NAVIGATION_KEY)
+        sessionStorage.removeItem(NAVIGATION_KEY)
       } else {
-        localStorage.setItem(NAVIGATION_KEY, JSON.stringify(normalized))
+        sessionStorage.setItem(NAVIGATION_KEY, JSON.stringify(normalized))
       }
     }
     set({ navigation: normalized })
@@ -127,9 +127,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     clearAuthToken()
     if (isBrowser()) {
-      localStorage.removeItem(USER_KEY)
-      localStorage.removeItem(PERMISSIONS_KEY)
-      localStorage.removeItem(NAVIGATION_KEY)
+      sessionStorage.removeItem(USER_KEY)
+      sessionStorage.removeItem(PERMISSIONS_KEY)
+      sessionStorage.removeItem(NAVIGATION_KEY)
     }
     set({ token: null, user: null, permissions: [], navigation: null })
   },

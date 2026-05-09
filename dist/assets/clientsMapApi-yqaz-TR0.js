@@ -1,1 +1,0 @@
-import{q as a}from"./index-CTMnMdSq.js";const n=async()=>{const{data:t}=await a.get("/clients-map",{cancelKey:"list"});return t},c=async t=>{const{data:e}=await a.get("/clients-map",{params:t,cancelKey:"filtered-list"});return e};export{c as a,n as g};

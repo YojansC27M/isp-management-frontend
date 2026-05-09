@@ -200,6 +200,17 @@
 }
 
 @layer components {
+  .leaflet-container {
+    position: relative;
+    z-index: 0;
+  }
+
+  .leaflet-pane,
+  .leaflet-top,
+  .leaflet-bottom {
+    z-index: 10;
+  }
+
   .visits-calendar .fc {
     color: hsl(var(--foreground));
   }

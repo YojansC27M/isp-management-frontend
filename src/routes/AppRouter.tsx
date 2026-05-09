@@ -1,64 +1,70 @@
-import { Suspense, lazy, type ReactNode } from "react"
+import { type ReactNode, useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import MainLayout from "../layouts/MainLayout"
 import ProtectedRoute from "@/auth/ProtectedRoute"
 import PermissionRoute from "@/auth/PermissionRoute"
+import AuthBootstrap from "@/auth/components/AuthBootstrap"
 import NavigationBootstrap from "@/auth/components/NavigationBootstrap"
-import StateMessage from "@/components/feedback/StateMessage"
-import { useEffect } from "react"
 import { useUI } from "@/ui/uiContext"
 import { getAuthToken, getClientToken } from "@/auth/session"
 import { useAuthStore } from "@/store/authStore"
-import { useI18n } from "@/i18n/i18nContext"
-const LoginPage = lazy(() => import("../pages/LoginPage"))
-const DashboardPage = lazy(() => import("../pages/DashboardPage"))
-const ProfilePage = lazy(() => import("../modules/account/pages/ProfilePage"))
-const PasswordSecurityPage = lazy(() => import("../modules/account/pages/PasswordSecurityPage"))
-const UnauthorizedPage = lazy(() => import("@/auth/UnauthorizedPage"))
-const ClientsListPage = lazy(() => import("../modules/clients/pages/ClientsListPage"))
-const InternalUsersListPage = lazy(() => import("../modules/internal-users/pages/InternalUsersListPage"))
-const InternalUserCreatePage = lazy(() => import("../modules/internal-users/pages/InternalUserCreatePage"))
-const InternalUserEditPage = lazy(() => import("../modules/internal-users/pages/InternalUserEditPage"))
-const ClientCreatePage = lazy(() => import("../modules/clients/pages/ClientCreatePage"))
-const ClientEditPage = lazy(() => import("../modules/clients/pages/ClientEditPage"))
-const PlansListPage = lazy(() => import("../modules/plans/pages/PlansListPage"))
-const PlanCreatePage = lazy(() => import("../modules/plans/pages/PlanCreatePage"))
-const PlanEditPage = lazy(() => import("../modules/plans/pages/PlanEditPage"))
-const PaymentsListPage = lazy(() => import("../modules/payments/pages/PaymentsListPage"))
-const PaymentCreatePage = lazy(() => import("../modules/payments/pages/PaymentCreatePage"))
-const AccountStatusPage = lazy(() => import("../modules/payments/pages/AccountStatusPage"))
-const TicketsListPage = lazy(() => import("../modules/tickets/pages/TicketsListPage"))
-const TicketCreatePage = lazy(() => import("../modules/tickets/pages/TicketCreatePage"))
-const TicketDetailPage = lazy(() => import("../modules/tickets/pages/TicketDetailPage"))
-const VisitsCalendarPage = lazy(() => import("../modules/visits/pages/VisitsCalendarPage"))
-const VisitCreatePage = lazy(() => import("../modules/visits/pages/VisitCreatePage"))
-const VisitDetailPage = lazy(() => import("../modules/visits/pages/VisitDetailPage"))
-const MonitoringDashboardPage = lazy(() => import("../modules/monitoring/pages/MonitoringDashboardPage"))
-const ClientsMapPage = lazy(() => import("../modules/clients-map/pages/ClientsMapPage"))
-const InvoicesListPage = lazy(() => import("../modules/invoices/pages/InvoicesListPage"))
-const InvoiceDetailPage = lazy(() => import("../modules/invoices/pages/InvoiceDetailPage"))
-const ReportsDashboardPage = lazy(() => import("../modules/reports/pages/ReportsDashboardPage"))
-const RoutersListPage = lazy(() => import("../modules/routers/pages/RoutersListPage"))
-const RouterCreatePage = lazy(() => import("../modules/routers/pages/RouterCreatePage"))
-const RouterDetailPage = lazy(() => import("../modules/routers/pages/RouterDetailPage"))
-const AccessControlPage = lazy(() => import("../modules/access-control/pages/AccessControlPage"))
-const SecurityAuditPage = lazy(() => import("../modules/security-audit/pages/SecurityAuditPage"))
-const SystemSettingsPage = lazy(() => import("../modules/system-settings/pages/SystemSettingsPage"))
-const ClientLoginPage = lazy(() => import("../modules/client-portal/pages/ClientLoginPage"))
-const ClientDashboardPage = lazy(() => import("../modules/client-portal/pages/ClientDashboardPage"))
-const ClientPaymentsPage = lazy(() => import("../modules/client-portal/pages/ClientPaymentsPage"))
-const ClientTicketsPage = lazy(() => import("../modules/client-portal/pages/ClientTicketsPage"))
+import RouteBoundary from "./RouteBoundary"
+import UnauthorizedPage from "@/auth/UnauthorizedPage"
+import ProfilePage from "../modules/account/pages/ProfilePage"
+import PasswordSecurityPage from "../modules/account/pages/PasswordSecurityPage"
+import AccessControlPage from "../modules/access-control/pages/AccessControlPage"
+import ClientDashboardPage from "../modules/client-portal/pages/ClientDashboardPage"
+import ClientChangePasswordPage from "../modules/client-portal/pages/ClientChangePasswordPage"
+import ClientLoginPage from "../modules/client-portal/pages/ClientLoginPage"
+import ClientPaymentsPage from "../modules/client-portal/pages/ClientPaymentsPage"
+import ClientTicketsPage from "../modules/client-portal/pages/ClientTicketsPage"
+import ClientsMapPage from "../modules/clients-map/pages/ClientsMapPage"
+import ClientCreatePage from "../modules/clients/pages/ClientCreatePage"
+import ClientDetailPage from "../modules/clients/pages/ClientDetailPage"
+import ClientEditPage from "../modules/clients/pages/ClientEditPage"
+import ClientsListPage from "../modules/clients/pages/ClientsListPage"
+import InternalUserCreatePage from "../modules/internal-users/pages/InternalUserCreatePage"
+import InternalUserEditPage from "../modules/internal-users/pages/InternalUserEditPage"
+import InternalUsersListPage from "../modules/internal-users/pages/InternalUsersListPage"
+import InvoiceCancelPage from "../modules/invoices/pages/InvoiceCancelPage"
+import InvoiceCreatePage from "../modules/invoices/pages/InvoiceCreatePage"
+import InvoiceDetailPage from "../modules/invoices/pages/InvoiceDetailPage"
+import InvoiceEditPage from "../modules/invoices/pages/InvoiceEditPage"
+import InvoicesListPage from "../modules/invoices/pages/InvoicesListPage"
+import MonitoringDashboardPage from "../modules/monitoring/pages/MonitoringDashboardPage"
+import NocPage from "../modules/operations/pages/NocPage"
+import AccountStatusPage from "../modules/payments/pages/AccountStatusPage"
+import PaymentCreatePage from "../modules/payments/pages/PaymentCreatePage"
+import PaymentDetailPage from "../modules/payments/pages/PaymentDetailPage"
+import PaymentEditPage from "../modules/payments/pages/PaymentEditPage"
+import PaymentsListPage from "../modules/payments/pages/PaymentsListPage"
+import PlanCreatePage from "../modules/plans/pages/PlanCreatePage"
+import PlanEditPage from "../modules/plans/pages/PlanEditPage"
+import PlansListPage from "../modules/plans/pages/PlansListPage"
+import ReportsDashboardPage from "../modules/reports/pages/ReportsDashboardPage"
+import InstallationCreatePage from "../modules/installations/pages/InstallationCreatePage"
+import InstallationEditPage from "../modules/installations/pages/InstallationEditPage"
+import InstallationsListPage from "../modules/installations/pages/InstallationsListPage"
+import RouterCreatePage from "../modules/routers/pages/RouterCreatePage"
+import RouterDetailPage from "../modules/routers/pages/RouterDetailPage"
+import RoutersListPage from "../modules/routers/pages/RoutersListPage"
+import SecurityAuditPage from "../modules/security-audit/pages/SecurityAuditPage"
+import DocumentTypesPage from "../modules/system-settings/pages/DocumentTypesPage"
+import SystemSettingsPage from "../modules/system-settings/pages/SystemSettingsPage"
+import SupportOverviewPage from "../modules/support/pages/SupportOverviewPage"
+import TicketCreatePage from "../modules/tickets/pages/TicketCreatePage"
+import TicketDetailPage from "../modules/tickets/pages/TicketDetailPage"
+import TicketEditPage from "../modules/tickets/pages/TicketEditPage"
+import TicketsListPage from "../modules/tickets/pages/TicketsListPage"
+import VisitCreatePage from "../modules/visits/pages/VisitCreatePage"
+import VisitDetailPage from "../modules/visits/pages/VisitDetailPage"
+import VisitEditPage from "../modules/visits/pages/VisitEditPage"
+import VisitReschedulePage from "../modules/visits/pages/VisitReschedulePage"
+import VisitsCalendarPage from "../modules/visits/pages/VisitsCalendarPage"
+import DashboardPage from "../pages/DashboardPage"
+import LoginPage from "../pages/LoginPage"
 
-const RouteFallback = () => {
-  const { t } = useI18n()
-  return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <StateMessage variant="loading" title={t("common.loadingModule")} />
-    </div>
-  )
-}
-
-const suspenseNode = (node: ReactNode) => <Suspense fallback={<RouteFallback />}>{node}</Suspense>
+const routeNode = (node: ReactNode) => <RouteBoundary>{node}</RouteBoundary>
 
 interface RouteToastState {
   title: string
@@ -101,12 +107,13 @@ const RootRoute = () => {
   if (token) {
     return <Navigate to="/dashboard" replace />
   }
-  return suspenseNode(<LoginPage />)
+  return routeNode(<LoginPage />)
 }
 
 const AppRouter = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AuthBootstrap />
       <NavigationBootstrap />
       <RouteStateNotifier />
       <Routes>
@@ -114,16 +121,16 @@ const AppRouter = () => {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
-              <MainLayout>{suspenseNode(<DashboardPage />)}</MainLayout>
-            </ProtectedRoute>
+            <PermissionRoute requiredPermissions={["dashboard.read"]}>
+              <MainLayout>{routeNode(<DashboardPage />)}</MainLayout>
+            </PermissionRoute>
           }
         />
         <Route
           path="/account/profile"
           element={
             <ProtectedRoute>
-              <MainLayout>{suspenseNode(<ProfilePage />)}</MainLayout>
+              <MainLayout>{routeNode(<ProfilePage />)}</MainLayout>
             </ProtectedRoute>
           }
         />
@@ -131,7 +138,7 @@ const AppRouter = () => {
           path="/account/security"
           element={
             <ProtectedRoute>
-              <MainLayout>{suspenseNode(<PasswordSecurityPage />)}</MainLayout>
+              <MainLayout>{routeNode(<PasswordSecurityPage />)}</MainLayout>
             </ProtectedRoute>
           }
         />
@@ -139,7 +146,7 @@ const AppRouter = () => {
           path="/internal-users"
           element={
             <PermissionRoute requiredPermissions={["internal_users.read"]}>
-              <MainLayout>{suspenseNode(<InternalUsersListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<InternalUsersListPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -147,7 +154,7 @@ const AppRouter = () => {
           path="/internal-users/new"
           element={
             <PermissionRoute requiredPermissions={["internal_users.write"]}>
-              <MainLayout>{suspenseNode(<InternalUserCreatePage />)}</MainLayout>
+              <MainLayout>{routeNode(<InternalUserCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -155,7 +162,7 @@ const AppRouter = () => {
           path="/internal-users/:id/edit"
           element={
             <PermissionRoute requiredPermissions={["internal_users.write"]}>
-              <MainLayout>{suspenseNode(<InternalUserEditPage />)}</MainLayout>
+              <MainLayout>{routeNode(<InternalUserEditPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -163,7 +170,15 @@ const AppRouter = () => {
           path="/clients"
           element={
             <PermissionRoute requiredPermissions={["clients.read"]}>
-              <MainLayout>{suspenseNode(<ClientsListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<ClientsListPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/clients/:id"
+          element={
+            <PermissionRoute requiredPermissions={["clients.read"]}>
+              <MainLayout>{routeNode(<ClientDetailPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -171,7 +186,7 @@ const AppRouter = () => {
           path="/clients/new"
           element={
             <PermissionRoute requiredPermissions={["clients.write"]}>
-              <MainLayout>{suspenseNode(<ClientCreatePage />)}</MainLayout>
+              <MainLayout>{routeNode(<ClientCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -179,7 +194,7 @@ const AppRouter = () => {
           path="/clients/:id/edit"
           element={
             <PermissionRoute requiredPermissions={["clients.write"]}>
-              <MainLayout>{suspenseNode(<ClientEditPage />)}</MainLayout>
+              <MainLayout>{routeNode(<ClientEditPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -187,7 +202,7 @@ const AppRouter = () => {
           path="/plans"
           element={
             <PermissionRoute requiredPermissions={["plans.read"]}>
-              <MainLayout>{suspenseNode(<PlansListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<PlansListPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -195,7 +210,7 @@ const AppRouter = () => {
           path="/plans/new"
           element={
             <PermissionRoute requiredPermissions={["plans.write"]}>
-              <MainLayout>{suspenseNode(<PlanCreatePage />)}</MainLayout>
+              <MainLayout>{routeNode(<PlanCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -203,7 +218,7 @@ const AppRouter = () => {
           path="/plans/:id/edit"
           element={
             <PermissionRoute requiredPermissions={["plans.write"]}>
-              <MainLayout>{suspenseNode(<PlanEditPage />)}</MainLayout>
+              <MainLayout>{routeNode(<PlanEditPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -211,15 +226,31 @@ const AppRouter = () => {
           path="/payments"
           element={
             <PermissionRoute requiredPermissions={["payments.read"]}>
-              <MainLayout>{suspenseNode(<PaymentsListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<PaymentsListPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/payments/detail/:id"
+          element={
+            <PermissionRoute requiredPermissions={["payments.read"]}>
+              <MainLayout>{routeNode(<PaymentDetailPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/payments/detail/:id/edit"
+          element={
+            <PermissionRoute requiredPermissions={["payments.manual.write"]}>
+              <MainLayout>{routeNode(<PaymentEditPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
         <Route
           path="/payments/new"
           element={
-            <PermissionRoute requiredPermissions={["payments.write"]}>
-              <MainLayout>{suspenseNode(<PaymentCreatePage />)}</MainLayout>
+            <PermissionRoute requiredPermissions={["payments.manual.write"]}>
+              <MainLayout>{routeNode(<PaymentCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -227,7 +258,15 @@ const AppRouter = () => {
           path="/payments/account-status/:clientId"
           element={
             <PermissionRoute requiredPermissions={["payments.read"]}>
-              <MainLayout>{suspenseNode(<AccountStatusPage />)}</MainLayout>
+              <MainLayout>{routeNode(<AccountStatusPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/support/overview"
+          element={
+            <PermissionRoute requiredPermissions={["tickets.read"]}>
+              <MainLayout>{routeNode(<SupportOverviewPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -235,7 +274,7 @@ const AppRouter = () => {
           path="/tickets"
           element={
             <PermissionRoute requiredPermissions={["tickets.read"]}>
-              <MainLayout>{suspenseNode(<TicketsListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<TicketsListPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -243,7 +282,7 @@ const AppRouter = () => {
           path="/tickets/new"
           element={
             <PermissionRoute requiredPermissions={["tickets.write"]}>
-              <MainLayout>{suspenseNode(<TicketCreatePage />)}</MainLayout>
+              <MainLayout>{routeNode(<TicketCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -251,7 +290,15 @@ const AppRouter = () => {
           path="/tickets/:id"
           element={
             <PermissionRoute requiredPermissions={["tickets.read"]}>
-              <MainLayout>{suspenseNode(<TicketDetailPage />)}</MainLayout>
+              <MainLayout>{routeNode(<TicketDetailPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/tickets/:id/edit"
+          element={
+            <PermissionRoute requiredPermissions={["tickets.write"]}>
+              <MainLayout>{routeNode(<TicketEditPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -259,7 +306,7 @@ const AppRouter = () => {
           path="/visits"
           element={
             <PermissionRoute requiredPermissions={["visits.read"]}>
-              <MainLayout>{suspenseNode(<VisitsCalendarPage />)}</MainLayout>
+              <MainLayout>{routeNode(<VisitsCalendarPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -267,7 +314,7 @@ const AppRouter = () => {
           path="/visits/new"
           element={
             <PermissionRoute requiredPermissions={["visits.write"]}>
-              <MainLayout>{suspenseNode(<VisitCreatePage />)}</MainLayout>
+              <MainLayout>{routeNode(<VisitCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -275,7 +322,55 @@ const AppRouter = () => {
           path="/visits/:id"
           element={
             <PermissionRoute requiredPermissions={["visits.read"]}>
-              <MainLayout>{suspenseNode(<VisitDetailPage />)}</MainLayout>
+              <MainLayout>{routeNode(<VisitDetailPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/visits/:id/edit"
+          element={
+            <PermissionRoute requiredPermissions={["visits.write"]}>
+              <MainLayout>{routeNode(<VisitEditPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/visits/:id/reschedule"
+          element={
+            <PermissionRoute requiredPermissions={["visits.write"]}>
+              <MainLayout>{routeNode(<VisitReschedulePage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/installations"
+          element={
+            <PermissionRoute requiredPermissions={["visits.read"]}>
+              <MainLayout>{routeNode(<InstallationsListPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/installations/new"
+          element={
+            <PermissionRoute requiredPermissions={["visits.write"]}>
+              <MainLayout>{routeNode(<InstallationCreatePage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/installations/:id/edit"
+          element={
+            <PermissionRoute requiredPermissions={["visits.write"]}>
+              <MainLayout>{routeNode(<InstallationEditPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/operations/noc"
+          element={
+            <PermissionRoute requiredPermissions={["routers.read", "monitoring.read"]}>
+              <MainLayout>{routeNode(<NocPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -283,7 +378,7 @@ const AppRouter = () => {
           path="/monitoring"
           element={
             <PermissionRoute requiredPermissions={["monitoring.read"]}>
-              <MainLayout>{suspenseNode(<MonitoringDashboardPage />)}</MainLayout>
+              <MainLayout>{routeNode(<MonitoringDashboardPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -291,7 +386,7 @@ const AppRouter = () => {
           path="/clients-map"
           element={
             <PermissionRoute requiredPermissions={["clients_map.read"]}>
-              <MainLayout>{suspenseNode(<ClientsMapPage />)}</MainLayout>
+              <MainLayout>{routeNode(<ClientsMapPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -299,7 +394,15 @@ const AppRouter = () => {
           path="/invoices"
           element={
             <PermissionRoute requiredPermissions={["invoices.read"]}>
-              <MainLayout>{suspenseNode(<InvoicesListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<InvoicesListPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/invoices/new"
+          element={
+            <PermissionRoute requiredPermissions={["invoices.write"]}>
+              <MainLayout>{routeNode(<InvoiceCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -307,7 +410,23 @@ const AppRouter = () => {
           path="/invoices/:id"
           element={
             <PermissionRoute requiredPermissions={["invoices.read"]}>
-              <MainLayout>{suspenseNode(<InvoiceDetailPage />)}</MainLayout>
+              <MainLayout>{routeNode(<InvoiceDetailPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/invoices/:id/edit"
+          element={
+            <PermissionRoute requiredPermissions={["invoices.write"]}>
+              <MainLayout>{routeNode(<InvoiceEditPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/invoices/:id/cancel"
+          element={
+            <PermissionRoute requiredPermissions={["invoices.write"]}>
+              <MainLayout>{routeNode(<InvoiceCancelPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -315,7 +434,7 @@ const AppRouter = () => {
           path="/reports"
           element={
             <PermissionRoute requiredPermissions={["reports.read"]}>
-              <MainLayout>{suspenseNode(<ReportsDashboardPage />)}</MainLayout>
+              <MainLayout>{routeNode(<ReportsDashboardPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -323,7 +442,7 @@ const AppRouter = () => {
           path="/routers"
           element={
             <PermissionRoute requiredPermissions={["routers.read"]}>
-              <MainLayout>{suspenseNode(<RoutersListPage />)}</MainLayout>
+              <MainLayout>{routeNode(<RoutersListPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -331,7 +450,7 @@ const AppRouter = () => {
           path="/routers/new"
           element={
             <PermissionRoute requiredPermissions={["routers.write"]}>
-              <MainLayout>{suspenseNode(<RouterCreatePage />)}</MainLayout>
+              <MainLayout>{routeNode(<RouterCreatePage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -339,7 +458,7 @@ const AppRouter = () => {
           path="/routers/:id"
           element={
             <PermissionRoute requiredPermissions={["routers.read"]}>
-              <MainLayout>{suspenseNode(<RouterDetailPage />)}</MainLayout>
+              <MainLayout>{routeNode(<RouterDetailPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -347,7 +466,7 @@ const AppRouter = () => {
           path="/access-control"
           element={
             <PermissionRoute requiredPermissions={["roles.read"]}>
-              <MainLayout>{suspenseNode(<AccessControlPage />)}</MainLayout>
+              <MainLayout>{routeNode(<AccessControlPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -355,7 +474,15 @@ const AppRouter = () => {
           path="/settings/system"
           element={
             <PermissionRoute requiredPermissions={["system_settings.read"]}>
-              <MainLayout>{suspenseNode(<SystemSettingsPage />)}</MainLayout>
+              <MainLayout>{routeNode(<SystemSettingsPage />)}</MainLayout>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/settings/document-types"
+          element={
+            <PermissionRoute requiredPermissions={["system_settings.read"]}>
+              <MainLayout>{routeNode(<DocumentTypesPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
@@ -363,28 +490,34 @@ const AppRouter = () => {
           path="/security-audit"
           element={
             <PermissionRoute requiredPermissions={["audit.read"]}>
-              <MainLayout>{suspenseNode(<SecurityAuditPage />)}</MainLayout>
+              <MainLayout>{routeNode(<SecurityAuditPage />)}</MainLayout>
             </PermissionRoute>
           }
         />
-        <Route path="/unauthorized" element={suspenseNode(<UnauthorizedPage />)} />
-        <Route path="/client/login" element={suspenseNode(<ClientLoginPage />)} />
+        <Route path="/unauthorized" element={routeNode(<UnauthorizedPage />)} />
+        <Route path="/client/login" element={routeNode(<ClientLoginPage />)} />
+        <Route
+          path="/client/change-password"
+          element={
+            <ClientProtectedRoute>{routeNode(<ClientChangePasswordPage />)}</ClientProtectedRoute>
+          }
+        />
         <Route
           path="/client/dashboard"
           element={
-            <ClientProtectedRoute>{suspenseNode(<ClientDashboardPage />)}</ClientProtectedRoute>
+            <ClientProtectedRoute>{routeNode(<ClientDashboardPage />)}</ClientProtectedRoute>
           }
         />
         <Route
           path="/client/payments"
           element={
-            <ClientProtectedRoute>{suspenseNode(<ClientPaymentsPage />)}</ClientProtectedRoute>
+            <ClientProtectedRoute>{routeNode(<ClientPaymentsPage />)}</ClientProtectedRoute>
           }
         />
         <Route
           path="/client/tickets"
           element={
-            <ClientProtectedRoute>{suspenseNode(<ClientTicketsPage />)}</ClientProtectedRoute>
+            <ClientProtectedRoute>{routeNode(<ClientTicketsPage />)}</ClientProtectedRoute>
           }
         />
       </Routes>

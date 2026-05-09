@@ -10,6 +10,13 @@ export interface PermissionDefinition {
 
 export const permissionCatalog: PermissionDefinition[] = [
   {
+    permission: "dashboard.read",
+    module: "Dashboard",
+    action: "read",
+    label: "Ver dashboard",
+    description: "Puede consultar el panel principal operativo.",
+  },
+  {
     permission: "system_settings.read",
     module: "Configuracion ISP",
     action: "read",
@@ -22,6 +29,20 @@ export const permissionCatalog: PermissionDefinition[] = [
     action: "write",
     label: "Gestionar configuracion del sistema",
     description: "Puede editar informacion de empresa, facturacion, zona horaria y logo.",
+  },
+  {
+    permission: "document_types.read",
+    module: "Configuracion ISP",
+    action: "read",
+    label: "Ver tipos de documento",
+    description: "Puede consultar el catalogo de tipos de documento.",
+  },
+  {
+    permission: "document_types.write",
+    module: "Configuracion ISP",
+    action: "write",
+    label: "Gestionar tipos de documento",
+    description: "Puede crear, editar y desactivar tipos de documento.",
   },
   {
     permission: "routers.read",
@@ -87,11 +108,11 @@ export const permissionCatalog: PermissionDefinition[] = [
     description: "Puede consultar pagos y estado de cuenta.",
   },
   {
-    permission: "payments.write",
+    permission: "payments.manual.write",
     module: "Pagos",
     action: "write",
-    label: "Registrar pagos",
-    description: "Puede registrar pagos manuales.",
+    label: "Registrar pagos manuales",
+    description: "Puede registrar, editar y eliminar pagos manuales de contingencia.",
   },
   {
     permission: "invoices.read",

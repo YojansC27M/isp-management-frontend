@@ -2,6 +2,9 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/i18nContext"
+import { getErrorMessage } from "@/lib/errors"
+import { useUI } from "@/ui/uiContext"
+import { getSystemSettings } from "@/modules/system-settings/services/systemSettingsApi"
 import PlanForm from "../components/PlanForm"
 import { getPlanById, updatePlan } from "../services/plansApi"
 import type { PlanFormValues } from "../types/plan"
@@ -10,32 +13,60 @@ const PlanEditPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useI18n()
+  const { notify } = useUI()
   const [initialValues, setInitialValues] = useState<PlanFormValues | null>(null)
+  const [currency, setCurrency] = useState("COP")
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const loadCurrency = async () => {
+      try {
+        const settings = await getSystemSettings()
+        if (settings.currency?.trim()) setCurrency(settings.currency)
+      } catch {
+        // fallback to COP
+      }
+    }
+    void loadCurrency()
+  }, [])
 
   useEffect(() => {
     const loadPlan = async () => {
       if (!id) return
       setLoading(true)
+      setError("")
       try {
         const plan = await getPlanById(id)
         const { name, downloadSpeed, uploadSpeed, price, type } = plan
         setInitialValues({ name, downloadSpeed, uploadSpeed, price, type })
+      } catch (err) {
+        setError(getErrorMessage(err, t("plans.loadErrorTitle")))
       } finally {
         setLoading(false)
       }
     }
 
-    loadPlan()
-  }, [id])
+    void loadPlan()
+  }, [id, t])
 
   const handleSubmit = async (values: PlanFormValues) => {
     if (!id) return
-    await updatePlan(id, values)
-    navigate("/plans")
+    try {
+      await updatePlan(id, values)
+      notify({ title: t("plans.updateSuccess"), type: "success" })
+      navigate("/plans")
+    } catch (err) {
+      notify({
+        title: t("plans.saveErrorTitle"),
+        description: getErrorMessage(err, t("plans.saveErrorDesc")),
+        type: "error",
+      })
+    }
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">{t("plans.editLoading")}</p>
+  if (error) return <p className="text-sm text-muted-foreground">{error}</p>
   if (!initialValues) return <p className="text-sm text-muted-foreground">{t("plans.editNotFound")}</p>
 
   return (
@@ -49,7 +80,7 @@ const PlanEditPage = () => {
           {t("plans.backToList")}
         </Button>
       </header>
-      <PlanForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel={t("profile.save")} />
+      <PlanForm initialValues={initialValues} currency={currency} onSubmit={handleSubmit} submitLabel={t("profile.save")} />
     </div>
   )
 }

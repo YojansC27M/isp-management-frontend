@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { getErrorDescription } from "@/lib/errors"
 import { useUI } from "@/ui/uiContext"
 import RouterForm from "../components/RouterForm"
 import { createRouter, testRouterConnection } from "../services/routersApi"
@@ -8,7 +9,7 @@ import type { RouterFormValues } from "../types/router"
 const initialValues: RouterFormValues = {
   name: "",
   ip: "",
-  port: 8728,
+  port: 80,
   username: "",
   password: "",
   zone: "",
@@ -30,10 +31,10 @@ const RouterCreatePage = () => {
         type: "success",
       })
       navigate("/routers")
-    } catch {
+    } catch (error) {
       notify({
         title: "No se pudo crear el router",
-        description: "Revisa los datos e intenta nuevamente.",
+        description: getErrorDescription(error, "Revisa los datos e intenta nuevamente."),
         type: "error",
       })
     }
@@ -58,10 +59,10 @@ const RouterCreatePage = () => {
         canEdit={true}
         onSubmit={handleSubmit}
         onTestConnection={testRouterConnection}
+        requireSuccessfulTestBeforeSubmit={true}
       />
     </div>
   )
 }
 
 export default RouterCreatePage
-

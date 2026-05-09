@@ -1,0 +1,382 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RouterStatus {
+  online
+  offline
+}
+
+enum InvoiceStatus {
+  draft
+  pending
+  paid
+  overdue
+  cancelled
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  waiting
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+enum TicketCategory {
+  technical
+  billing
+  installation
+}
+
+enum TicketCommentVisibility {
+  public
+  internal
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  overdue
+  refunded
+}
+
+enum InstallationStatus {
+  pending
+  scheduled
+  installed
+  suspended
+  canceled
+}
+
+enum InstallationOperationType {
+  installation
+  relocation
+  replacement
+  removal
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  roleId       String?
+  role         Role?    @relation(fields: [roleId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs    AuditLog[]
+  permissionOverrides UserPermissionOverride[]
+
+  @@index([createdAt(sort: Desc)], map: "idx_user_created_at")
+  @@index([roleId, createdAt(sort: Desc)], map: "idx_user_role_created_at")
+  @@index([name], map: "idx_user_name")
+}
+
+model Role {
+  id            String           @id @default(cuid())
+  key           String           @unique
+  name          String
+  description   String?
+  isSystem      Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  users         User[]
+  permissions   RolePermission[]
+}
+
+model Permission {
+  id            String           @id @default(cuid())
+  key           String           @unique
+  module        String
+  label         String
+  description   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  roles         RolePermission[]
+  userOverrides UserPermissionOverride[]
+}
+
+model RolePermission {
+  id            String      @id @default(cuid())
+  roleId        String
+  permissionId  String
+  role          Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model UserPermissionOverride {
+  id            String      @id @default(cuid())
+  userId        String
+  permissionId  String
+  granted       Boolean
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@index([userId, granted], map: "idx_user_permission_override_user_granted")
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  document    String?
+  phone       String?
+  address     String?
+  planId      String?
+  plan        Plan?    @relation(fields: [planId], references: [id], onDelete: SetNull)
+  ipAddress   String   @default("")
+  latitude    Float?
+  longitude   Float?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments    Payment[]
+  invoices    Invoice[]
+  tickets     Ticket[]
+  visits      Visit[]
+  installation Installation?
+  installationMovements InstallationMovement[]
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  name        String
+  speedDown   Int
+  speedUp     Int
+  price       Decimal  @db.Decimal(12, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  clients     Client[]
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  invoiceNumber String  @unique
+  total       Decimal  @db.Decimal(12, 2)
+  status      InvoiceStatus @default(pending)
+  issuedAt    DateTime @default(now())
+  dueAt       DateTime
+  cancelledAt DateTime?
+  cancellationReason String?
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  invoiceNumber String
+  amount      Decimal  @db.Decimal(12, 2)
+  status      PaymentStatus @default(pending)
+  method      String
+  paymentDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  title       String
+  description String   @default("")
+  status      TicketStatus @default(open)
+  priority    String   @default("medium")
+  category    String   @default("technical")
+  assignedUserId        String   @default("")
+  assignedUserName      String   @default("")
+  assignedTechnicianId  String   @default("")
+  assignedTechnicianName String   @default("")
+  attachmentFileName    String?
+  attachmentOriginalName String?
+  attachmentMimeType    String?
+  attachmentSizeBytes   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  comments    TicketComment[]
+  attachments TicketAttachment[]
+}
+
+model TicketAttachment {
+  id                    String   @id @default(cuid())
+  ticketId              String
+  ticket                Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fileName              String
+  originalName          String
+  mimeType              String
+  sizeBytes             Int
+  createdAt             DateTime @default(now())
+
+  @@index([ticketId, createdAt(sort: Desc)], map: "idx_ticket_attachment_ticket_created_at")
+}
+
+model TicketComment {
+  id          String   @id @default(cuid())
+  ticketId    String
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  message     String
+  author      String
+  visibility  String   @default("public")
+  createdAt   DateTime @default(now())
+}
+
+model Visit {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  technicianId String   @default("")
+  technicianName String @default("")
+  zone        String
+  type        String
+  scheduledAt DateTime
+  status      String   @default("scheduled")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  installation Installation?
+  installationMovements InstallationMovement[]
+}
+
+model Installation {
+  id          String   @id @default(cuid())
+  clientId    String   @unique
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  visitId     String?  @unique
+  visit       Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  routerId    String?
+  router      Router?  @relation(fields: [routerId], references: [id], onDelete: SetNull)
+  operationType InstallationOperationType @default(installation)
+  status      InstallationStatus @default(pending)
+  installedAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([routerId, status, createdAt(sort: Desc)], map: "idx_installation_router_status_created_at")
+  @@index([visitId], map: "idx_installation_visit")
+  movements InstallationMovement[]
+}
+
+model InstallationMovement {
+  id              String                    @id @default(cuid())
+  clientId        String
+  client          Client                    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  installationId  String?
+  installation    Installation?             @relation(fields: [installationId], references: [id], onDelete: SetNull)
+  visitId         String?
+  visit           Visit?                    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  routerId        String?
+  router          Router?                   @relation(fields: [routerId], references: [id], onDelete: SetNull)
+  operationType   InstallationOperationType
+  status          InstallationStatus
+  notes           String?
+  happenedAt      DateTime                  @default(now())
+  createdAt       DateTime                  @default(now())
+
+  @@index([clientId, happenedAt(sort: Desc)], map: "idx_installation_movement_client_happened_at")
+  @@index([installationId, happenedAt(sort: Desc)], map: "idx_installation_movement_installation_happened_at")
+}
+
+model Router {
+  id          String   @id @default(cuid())
+  name        String
+  ip          String   @unique
+  port        Int      @default(8728)
+  username    String
+  password    String
+  zone        String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  status      RouterStatus @default(offline)
+  lastCheckedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  backups     RouterBackup[]
+  trafficSamples RouterTrafficSample[]
+  installations Installation[]
+  installationMovements InstallationMovement[]
+}
+
+model RouterBackup {
+  id          String   @id
+  routerId    String
+  router      Router   @relation(fields: [routerId], references: [id], onDelete: Cascade)
+  fileName    String
+  content     String
+  sizeBytes   Int
+  checksum    String
+  source      String
+  createdAt   DateTime @default(now())
+
+  @@index([routerId, createdAt])
+}
+
+model RouterTrafficSample {
+  id            String   @id @default(cuid())
+  routerId      String
+  router        Router   @relation(fields: [routerId], references: [id], onDelete: Cascade)
+  sampledMinute DateTime
+  sampledAt     DateTime @default(now())
+  rxMbps        Float
+  txMbps        Float
+  totalMbps     Float
+
+  @@unique([routerId, sampledMinute])
+  @@index([sampledMinute])
+  @@index([routerId, sampledMinute])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  entity      String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DocumentType {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

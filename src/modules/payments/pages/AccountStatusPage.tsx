@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
+import { ExternalLink, PencilLine } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import StateMessage from "@/components/feedback/StateMessage"
+import { useCan } from "@/auth/usePermission"
 import { useI18n } from "@/i18n/i18nContext"
+import { getInvoices } from "@/modules/invoices/services/invoicesApi"
+import type { Invoice } from "@/modules/invoices/types/invoice"
 import AccountStatusSummary from "../components/AccountStatusSummary"
 import { getAccountStatusByClient } from "../services/paymentsApi"
-import type { AccountStatusItem, PaymentStatus } from "../types/payment"
+import type { AccountInvoiceStatus, AccountStatusItem } from "../types/payment"
 
 interface LocationState {
   clientName?: string
 }
 
-const statusClasses: Record<PaymentStatus, string> = {
+const statusClasses: Record<AccountInvoiceStatus, string> = {
   pending: "bg-amber-100 text-amber-800",
   paid: "bg-emerald-100 text-emerald-800",
   overdue: "bg-rose-100 text-rose-800",
+  cancelled: "bg-slate-200 text-slate-700",
 }
 
 const AccountStatusPage = () => {
@@ -22,8 +27,11 @@ const AccountStatusPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useI18n()
+  const canCreatePayments = useCan("payments.manual.write")
+  const canReadInvoices = useCan("invoices.read")
   const state = location.state as LocationState | null
   const [items, setItems] = useState<AccountStatusItem[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -31,15 +39,19 @@ const AccountStatusPage = () => {
       if (!clientId) return
       setLoading(true)
       try {
-        const data = await getAccountStatusByClient(clientId)
-        setItems(data)
+        const [statusData, invoicesData] = await Promise.all([
+          getAccountStatusByClient(clientId),
+          canReadInvoices ? getInvoices({ cancel: false }) : Promise.resolve([]),
+        ])
+        setItems(statusData)
+        setInvoices(invoicesData)
       } finally {
         setLoading(false)
       }
     }
 
     loadStatus()
-  }, [clientId])
+  }, [canReadInvoices, clientId])
 
   const summary = useMemo(() => {
     return items.reduce(
@@ -52,6 +64,8 @@ const AccountStatusPage = () => {
       { totalPending: 0, totalPaid: 0, totalOverdue: 0 },
     )
   }, [items])
+
+  const invoiceByNumber = useMemo(() => new Map(invoices.map((invoice) => [invoice.invoiceNumber, invoice])), [invoices])
 
   const clientLabel = state?.clientName ? state.clientName : clientId ? `Cliente ${clientId}` : t("payments.account.client")
 
@@ -88,6 +102,7 @@ const AccountStatusPage = () => {
                     <th className="px-4 py-3 font-semibold">{t("invoices.table.dueDate")}</th>
                     <th className="px-4 py-3 font-semibold">{t("payments.table.amount")}</th>
                     <th className="px-4 py-3 font-semibold">{t("payments.table.status")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("invoices.table.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -100,6 +115,43 @@ const AccountStatusPage = () => {
                         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[item.status]}`}>
                           {t(`payments.status.${item.status}`)}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {canReadInvoices && invoiceByNumber.get(item.invoiceNumber) ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-8 px-2.5 text-xs"
+                              onClick={() => {
+                                const invoice = invoiceByNumber.get(item.invoiceNumber)
+                                if (invoice) navigate(`/invoices/${invoice.id}`)
+                              }}
+                            >
+                              <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                              {t("payments.account.viewInvoice")}
+                            </Button>
+                          ) : null}
+                          {item.status !== "paid" && canCreatePayments ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-8 px-2.5 text-xs"
+                              onClick={() =>
+                                navigate("/payments/new", {
+                                  state: {
+                                    clientId: clientId ?? "",
+                                    clientName: state?.clientName,
+                                    invoiceNumber: item.invoiceNumber,
+                                  },
+                                })
+                              }
+                            >
+                              <PencilLine className="mr-1 h-3.5 w-3.5" />
+                              {t("payments.account.registerPayment")}
+                            </Button>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   ))}

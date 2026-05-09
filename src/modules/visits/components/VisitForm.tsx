@@ -18,6 +18,7 @@ interface VisitFormProps {
   initialValues: VisitFormValues
   onSubmit: (values: VisitFormValues) => void
   submitLabel?: string
+  excludeVisitId?: string
 }
 
 type VisitFormState = {
@@ -56,7 +57,7 @@ const textareaClass =
 const inputId = (field: string) => `visit-form-${field}`
 const errorId = (field: string) => `visit-form-${field}-error`
 
-const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFormProps) => {
+const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar", excludeVisitId }: VisitFormProps) => {
   const { t } = useI18n()
   const [values, setValues] = useState<VisitFormState>({
     clientId: initialValues.clientId,
@@ -96,6 +97,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
           zone: values.zone,
           scheduledDate: values.scheduledDate,
           scheduledTime: values.scheduledTime,
+          excludeVisitId,
         })
         if (cancelled) return
         setAssignmentOptions(options)
@@ -108,7 +110,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
     return () => {
       cancelled = true
     }
-  }, [values.zone, values.scheduledDate, values.scheduledTime])
+  }, [excludeVisitId, values.zone, values.scheduledDate, values.scheduledTime])
 
   const handleClientSelect = async (client: ClientSummary | null) => {
     if (!client) {
@@ -116,13 +118,23 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
       return
     }
 
-    const detectedZone = await getClientZone(client.id)
+    const selectedClientId = client.id
     setValues((current) => ({
       ...current,
-      clientId: client.id,
-      zone: detectedZone || current.zone,
+      clientId: selectedClientId,
+      zone: "",
       technicianId: "",
     }))
+
+    const detectedZone = await getClientZone(selectedClientId)
+    setValues((current) =>
+      current.clientId === selectedClientId
+        ? {
+            ...current,
+            zone: detectedZone,
+          }
+        : current,
+    )
   }
 
   const handleChange = (field: keyof VisitFormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -134,8 +146,8 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
   }
 
   const selectedTechnicianName = useMemo(() => {
-    return assignmentOptions.find((item) => item.id === values.technicianId)?.name ?? t("visits.unassigned")
-  }, [assignmentOptions, t, values.technicianId])
+    return assignmentOptions.find((item) => item.id === values.technicianId)?.name ?? initialValues.technicianName ?? t("visits.unassigned")
+  }, [assignmentOptions, initialValues.technicianName, t, values.technicianId])
 
   const validate = () => {
     const nextErrors: FormErrors = {}
@@ -156,6 +168,7 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
         zone: values.zone,
         scheduledDate: values.scheduledDate,
         scheduledTime: values.scheduledTime,
+        excludeVisitId,
       })
       setValues((current) => ({ ...current, technicianId: suggestion?.id ?? "" }))
     } finally {
@@ -211,11 +224,18 @@ const VisitForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: VisitFo
             id={inputId("zone")}
             name="zone"
             value={values.zone}
-            onChange={handleChange("zone")}
+            readOnly
+            disabled={!values.clientId}
+            placeholder={!values.clientId ? "Selecciona un cliente para detectar zona" : ""}
             ref={(node) => (fieldRefs.current.zone = node)}
             aria-invalid={Boolean(errors.zone)}
             aria-describedby={describedBy("zone")}
           />
+          {values.clientId && !values.zone ? (
+            <span className="text-xs text-amber-600" role="status">
+              No se pudo detectar zona para este cliente. Actualiza su ubicacion en clientes/mapa.
+            </span>
+          ) : null}
           {errors.zone && <span id={errorId("zone")} className="text-xs text-rose-600" role="alert">{errors.zone}</span>}
         </label>
 

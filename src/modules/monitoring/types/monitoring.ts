@@ -5,6 +5,7 @@ export interface Router {
   id: string
   name: string
   ip: string
+  zone?: string
   location: string
   status: RouterStatus
 }
@@ -14,6 +15,9 @@ export interface RouterMetrics {
   ramUsage: number
   uptime: string
   totalTraffic: string
+  rxTraffic: string
+  txTraffic: string
+  degraded: boolean
 }
 
 export interface InterfaceStatus {
@@ -21,4 +25,6 @@ export interface InterfaceStatus {
   status: InterfaceStatusType
   rx: string
   tx: string
+  rxMbps?: number
+  txMbps?: number
 }

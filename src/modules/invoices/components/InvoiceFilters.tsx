@@ -11,6 +11,7 @@ interface InvoiceFiltersProps {
   onChange: (values: InvoiceFiltersValues) => void
   onApply: () => void
   onClear: () => void
+  errorMessage?: string
 }
 
 const selectClass =
@@ -18,12 +19,13 @@ const selectClass =
 
 const inputId = (field: string) => `invoice-filters-${field}`
 
-const InvoiceFilters = ({ values, onChange, onApply, onClear }: InvoiceFiltersProps) => {
+const InvoiceFilters = ({ values, onChange, onApply, onClear, errorMessage }: InvoiceFiltersProps) => {
   const { t } = useI18n()
   const statusOptions: { label: string; value: InvoiceStatus }[] = [
     { label: t("invoices.status.pending"), value: "pending" },
     { label: t("invoices.status.paid"), value: "paid" },
     { label: t("invoices.status.overdue"), value: "overdue" },
+    { label: t("invoices.status.cancelled"), value: "cancelled" },
   ]
 
   const handleInputChange = (field: keyof InvoiceFiltersValues) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +90,7 @@ const InvoiceFilters = ({ values, onChange, onApply, onClear }: InvoiceFiltersPr
           </Button>
         </div>
       </div>
+      {errorMessage ? <p className="text-sm text-rose-600">{errorMessage}</p> : null}
     </FilterPanel>
   )
 }

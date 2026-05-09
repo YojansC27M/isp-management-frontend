@@ -36,6 +36,7 @@ const statusOptions: { key: string; value: PaymentStatus }[] = [
   { key: "payments.status.pending", value: "pending" },
   { key: "payments.status.paid", value: "paid" },
   { key: "payments.status.overdue", value: "overdue" },
+  { key: "payments.status.refunded", value: "refunded" },
 ]
 
 const selectClass =

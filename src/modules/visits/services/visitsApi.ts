@@ -1,13 +1,23 @@
 import api from "@/api/axios"
 import type { Visit, VisitFormValues } from "../types/visit"
 
-export const getVisits = async () => {
-  const { data } = await api.get<Visit[]>("/visits", { cancelKey: "list" })
+interface VisitsRequestOptions {
+  cancel?: boolean
+}
+
+export const getVisits = async (options?: VisitsRequestOptions) => {
+  const config = options?.cancel === false ? undefined : { cancelKey: "list" }
+  const { data } = await api.get<Visit[]>("/visits", config)
   return data
 }
 
 export const getVisitById = async (id: string) => {
   const { data } = await api.get<Visit>(`/visits/${id}`)
+  return data
+}
+
+export const getClientVisits = async (clientId: string) => {
+  const { data } = await api.get<Visit[]>(`/clients/${clientId}/visits`)
   return data
 }
 
@@ -21,15 +31,12 @@ export const updateVisit = async (id: string, payload: VisitFormValues) => {
   return data
 }
 
-export const findTechnicianConflict = async (payload: Pick<VisitFormValues, "technicianId" | "scheduledDate" | "scheduledTime">) => {
-  if (!payload.technicianId.trim()) return null
-  const visits = await getVisits()
-  const conflict = visits.find(
-    (visit) =>
-      visit.technicianId === payload.technicianId &&
-      visit.scheduledDate === payload.scheduledDate &&
-      visit.scheduledTime === payload.scheduledTime &&
-      visit.status !== "canceled",
-  )
-  return conflict ?? null
+export const rescheduleVisit = async (id: string, payload: Pick<VisitFormValues, "scheduledDate" | "scheduledTime" | "notes">) => {
+  const { data } = await api.post<Visit>(`/visits/${id}/reschedule`, payload)
+  return data
+}
+
+export const deleteVisit = async (id: string) => {
+  const { data } = await api.delete<{ ok: true }>(`/visits/${id}`)
+  return data
 }

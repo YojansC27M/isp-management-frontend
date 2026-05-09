@@ -4,28 +4,18 @@ import { Button } from "@/components/ui/button"
 import StateMessage from "@/components/feedback/StateMessage"
 import { useUI } from "@/ui/uiContext"
 import { useI18n } from "@/i18n/i18nContext"
-import type { SecurityAuditEntry } from "@/auth/auditLog"
-import { readSecurityAudit, writeSecurityAudit } from "@/auth/auditLog"
-import { useAuthStore } from "@/store/authStore"
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorDescription, getErrorMessage } from "@/lib/errors"
 import InternalUserForm from "../components/InternalUserForm"
 import { getInternalUserById, updateInternalUser } from "../services/internalUsersApi"
 import type { InternalUserFormValues } from "../types/internalUser"
-
-const createAuditId = () => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID()
-  }
-  return `${Date.now()}-${Math.floor(Math.random() * 1000)}`
-}
 
 const InternalUserEditPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { notify } = useUI()
   const { t } = useI18n()
-  const actor = useAuthStore((state) => state.user)
   const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [initialValues, setInitialValues] = useState<InternalUserFormValues | null>(null)
 
@@ -39,6 +29,8 @@ const InternalUserEditPage = () => {
         setInitialValues({
           name: user.name,
           email: user.email,
+          documentType: user.documentType,
+          documentNumber: user.documentNumber,
           phone: user.phone,
           role: user.role,
           status: user.status,
@@ -56,19 +48,10 @@ const InternalUserEditPage = () => {
 
   const handleSubmit = async (values: InternalUserFormValues) => {
     if (!id) return
+    if (submitting) return
+    setSubmitting(true)
     try {
-      const updated = await updateInternalUser(id, values)
-      const entry: SecurityAuditEntry = {
-        id: createAuditId(),
-        createdAt: new Date().toISOString(),
-        actorName: actor?.name ?? t("internalUsers.localUser"),
-        actorRole: actor?.role ?? "admin",
-        targetRole: "all",
-        action: "internal_user_update",
-        details: t("internalUsers.edit.auditDetails", { name: updated.name, role: updated.role }),
-      }
-      const nextAudit = [entry, ...readSecurityAudit()].slice(0, 50)
-      writeSecurityAudit(nextAudit)
+      await updateInternalUser(id, values)
 
       notify({
         title: t("internalUsers.edit.successTitle"),
@@ -79,9 +62,11 @@ const InternalUserEditPage = () => {
     } catch (err) {
       notify({
         title: t("internalUsers.edit.errorTitle"),
-        description: getErrorMessage(err, t("internalUsers.edit.errorDesc")),
+        description: getErrorDescription(err, t("internalUsers.edit.errorDesc")),
         type: "error",
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -101,7 +86,7 @@ const InternalUserEditPage = () => {
         </Button>
       </header>
 
-      <InternalUserForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel={t("profile.save")} />
+      <InternalUserForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel={t("profile.save")} isSubmitting={submitting} />
     </div>
   )
 }

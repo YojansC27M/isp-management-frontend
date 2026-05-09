@@ -1,14 +1,9 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useI18n } from "@/i18n/i18nContext"
-
-export interface InvoiceAutomationSettings {
-  cutDay: number
-  prefix: string
-  nextCorrelative: number
-}
+import type { InvoiceAutomationSettings } from "../types/invoice"
 
 interface InvoiceAutomationPanelProps {
   initialSettings: InvoiceAutomationSettings
@@ -23,6 +18,10 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
   const { t } = useI18n()
   const [settings, setSettings] = useState(initialSettings)
 
+  useEffect(() => {
+    setSettings(initialSettings)
+  }, [initialSettings])
+
   const previewNumber = useMemo(() => {
     return `${settings.prefix}-${String(settings.nextCorrelative).padStart(6, "0")}`
   }, [settings.nextCorrelative, settings.prefix])
@@ -33,6 +32,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
         <div>
           <h2 className="text-base font-semibold text-foreground">{t("invoices.automation.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("invoices.automation.description")}</p>
+          {!canManage ? <p className="mt-2 text-xs text-muted-foreground">{t("invoices.permissionManageSettings")}</p> : null}
         </div>
         <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
           {t("invoices.automation.nextInvoice", { number: previewNumber })}
@@ -49,6 +49,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
             type="number"
             min={1}
             max={28}
+            step={1}
             value={settings.cutDay}
             disabled={!canManage}
             onChange={(event) =>
@@ -77,6 +78,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
             id={inputId("nextCorrelative")}
             type="number"
             min={1}
+            step={1}
             value={settings.nextCorrelative}
             disabled={!canManage}
             onChange={(event) =>
@@ -88,6 +90,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
           />
         </label>
         <Button
+          type="button"
           variant="outline"
           onClick={() => onRunSimulation(settings)}
           disabled={!canManage}
@@ -96,6 +99,7 @@ const InvoiceAutomationPanel = ({ initialSettings, onSave, onRunSimulation, canM
           {t("invoices.automation.runSimulation")}
         </Button>
         <Button
+          type="button"
           onClick={() => onSave(settings)}
           disabled={!canManage}
           title={!canManage ? t("invoices.permissionManageSettings") : undefined}

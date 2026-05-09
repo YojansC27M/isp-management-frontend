@@ -1,28 +1,46 @@
-import type { SecurityAuditAction, SecurityAuditEntry } from "@/auth/auditLog"
+import type { SecurityAuditAction as LegacySecurityAuditAction } from "@/auth/auditLog"
 import type { Role } from "@/auth/types"
 
-export type SecurityAuditDateFilter = "all" | "today" | "last7"
-export type SecurityAuditTargetFilter = "all" | Role | "system"
+export interface SecurityAuditActor {
+  id: string
+  name: string
+  email: string
+  roleKey?: string
+  roleName?: string
+}
+
+export interface SecurityAuditEntry {
+  id: string
+  createdAt: string
+  action: string
+  entity: string
+  entityId: string | null
+  actor: SecurityAuditActor | null
+  metadata: Record<string, unknown> | null
+}
 
 export interface SecurityAuditFilters {
   search: string
-  selectedAction: SecurityAuditAction | "all"
-  selectedActorRole: Role | "all"
-  selectedTargetRole: SecurityAuditTargetFilter
-  dateFilter: SecurityAuditDateFilter
+  actorId?: string
+  action?: string
+  module?: string
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  perPage?: number
+  selectedAction?: SecurityAuditAction | "all"
+  selectedActorRole?: Role | "all"
+  selectedTargetRole?: SecurityAuditTargetFilter
+  dateFilter?: SecurityAuditDateFilter
 }
 
 export interface SecurityAuditStats {
   total: number
   todayCount: number
   last7Count: number
-  riskyChanges: number
+  sensitiveCount: number
 }
 
-export interface SecurityAuditActionMeta {
-  actionLabels: Record<SecurityAuditAction, string>
-  actionBadgeClass: Record<SecurityAuditAction, string>
-}
-
-export type { SecurityAuditAction, SecurityAuditEntry }
-
+export type SecurityAuditAction = LegacySecurityAuditAction
+export type SecurityAuditDateFilter = "all" | "today" | "last7"
+export type SecurityAuditTargetFilter = "all" | Role | "system"

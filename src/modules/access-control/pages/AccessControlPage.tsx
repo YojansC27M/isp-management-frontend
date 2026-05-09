@@ -1,258 +1,278 @@
-import { useMemo, useState } from "react"
-import { Clock3, Eye, KeyRound, RefreshCw, ShieldCheck, ShieldX } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import type { KeyboardEvent } from "react"
+import { ShieldCheck } from "lucide-react"
+import KpiCard from "@/components/shared/KpiCard"
+import StateMessage from "@/components/feedback/StateMessage"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useI18n } from "@/i18n/i18nContext"
-import { readSecurityAudit, writeSecurityAudit, type SecurityAuditEntry } from "@/auth/auditLog"
-import { cn } from "@/lib/utils"
-import { permissionCatalog } from "@/auth/permissionCatalog"
-import {
-  appRoles,
-  getRolePermissions,
-  getRolePermissionsMap,
-  getRoleStatusMap,
-  resetAllRolePermissions,
-  resetRolePermissions,
-  resetRoleStatus,
-  roleLabels,
-  setRoleEnabled,
-  setRolePermissions,
-} from "@/auth/permissions"
 import { useCan } from "@/auth/usePermission"
-import type { Permission, Role } from "@/auth/types"
+import { getMe } from "@/auth/services/authApi"
+import { normalizePermissions } from "@/auth/validators"
+import { useI18n } from "@/i18n/i18nContext"
+import { getErrorDescription, getErrorMessage } from "@/lib/errors"
 import { useAuthStore } from "@/store/authStore"
 import { useUI } from "@/ui/uiContext"
+import {
+  getAccessPermissions,
+  getAccessRoles,
+  getUserPermissionOverrides,
+  getRolePermissions,
+  resetAllRolePermissions,
+  resetRolePermissions,
+  updateUserPermissionOverrides,
+  updateRolePermissions,
+} from "../services/accessControlApi"
+import { getInternalUsers } from "@/modules/internal-users/services/internalUsersApi"
+import type { InternalUser } from "@/modules/internal-users/types/internalUser"
+import type { AccessPermission, AccessRole } from "../types/accessControl"
+import { getSecurityAuditEntries } from "@/modules/security-audit/services/securityAuditApi"
+import type { SecurityAuditEntry } from "@/modules/security-audit/types/securityAudit"
 
-type ViewMode = "detail" | "matrix"
-type MatrixActionFilter = "all" | "read" | "write"
-type MatrixCoverageFilter = "all" | "with_blocked" | "all_enabled"
-
-const countPermissionDiff = (before: Permission[], after: Permission[]) => {
-  const beforeSet = new Set(before)
-  const afterSet = new Set(after)
-  let changes = 0
-
-  for (const permission of beforeSet) {
-    if (!afterSet.has(permission)) changes += 1
-  }
-  for (const permission of afterSet) {
-    if (!beforeSet.has(permission)) changes += 1
-  }
-
-  return changes
-}
-
-const createAuditId = () => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID()
-  }
-  return `${Date.now()}-${Math.floor(Math.random() * 1000)}`
+const inferAction = (permissionKey: string) => {
+  if (permissionKey.endsWith(".read")) return "read"
+  if (permissionKey.endsWith(".write")) return "write"
+  return "other"
 }
 
 const AccessControlPage = () => {
-  const navigate = useNavigate()
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
   const { notify, confirm } = useUI()
   const canWriteRoles = useCan("roles.write")
-  const user = useAuthStore((state) => state.user)
+  const authUser = useAuthStore((state) => state.user)
   const setPermissions = useAuthStore((state) => state.setPermissions)
 
-  const [selectedRole, setSelectedRole] = useState<Role>("admin")
-  const [viewMode, setViewMode] = useState<ViewMode>("detail")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [roles, setRoles] = useState<AccessRole[]>([])
+  const [permissions, setPermissionsCatalog] = useState<AccessPermission[]>([])
+  const [permissionsByRoleId, setPermissionsByRoleId] = useState<Record<string, string[]>>({})
+  const [selectedRoleId, setSelectedRoleId] = useState("")
+  const [draftPermissions, setDraftPermissions] = useState<string[]>([])
   const [showTechnicalCodes, setShowTechnicalCodes] = useState(false)
-  const [matrixSearch, setMatrixSearch] = useState("")
-  const [matrixModuleFilter, setMatrixModuleFilter] = useState("all")
-  const [matrixActionFilter, setMatrixActionFilter] = useState<MatrixActionFilter>("all")
-  const [matrixCoverageFilter, setMatrixCoverageFilter] = useState<MatrixCoverageFilter>("all")
-  const [permissionsByRole, setPermissionsByRole] = useState<Record<Role, Permission[]>>(() => getRolePermissionsMap())
-  const [roleStatusByRole, setRoleStatusByRole] = useState<Record<Role, boolean>>(() => getRoleStatusMap())
-  const [auditEntries, setAuditEntries] = useState<SecurityAuditEntry[]>(() => readSecurityAudit())
+  const [search, setSearch] = useState("")
+  const [moduleFilter, setModuleFilter] = useState("all")
+  const [actionFilter, setActionFilter] = useState<"all" | "read" | "write">("all")
+  const [internalUsers, setInternalUsers] = useState<InternalUser[]>([])
+  const [selectedUserId, setSelectedUserId] = useState("")
+  const [userGrantsDraft, setUserGrantsDraft] = useState<string[]>([])
+  const [userRevokesDraft, setUserRevokesDraft] = useState<string[]>([])
+  const [userBaseline, setUserBaseline] = useState<{ grants: string[]; revokes: string[] } | null>(null)
+  const [loadingUserOverrides, setLoadingUserOverrides] = useState(false)
+  const [overrideAudit, setOverrideAudit] = useState<SecurityAuditEntry[]>([])
+  const [activeTab, setActiveTab] = useState<"roles" | "exceptions">("roles")
+  const [userSearch, setUserSearch] = useState("")
+  const [comboboxOpen, setComboboxOpen] = useState(false)
+  const [comboboxActiveIndex, setComboboxActiveIndex] = useState(0)
 
-  const formatDateTime = (isoDate: string) => {
-    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-CO", {
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(new Date(isoDate))
-  }
+  const selectedRole = useMemo(() => roles.find((role) => role.id === selectedRoleId) ?? null, [roles, selectedRoleId])
+  const selectedInternalUser = useMemo(
+    () => internalUsers.find((user) => user.id === selectedUserId) ?? null,
+    [internalUsers, selectedUserId],
+  )
 
-  const selectedPermissions = useMemo(() => permissionsByRole[selectedRole] ?? [], [permissionsByRole, selectedRole])
-  const selectedRoleEnabled = roleStatusByRole[selectedRole]
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const [rolesData, permissionsData, usersData] = await Promise.all([getAccessRoles(), getAccessPermissions(), getInternalUsers({ status: "active" })])
 
-  const groupedCatalog = useMemo(() => {
-    const groups = new Map<string, typeof permissionCatalog>()
-    for (const item of permissionCatalog) {
-      const current = groups.get(item.module) ?? []
-      current.push(item)
-      groups.set(item.module, current)
-    }
-    return Array.from(groups.entries())
-  }, [])
+      const rolePermissionsEntries = await Promise.all(
+        rolesData.map(async (role) => {
+          const payload = await getRolePermissions(role.id)
+          return [role.id, payload.permissions] as const
+        }),
+      )
 
-  const moduleSummary = useMemo(() => {
-    const summary = new Map<string, { total: number; enabled: number }>()
-    for (const item of permissionCatalog) {
-      const current = summary.get(item.module) ?? { total: 0, enabled: 0 }
-      current.total += 1
-      if (selectedPermissions.includes(item.permission)) {
-        current.enabled += 1
-      }
-      summary.set(item.module, current)
-    }
-    return Array.from(summary.entries())
-  }, [selectedPermissions])
-
-  const matrixModuleOptions = useMemo(() => {
-    return Array.from(new Set(permissionCatalog.map((item) => item.module)))
-  }, [])
-
-  const filteredMatrixRows = useMemo(() => {
-    const term = matrixSearch.trim().toLowerCase()
-
-    return permissionCatalog.filter((item) => {
-      if (matrixModuleFilter !== "all" && item.module !== matrixModuleFilter) return false
-      if (matrixActionFilter !== "all" && item.action !== matrixActionFilter) return false
-
-      const enabledCount = appRoles.reduce((count, role) => {
-        return (permissionsByRole[role] ?? []).includes(item.permission) ? count + 1 : count
-      }, 0)
-
-      if (matrixCoverageFilter === "all_enabled" && enabledCount !== appRoles.length) return false
-      if (matrixCoverageFilter === "with_blocked" && enabledCount === appRoles.length) return false
-
-      if (!term) return true
-
-      const technicalCode = showTechnicalCodes ? item.permission : ""
-      const haystack = [item.label, item.description, item.module, technicalCode].join(" ").toLowerCase()
-      return haystack.includes(term)
-    })
-  }, [matrixActionFilter, matrixCoverageFilter, matrixModuleFilter, matrixSearch, permissionsByRole, showTechnicalCodes])
-
-  const appendAudit = (entry: Omit<SecurityAuditEntry, "id" | "createdAt">) => {
-    const next: SecurityAuditEntry = {
-      id: createAuditId(),
-      createdAt: new Date().toISOString(),
-      ...entry,
-    }
-
-    setAuditEntries((current) => {
-      const updated = [next, ...current].slice(0, 50)
-      writeSecurityAudit(updated)
-      return updated
-    })
-  }
-
-  const handleToggleRoleStatus = (role: Role, enabled: boolean) => {
-    if (!canWriteRoles) return
-    if (user?.role === role && !enabled) {
-      notify({
-        title: t("accessControl.operationBlocked"),
-        description: t("accessControl.cannotDisableCurrentRole"),
-        type: "error",
+      const byRole = Object.fromEntries(rolePermissionsEntries)
+      setRoles(rolesData)
+      setPermissionsCatalog(permissionsData)
+      setInternalUsers(usersData)
+      setPermissionsByRoleId(byRole)
+      const overrideEvents = await getSecurityAuditEntries({
+        action: "users.permissions_overrides",
+        limit: 20,
       })
-      return
-    }
+      setOverrideAudit(overrideEvents)
 
-    if (role === "admin" && !enabled) {
-      const activeAdmins = appRoles.filter((item) => item === "admin" && roleStatusByRole[item]).length
-      if (activeAdmins <= 1) {
+      const firstRoleId = rolesData[0]?.id ?? ""
+      const firstUserId = usersData[0]?.id ?? ""
+      setSelectedRoleId((current) => (current && byRole[current] ? current : firstRoleId))
+      setSelectedUserId((current) => current || firstUserId)
+      setDraftPermissions((current) => {
+        if (current.length > 0 && selectedRoleId) return current
+        return byRole[firstRoleId] ?? []
+      })
+    } catch (err) {
+      setError(getErrorMessage(err, "No se pudo cargar perfiles y permisos desde el backend."))
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedRoleId])
+
+  const loadUserOverrides = useCallback(
+    async (userId: string) => {
+      if (!userId) return
+      setLoadingUserOverrides(true)
+      try {
+        const payload = await getUserPermissionOverrides(userId)
+        setUserGrantsDraft(payload.grants)
+        setUserRevokesDraft(payload.revokes)
+        setUserBaseline({ grants: payload.grants, revokes: payload.revokes })
+      } catch (err) {
         notify({
-          title: t("accessControl.operationBlocked"),
-          description: t("accessControl.atLeastOneAdmin"),
+          title: "No se pudieron cargar excepciones por usuario",
+          description: getErrorDescription(err, "Intenta nuevamente en unos segundos."),
           type: "error",
         })
-        return
+      } finally {
+        setLoadingUserOverrides(false)
       }
+    },
+    [notify],
+  )
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  useEffect(() => {
+    if (!selectedRoleId) return
+    setDraftPermissions(permissionsByRoleId[selectedRoleId] ?? [])
+  }, [permissionsByRoleId, selectedRoleId])
+
+  useEffect(() => {
+    if (!selectedUserId) return
+    loadUserOverrides(selectedUserId)
+  }, [loadUserOverrides, selectedUserId])
+
+  const modules = useMemo(() => {
+    return Array.from(new Set(permissions.map((permission) => permission.module))).sort((a, b) => a.localeCompare(b))
+  }, [permissions])
+
+  const filteredPermissions = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return permissions.filter((permission) => {
+      if (moduleFilter !== "all" && permission.module !== moduleFilter) return false
+      const action = inferAction(permission.key)
+      if (actionFilter !== "all" && action !== actionFilter) return false
+      if (!term) return true
+
+      const haystack = [permission.label, permission.description ?? "", permission.module, permission.key]
+        .join(" ")
+        .toLowerCase()
+      return haystack.includes(term)
+    })
+  }, [actionFilter, moduleFilter, permissions, search])
+
+  const filteredInternalUsers = useMemo(() => {
+    const term = userSearch.trim().toLowerCase()
+    if (!term) return internalUsers.slice(0, 12)
+    return internalUsers
+      .filter((user) => `${user.name} ${user.email} ${user.role}`.toLowerCase().includes(term))
+      .slice(0, 12)
+  }, [internalUsers, userSearch])
+
+  useEffect(() => {
+    setComboboxActiveIndex(0)
+  }, [userSearch])
+
+  const selectedPermissionSet = useMemo(() => new Set(draftPermissions), [draftPermissions])
+  const selectedCount = selectedPermissionSet.size
+  const hasUnsavedChanges = useMemo(() => {
+    const current = new Set(permissionsByRoleId[selectedRoleId] ?? [])
+    if (current.size !== selectedPermissionSet.size) return true
+    for (const item of selectedPermissionSet) {
+      if (!current.has(item)) return true
     }
+    return false
+  }, [permissionsByRoleId, selectedPermissionSet, selectedRoleId])
 
-    setRoleEnabled(role, enabled)
-    setRoleStatusByRole((current) => ({ ...current, [role]: enabled }))
-    appendAudit({
-      actorName: user?.name ?? t("internalUsers.localUser"),
-      actorRole: user?.role ?? "admin",
-      targetRole: role,
-      action: "toggle_role_status",
-      details: t("accessControl.audit.roleToggled", {
-        role: roleLabels[role],
-        status: enabled ? t("internalUsers.status.active").toLowerCase() : t("internalUsers.status.inactive").toLowerCase(),
-      }),
-    })
-    notify({
-      title: enabled ? t("accessControl.roleEnabledTitle") : t("accessControl.roleDisabledTitle"),
-      description: enabled
-        ? t("accessControl.roleEnabledDesc", { role: roleLabels[role] })
-        : t("accessControl.roleDisabledDesc", { role: roleLabels[role] }),
-      type: enabled ? "success" : "info",
-    })
-  }
+  const userOverrideModeByKey = useMemo(() => {
+    const mode = new Map<string, "inherit" | "grant" | "revoke">()
+    for (const key of userGrantsDraft) mode.set(key, "grant")
+    for (const key of userRevokesDraft) mode.set(key, "revoke")
+    return mode
+  }, [userGrantsDraft, userRevokesDraft])
 
-  const togglePermissionForRole = (role: Role, permission: Permission) => {
+  const hasUnsavedUserOverrides = useMemo(() => {
+    if (!userBaseline) return false
+    const sort = (items: string[]) => [...items].sort((a, b) => a.localeCompare(b))
+    const aGrants = sort(userBaseline.grants)
+    const aRevokes = sort(userBaseline.revokes)
+    const bGrants = sort(userGrantsDraft)
+    const bRevokes = sort(userRevokesDraft)
+    return (
+      aGrants.length !== bGrants.length ||
+      aRevokes.length !== bRevokes.length ||
+      aGrants.some((value, index) => value !== bGrants[index]) ||
+      aRevokes.some((value, index) => value !== bRevokes[index])
+    )
+  }, [userBaseline, userGrantsDraft, userRevokesDraft])
+
+  const togglePermission = (permissionKey: string) => {
     if (!canWriteRoles) return
-
-    setPermissionsByRole((current) => {
-      const currentPermissions = new Set(current[role] ?? [])
-      if (currentPermissions.has(permission)) {
-        currentPermissions.delete(permission)
+    setDraftPermissions((current) => {
+      const next = new Set(current)
+      if (next.has(permissionKey)) {
+        next.delete(permissionKey)
       } else {
-        currentPermissions.add(permission)
+        next.add(permissionKey)
       }
+      return Array.from(next)
+    })
+  }
 
-      return {
+  const updateUserOverrideMode = (permissionKey: string, mode: "inherit" | "grant" | "revoke") => {
+    if (!canWriteRoles) return
+    setUserGrantsDraft((current) => {
+      const next = current.filter((item) => item !== permissionKey)
+      return mode === "grant" ? [...next, permissionKey] : next
+    })
+    setUserRevokesDraft((current) => {
+      const next = current.filter((item) => item !== permissionKey)
+      return mode === "revoke" ? [...next, permissionKey] : next
+    })
+  }
+
+  const syncCurrentUserPermissions = async (roleKey: string) => {
+    if (!authUser || authUser.role !== roleKey) return
+    try {
+      const me = await getMe()
+      setPermissions(normalizePermissions(me.permissions))
+    } catch {
+      // Si falla esta sincronizacion, la actualizacion de permisos de rol ya se aplico en backend.
+    }
+  }
+
+  const handleSave = async () => {
+    if (!selectedRole || !canWriteRoles) return
+    setSaving(true)
+    try {
+      const payload = await updateRolePermissions(selectedRole.id, draftPermissions)
+      setPermissionsByRoleId((current) => ({
         ...current,
-        [role]: Array.from(currentPermissions),
-      }
-    })
-  }
-
-  const handleSave = () => {
-    const before = getRolePermissions(selectedRole)
-    const changes = countPermissionDiff(before, selectedPermissions)
-
-    setRolePermissions(selectedRole, selectedPermissions)
-    if (user?.role === selectedRole) {
-      setPermissions(selectedPermissions)
+        [selectedRole.id]: payload.permissions,
+      }))
+      await syncCurrentUserPermissions(selectedRole.key)
+      notify({
+        title: t("accessControl.permissionsSaved"),
+        description: t("accessControl.permissionsSavedDesc", { role: selectedRole.name }),
+        type: "success",
+      })
+    } catch (err) {
+      notify({
+        title: "No se pudieron guardar permisos",
+        description: getErrorDescription(err, "Verifica permisos y vuelve a intentar."),
+        type: "error",
+      })
+    } finally {
+      setSaving(false)
     }
-
-    appendAudit({
-      actorName: user?.name ?? t("internalUsers.localUser"),
-      actorRole: user?.role ?? "admin",
-      targetRole: selectedRole,
-      action: "save",
-      details: t("accessControl.audit.permissionsUpdated", { changes, role: roleLabels[selectedRole] }),
-    })
-
-    notify({
-      title: t("accessControl.permissionsSaved"),
-      description: t("accessControl.permissionsSavedDesc", { role: roleLabels[selectedRole] }),
-      type: "success",
-    })
-  }
-
-  const handleSaveAllRoles = () => {
-    for (const role of appRoles) {
-      setRolePermissions(role, permissionsByRole[role] ?? [])
-    }
-
-    if (user) {
-      setPermissions(permissionsByRole[user.role] ?? [])
-    }
-
-    appendAudit({
-      actorName: user?.name ?? t("internalUsers.localUser"),
-      actorRole: user?.role ?? "admin",
-      targetRole: "all",
-      action: "save_all",
-      details: t("accessControl.audit.savedAll"),
-    })
-
-    notify({
-      title: t("accessControl.matrixSaved"),
-      description: t("accessControl.matrixSavedDesc"),
-      type: "success",
-    })
   }
 
   const handleResetRole = async () => {
+    if (!selectedRole || !canWriteRoles) return
     const accepted = await confirm({
       title: t("accessControl.restoreRoleTitle"),
       description: t("accessControl.restoreRoleDesc"),
@@ -260,32 +280,33 @@ const AccessControlPage = () => {
     })
     if (!accepted) return
 
-    resetRolePermissions(selectedRole)
-    resetRoleStatus(selectedRole)
-    const nextMap = getRolePermissionsMap()
-    setPermissionsByRole(nextMap)
-    const nextStatus = getRoleStatusMap()
-    setRoleStatusByRole(nextStatus)
-    if (user?.role === selectedRole) {
-      setPermissions(nextMap[selectedRole])
+    setSaving(true)
+    try {
+      const payload = await resetRolePermissions(selectedRole.id)
+      setPermissionsByRoleId((current) => ({
+        ...current,
+        [selectedRole.id]: payload.permissions,
+      }))
+      setDraftPermissions(payload.permissions)
+      await syncCurrentUserPermissions(selectedRole.key)
+      notify({
+        title: t("accessControl.roleRestoredTitle"),
+        description: t("accessControl.roleRestoredDesc", { role: selectedRole.name }),
+        type: "success",
+      })
+    } catch (err) {
+      notify({
+        title: "No se pudo restaurar el perfil",
+        description: getErrorDescription(err, "Intenta nuevamente en unos segundos."),
+        type: "error",
+      })
+    } finally {
+      setSaving(false)
     }
-
-    appendAudit({
-      actorName: user?.name ?? t("internalUsers.localUser"),
-      actorRole: user?.role ?? "admin",
-      targetRole: selectedRole,
-      action: "reset_role",
-      details: t("accessControl.audit.roleRestored", { role: roleLabels[selectedRole] }),
-    })
-
-    notify({
-      title: t("accessControl.roleRestoredTitle"),
-      description: t("accessControl.roleRestoredDesc", { role: roleLabels[selectedRole] }),
-      type: "info",
-    })
   }
 
   const handleResetAll = async () => {
+    if (!canWriteRoles) return
     const accepted = await confirm({
       title: t("accessControl.restoreAllTitle"),
       description: t("accessControl.restoreAllDesc"),
@@ -293,41 +314,95 @@ const AccessControlPage = () => {
     })
     if (!accepted) return
 
-    resetAllRolePermissions()
-    const nextMap = getRolePermissionsMap()
-    setPermissionsByRole(nextMap)
-    const nextStatus = getRoleStatusMap()
-    setRoleStatusByRole(nextStatus)
-    if (user) {
-      setPermissions(nextMap[user.role])
+    setSaving(true)
+    try {
+      await resetAllRolePermissions()
+      await loadData()
+      notify({
+        title: t("accessControl.configRestoredTitle"),
+        description: t("accessControl.configRestoredDesc"),
+        type: "success",
+      })
+    } catch (err) {
+      notify({
+        title: "No se pudieron restaurar todos los perfiles",
+        description: getErrorDescription(err, "Intenta nuevamente en unos segundos."),
+        type: "error",
+      })
+    } finally {
+      setSaving(false)
     }
-
-    appendAudit({
-      actorName: user?.name ?? t("internalUsers.localUser"),
-      actorRole: user?.role ?? "admin",
-      targetRole: "all",
-      action: "reset_all",
-      details: t("accessControl.audit.allRestored"),
-    })
-
-    notify({
-      title: t("accessControl.configRestoredTitle"),
-      description: t("accessControl.configRestoredDesc"),
-      type: "info",
-    })
   }
 
-  const clearAudit = async () => {
-    const accepted = await confirm({
-      title: t("accessControl.clearHistoryTitle"),
-      description: t("accessControl.clearHistoryDesc"),
-      confirmLabel: t("accessControl.clear"),
-    })
-    if (!accepted) return
+  const handleSaveUserOverrides = async () => {
+    if (!selectedUserId || !canWriteRoles) return
+    setSaving(true)
+    try {
+      const payload = await updateUserPermissionOverrides(selectedUserId, userGrantsDraft, userRevokesDraft)
+      setUserGrantsDraft(payload.grants)
+      setUserRevokesDraft(payload.revokes)
+      setUserBaseline({ grants: payload.grants, revokes: payload.revokes })
+      notify({
+        title: "Excepciones guardadas",
+        description: "Se actualizaron permisos individuales para el usuario.",
+        type: "success",
+      })
+      const overrideEvents = await getSecurityAuditEntries({
+        action: "users.permissions_overrides",
+        limit: 20,
+      })
+      setOverrideAudit(overrideEvents)
+    } catch (err) {
+      notify({
+        title: "No se pudieron guardar excepciones",
+        description: getErrorDescription(err, "Verifica los cambios e intenta nuevamente."),
+        type: "error",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
-    setAuditEntries([])
-    writeSecurityAudit([])
-    notify({ title: t("accessControl.historyCleared"), type: "success" })
+  const handleUserSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (filteredInternalUsers.length === 0) return
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      setComboboxOpen(true)
+      setComboboxActiveIndex((current) => (current + 1) % filteredInternalUsers.length)
+      return
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      setComboboxOpen(true)
+      setComboboxActiveIndex((current) => (current - 1 + filteredInternalUsers.length) % filteredInternalUsers.length)
+      return
+    }
+
+    if (event.key === "Enter") {
+      if (!comboboxOpen) return
+      event.preventDefault()
+      const selected = filteredInternalUsers[comboboxActiveIndex]
+      if (!selected) return
+      setSelectedUserId(selected.id)
+      setUserSearch(selected.name)
+      setComboboxOpen(false)
+      return
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault()
+      setComboboxOpen(false)
+    }
+  }
+
+  if (loading) {
+    return <StateMessage variant="loading" title="Cargando perfiles y permisos..." />
+  }
+
+  if (error) {
+    return <StateMessage variant="error" title="Error cargando control de acceso" description={error} />
   }
 
   return (
@@ -339,367 +414,343 @@ const AccessControlPage = () => {
           <div>
             <p className="text-xs uppercase tracking-[0.28em] text-cyan-100">{t("nav.security")}</p>
             <h1 className="mt-2 text-2xl font-semibold">{t("accessControl.title")}</h1>
-            <p className="mt-1 max-w-3xl text-sm text-slate-100/90">{t("accessControl.description")}</p>
+            <p className="mt-1 max-w-3xl text-sm text-slate-100/90">
+              Gestiona permisos por perfil usando la configuracion central del backend.
+            </p>
           </div>
           <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur">
-            <p className="text-xs text-cyan-100">{t("accessControl.enabledPermissions", { role: roleLabels[selectedRole] })}</p>
-            <p className="text-2xl font-semibold">{selectedPermissions.length}</p>
+            <p className="text-xs text-cyan-100">{t("accessControl.enabledPermissions", { role: selectedRole?.name ?? "-" })}</p>
+            <p className="text-2xl font-semibold">{selectedCount}</p>
           </div>
         </div>
       </section>
 
-      {!canWriteRoles && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <KpiCard
+          label={t("accessControl.metrics.totalPermissions")}
+          value={String(permissions.length)}
+          className="border-sky-300/50 bg-sky-100/70 dark:border-sky-700/40 dark:bg-sky-900/25"
+        />
+        <KpiCard
+          label={t("accessControl.metrics.activeRoles")}
+          value={String(roles.length)}
+          className="border-emerald-300/50 bg-emerald-100/70 dark:border-emerald-700/40 dark:bg-emerald-900/25"
+        />
+        <KpiCard
+          label={t("accessControl.metrics.selectedRole")}
+          value={String(selectedCount)}
+          className="border-cyan-300/50 bg-cyan-100/70 dark:border-cyan-700/40 dark:bg-cyan-900/25"
+        />
+      </section>
+
+      <section className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("roles")}
+          className={`rounded-lg px-3 py-1.5 text-sm transition ${
+            activeTab === "roles"
+              ? "border border-primary/40 bg-primary/10 text-foreground"
+              : "border border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          }`}
+        >
+          Perfiles
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("exceptions")}
+          className={`rounded-lg px-3 py-1.5 text-sm transition ${
+            activeTab === "exceptions"
+              ? "border border-primary/40 bg-primary/10 text-foreground"
+              : "border border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          }`}
+        >
+          Excepciones por usuario
+        </button>
+      </section>
+
+      {!canWriteRoles ? (
+        <div className="rounded-xl border border-amber-300/70 bg-amber-100/80 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100">
           {t("accessControl.readOnlyWarning")}
         </div>
-      )}
+      ) : null}
 
-      <section className="rounded-xl border border-border bg-card p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">{t("accessControl.subtitle")}</p>
-          <div className="flex items-center gap-2">
-            <Button variant={viewMode === "detail" ? "default" : "outline"} onClick={() => setViewMode("detail")}>
-              {t("accessControl.detailedView")}
-            </Button>
-            <Button variant={viewMode === "matrix" ? "default" : "outline"} onClick={() => setViewMode("matrix")}>
-              {t("accessControl.matrixView")}
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-3">
-        {moduleSummary.map(([moduleName, summary]) => {
-          const fullyEnabled = summary.enabled === summary.total
-          return (
-            <div key={moduleName} className="rounded-xl border border-border bg-card p-3">
-              <p className="text-sm font-semibold text-foreground">{moduleName}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t("accessControl.moduleSummary", { enabled: summary.enabled, total: summary.total })}</p>
-              <span
-                className={cn(
-                  "mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
-                  fullyEnabled ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700",
-                )}
-              >
-                {fullyEnabled ? <ShieldCheck className="h-3.5 w-3.5" /> : <ShieldX className="h-3.5 w-3.5" />}
-                {fullyEnabled ? t("accessControl.complete") : t("accessControl.partial")}
-              </span>
-            </div>
-          )
-        })}
-      </section>
-
-      {viewMode === "detail" ? (
-        <section className="grid gap-4 xl:grid-cols-[320px_1fr]">
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" />
-                {t("accessControl.roles")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              {appRoles.map((role) => {
-                const selected = selectedRole === role
-                const count = permissionsByRole[role]?.length ?? 0
-                const enabled = roleStatusByRole[role]
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => setSelectedRole(role)}
-                    className={cn(
-                      "flex items-center justify-between rounded-lg border px-3 py-2 text-left transition",
-                      selected
-                        ? "border-primary/40 bg-primary/10 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground",
-                    )}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold">{roleLabels[role]}</p>
-                      <p className="text-xs uppercase tracking-wide opacity-80">{role}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-semibold",
-                          enabled ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700",
-                        )}
-                      >
-                        {enabled ? t("internalUsers.status.active") : t("internalUsers.status.inactive")}
-                      </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">{count}</span>
-                    </div>
-                  </button>
-                )
-              })}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="flex items-center gap-2">
-                  <KeyRound className="h-4 w-4" />
-                  {t("accessControl.permissionsFor", { role: roleLabels[selectedRole] })}
-                </CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant={selectedRoleEnabled ? "outline" : "default"}
-                    onClick={() => handleToggleRoleStatus(selectedRole, !selectedRoleEnabled)}
-                    disabled={!canWriteRoles}
-                    title={!canWriteRoles ? t("accessControl.noPermissionModify") : undefined}
-                  >
-                    {selectedRoleEnabled ? t("accessControl.disableRole") : t("accessControl.enableRole")}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowTechnicalCodes((current) => !current)}>
-                    {showTechnicalCodes ? t("accessControl.hideCodes") : t("accessControl.showCodes")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleResetRole}
-                    disabled={!canWriteRoles}
-                    title={!canWriteRoles ? t("accessControl.noPermissionModify") : undefined}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    {t("accessControl.restoreRole")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleResetAll}
-                    disabled={!canWriteRoles}
-                    title={!canWriteRoles ? t("accessControl.noPermissionModify") : undefined}
-                  >
-                    {t("accessControl.restoreAll")}
-                  </Button>
-                  <Button onClick={handleSave} disabled={!canWriteRoles} title={!canWriteRoles ? t("accessControl.noPermissionModify") : undefined}>
-                    {t("accessControl.saveChanges")}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {groupedCatalog.map(([moduleName, items]) => (
-                <div key={moduleName} className="rounded-xl border border-border">
-                  <div className="border-b border-border bg-muted/40 px-4 py-2">
-                    <p className="text-sm font-semibold text-foreground">{moduleName}</p>
+      {activeTab === "roles" ? (
+      <section className="grid gap-4 xl:grid-cols-[320px_1fr]">
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              {t("accessControl.roles")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            {roles.map((role) => {
+              const selected = selectedRoleId === role.id
+              const count = (permissionsByRoleId[role.id] ?? []).length
+              return (
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => setSelectedRoleId(role.id)}
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left transition ${
+                    selected
+                      ? "border-primary/40 bg-primary/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold">{role.name}</p>
+                    <p className="text-xs uppercase tracking-wide opacity-80">{role.key}</p>
                   </div>
-                  <div className="divide-y divide-border/60">
-                    {items.map((item) => {
-                      const checked = selectedPermissions.includes(item.permission)
-                      return (
-                        <label
-                          key={item.permission}
-                          className={cn("flex cursor-pointer items-center justify-between gap-4 px-4 py-3", !canWriteRoles && "cursor-not-allowed opacity-80")}
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{item.label}</p>
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
-                            {showTechnicalCodes && <p className="mt-1 text-[11px] text-muted-foreground">{t("accessControl.technicalCode", { code: item.permission })}</p>}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", checked ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700")}>
-                              {checked ? t("accessControl.allowed") : t("accessControl.blocked")}
-                            </span>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              disabled={!canWriteRoles}
-                              onChange={() => togglePermissionForRole(selectedRole, item.permission)}
-                              className="h-4 w-4 rounded border-border"
-                            />
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
-      ) : (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">{count}</span>
+                </button>
+              )
+            })}
+          </CardContent>
+        </Card>
+
         <Card className="border-border bg-card">
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle className="flex items-center gap-2">
-                <KeyRound className="h-4 w-4" />
-                {t("accessControl.compactMatrix")}
-              </CardTitle>
+              <CardTitle>{t("accessControl.permissionsFor", { role: selectedRole?.name ?? "-" })}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" onClick={() => setShowTechnicalCodes((current) => !current)}>
                   {showTechnicalCodes ? t("accessControl.hideCodes") : t("accessControl.showCodes")}
                 </Button>
-                <Button variant="outline" onClick={handleResetAll} disabled={!canWriteRoles} title={!canWriteRoles ? t("accessControl.noPermissionModify") : undefined}>
+                <Button variant="outline" onClick={handleResetRole} disabled={!canWriteRoles || saving || !selectedRole}>
+                  {t("accessControl.restoreRole")}
+                </Button>
+                <Button variant="outline" onClick={handleResetAll} disabled={!canWriteRoles || saving}>
                   {t("accessControl.restoreAll")}
                 </Button>
-                <Button onClick={handleSaveAllRoles} disabled={!canWriteRoles} title={!canWriteRoles ? t("accessControl.noPermissionModify") : undefined}>
-                  {t("accessControl.saveAll")}
+                <Button onClick={handleSave} disabled={!canWriteRoles || saving || !hasUnsavedChanges || !selectedRole}>
+                  {saving ? "Guardando..." : t("accessControl.saveChanges")}
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="mb-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <CardContent className="space-y-4">
+            <div className="grid gap-2 md:grid-cols-3">
               <input
                 type="search"
-                value={matrixSearch}
-                onChange={(event) => setMatrixSearch(event.target.value)}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("accessControl.searchPermissionPlaceholder")}
                 className="h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
               />
               <select
-                value={matrixModuleFilter}
-                onChange={(event) => setMatrixModuleFilter(event.target.value)}
+                value={moduleFilter}
+                onChange={(event) => setModuleFilter(event.target.value)}
                 className="h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
               >
                 <option value="all">{t("accessControl.allModules")}</option>
-                {matrixModuleOptions.map((moduleName) => (
+                {modules.map((moduleName) => (
                   <option key={moduleName} value={moduleName}>
                     {moduleName}
                   </option>
                 ))}
               </select>
               <select
-                value={matrixActionFilter}
-                onChange={(event) => setMatrixActionFilter(event.target.value as MatrixActionFilter)}
+                value={actionFilter}
+                onChange={(event) => setActionFilter(event.target.value as "all" | "read" | "write")}
                 className="h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
               >
                 <option value="all">{t("accessControl.readAndWrite")}</option>
                 <option value="read">{t("accessControl.readOnlyFilter")}</option>
                 <option value="write">{t("accessControl.writeOnlyFilter")}</option>
               </select>
-              <select
-                value={matrixCoverageFilter}
-                onChange={(event) => setMatrixCoverageFilter(event.target.value as MatrixCoverageFilter)}
-                className="h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
-              >
-                <option value="all">{t("accessControl.allStatuses")}</option>
-                <option value="with_blocked">{t("accessControl.withBlockedOnly")}</option>
-                <option value="all_enabled">{t("accessControl.allEnabledOnly")}</option>
-              </select>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-3 py-2 font-semibold">{t("accessControl.permission")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("accessControl.module")}</th>
-                    {appRoles.map((role) => (
-                      <th key={role} className="px-3 py-2 text-center font-semibold">
-                        <div className="flex flex-col items-center gap-1">
-                          <span>{roleLabels[role]}</span>
-                          <button
-                            type="button"
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-[10px] font-semibold normal-case",
-                              roleStatusByRole[role] ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700",
-                            )}
-                            onClick={() => handleToggleRoleStatus(role, !roleStatusByRole[role])}
-                            disabled={!canWriteRoles}
-                            title={
-                              !canWriteRoles
-                                ? t("accessControl.noPermissionModify")
-                                : roleStatusByRole[role]
-                                  ? t("accessControl.disableRole")
-                                  : t("accessControl.enableRole")
-                            }
-                          >
-                            {roleStatusByRole[role] ? t("internalUsers.status.active") : t("internalUsers.status.inactive")}
-                          </button>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMatrixRows.map((item) => (
-                    <tr key={item.permission} className="border-t border-border/60">
-                      <td className="px-3 py-2">
-                        <p className="font-medium text-foreground">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                        {showTechnicalCodes && <p className="text-[11px] text-muted-foreground">{item.permission}</p>}
-                      </td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">{item.module}</td>
-                      {appRoles.map((role) => {
-                        const checked = (permissionsByRole[role] ?? []).includes(item.permission)
-                        return (
-                          <td key={`${role}-${item.permission}`} className="px-3 py-2 text-center">
-                            <label className={cn("inline-flex items-center gap-2 rounded-full px-2 py-1", checked ? "bg-emerald-50" : "bg-rose-50")}>
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                disabled={!canWriteRoles}
-                                onChange={() => togglePermissionForRole(role, item.permission)}
-                                className="h-4 w-4 rounded border-border"
-                              />
-                              <span className={cn("text-xs font-semibold", checked ? "text-emerald-700" : "text-rose-700")}>{checked ? t("accessControl.yes") : t("accessControl.no")}</span>
-                            </label>
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {filteredMatrixRows.length === 0 && <p className="mt-3 text-sm text-muted-foreground">{t("accessControl.noMatchingPermissions")}</p>}
+
+            {filteredPermissions.length === 0 ? (
+              <StateMessage variant="empty" title={t("accessControl.noMatchingPermissions")} />
+            ) : (
+              <div className="divide-y divide-border rounded-xl border border-border">
+                {filteredPermissions.map((permission) => {
+                  const checked = selectedPermissionSet.has(permission.key)
+                  return (
+                    <label key={permission.id} className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{permission.label}</p>
+                        <p className="text-xs text-muted-foreground">{permission.description ?? permission.module}</p>
+                        {showTechnicalCodes ? <p className="text-[11px] text-muted-foreground">{t("accessControl.technicalCode", { code: permission.key })}</p> : null}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                            checked
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                              : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200"
+                          }`}
+                        >
+                          {checked ? t("accessControl.allowed") : t("accessControl.blocked")}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={!canWriteRoles}
+                          onChange={() => togglePermission(permission.key)}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      </section>
+      ) : null}
 
-      <Card className="border-border bg-card">
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2">
-              <Clock3 className="h-4 w-4" />
-              {t("accessControl.localHistory")}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => navigate("/security-audit")}>
-                {t("accessControl.openFullAudit")}
-              </Button>
-              <Button variant="outline" onClick={clearAudit}>
-                {t("accessControl.clearHistory")}
-              </Button>
+      {activeTab === "exceptions" ? (
+      <>
+      <section className="grid gap-4 xl:grid-cols-[320px_1fr]">
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <CardTitle>Excepciones por usuario</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <div className="relative">
+              <input
+                type="search"
+                value={userSearch}
+                onFocus={() => setComboboxOpen(true)}
+                onChange={(event) => {
+                  setUserSearch(event.target.value)
+                  setComboboxOpen(true)
+                }}
+                onKeyDown={handleUserSearchKeyDown}
+                placeholder="Buscar usuario por nombre, correo o rol..."
+                role="combobox"
+                aria-expanded={comboboxOpen}
+                aria-controls="access-control-user-combobox-list"
+                aria-activedescendant={comboboxOpen ? `access-control-user-option-${comboboxActiveIndex}` : undefined}
+                className="h-9 w-full rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground outline-none focus:border-ring"
+              />
+              {comboboxOpen ? (
+                <div
+                  id="access-control-user-combobox-list"
+                  role="listbox"
+                  className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-card shadow-lg"
+                >
+                  {filteredInternalUsers.length === 0 ? (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">No hay usuarios que coincidan con la busqueda.</p>
+                  ) : (
+                    filteredInternalUsers.map((user, index) => {
+                      const selected = user.id === selectedUserId
+                      const active = index === comboboxActiveIndex
+                      return (
+                        <button
+                          key={user.id}
+                          id={`access-control-user-option-${index}`}
+                          role="option"
+                          aria-selected={selected}
+                          type="button"
+                          onMouseEnter={() => setComboboxActiveIndex(index)}
+                          onClick={() => {
+                            setSelectedUserId(user.id)
+                            setUserSearch(user.name)
+                            setComboboxOpen(false)
+                          }}
+                          className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition ${
+                            active || selected
+                              ? "bg-primary/10 text-foreground"
+                              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          }`}
+                        >
+                          <span className="truncate">{user.name}</span>
+                          <span className="ml-3 shrink-0 text-xs uppercase">{user.role}</span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              ) : null}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {auditEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("accessControl.noChangesYet")}</p>
-          ) : (
-            <ul className="grid gap-2">
-              {auditEntries.map((entry) => (
-                <li key={entry.id} className="rounded-lg border border-border bg-muted/30 px-3 py-2">
-                  <p className="text-sm text-foreground">{entry.details}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatDateTime(entry.createdAt)} - {entry.actorName} ({roleLabels[entry.actorRole]})
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+            {selectedInternalUser ? (
+              <p className="text-xs text-muted-foreground">
+                Seleccionado: {selectedInternalUser.name} · {selectedInternalUser.email}
+              </p>
+            ) : null}
+            <p className="text-xs text-muted-foreground">
+              Usa esto para casos puntuales. Ejemplo: un usuario de soporte con permisos extra sin cambiar todo el perfil soporte.
+            </p>
+          </CardContent>
+        </Card>
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h2 className="text-sm font-semibold text-foreground">{t("accessControl.quickGuide")}</h2>
-        <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
-          <li className="flex items-start gap-2">
-            <Eye className="mt-0.5 h-4 w-4 shrink-0" />
-            {t("accessControl.guide.read")}
-          </li>
-          <li className="flex items-start gap-2">
-            <KeyRound className="mt-0.5 h-4 w-4 shrink-0" />
-            {t("accessControl.guide.manage")}
-          </li>
-          <li className="flex items-start gap-2">
-            <ShieldX className="mt-0.5 h-4 w-4 shrink-0" />
-            {t("accessControl.guide.inactiveRole")}
-          </li>
-        </ul>
-      </div>
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle>Permisos individuales</CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  disabled={!canWriteRoles || saving || loadingUserOverrides}
+                  onClick={() => {
+                    if (!userBaseline) return
+                    setUserGrantsDraft(userBaseline.grants)
+                    setUserRevokesDraft(userBaseline.revokes)
+                  }}
+                >
+                  Revertir
+                </Button>
+                <Button onClick={handleSaveUserOverrides} disabled={!canWriteRoles || saving || !hasUnsavedUserOverrides || loadingUserOverrides}>
+                  {saving ? "Guardando..." : "Guardar excepciones"}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingUserOverrides ? (
+              <StateMessage variant="loading" title="Cargando excepciones del usuario..." />
+            ) : (
+              <div className="divide-y divide-border rounded-xl border border-border">
+                {filteredPermissions.map((permission) => {
+                  const mode = userOverrideModeByKey.get(permission.key) ?? "inherit"
+                  return (
+                    <div key={`user-override-${permission.id}`} className="flex items-center justify-between gap-4 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{permission.label}</p>
+                        <p className="text-xs text-muted-foreground">{permission.description ?? permission.module}</p>
+                      </div>
+                      <select
+                        value={mode}
+                        onChange={(event) => updateUserOverrideMode(permission.key, event.target.value as "inherit" | "grant" | "revoke")}
+                        disabled={!canWriteRoles}
+                        className="h-8 min-w-[110px] rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                      >
+                        <option value="inherit">Heredar</option>
+                        <option value="grant">Permitir</option>
+                        <option value="revoke">Bloquear</option>
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-3 rounded-xl border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Auditoria de excepciones por usuario</h3>
+        {overrideAudit.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aun no hay eventos de excepciones por usuario.</p>
+        ) : (
+          <div className="divide-y divide-border rounded-lg border border-border">
+            {overrideAudit.slice(0, 8).map((entry) => (
+              <div key={entry.id} className="px-3 py-2">
+                <p className="text-xs text-foreground">{entry.action}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {new Date(entry.createdAt).toLocaleString()} · {entry.actor?.name ?? "Sistema"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+      </>
+      ) : null}
     </div>
   )
 }

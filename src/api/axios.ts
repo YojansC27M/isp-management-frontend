@@ -2,7 +2,6 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { normalizeApiError } from "@/api/apiError"
 import { getAuthToken, getClientToken } from "@/auth/session"
 import { getCurrentLocale } from "@/i18n/locale"
-import mockAdapter from "@/mocks/adapter"
 
 type DomainName =
   | "auth"
@@ -13,7 +12,9 @@ type DomainName =
   | "tickets"
   | "visits"
   | "monitoring"
+  | "dashboard"
   | "reports"
+  | "routers"
   | "roles"
   | "audit"
   | "client-portal"
@@ -50,7 +51,9 @@ const domainPolicies: Record<DomainName, DomainPolicy> = {
   tickets: { timeoutMs: 10_000, retries: 1, retryDelayMs: 300 },
   visits: { timeoutMs: 10_000, retries: 1, retryDelayMs: 300 },
   monitoring: { timeoutMs: 15_000, retries: 1, retryDelayMs: 400 },
+  dashboard: { timeoutMs: 12_000, retries: 1, retryDelayMs: 350 },
   reports: { timeoutMs: 15_000, retries: 1, retryDelayMs: 400 },
+  routers: { timeoutMs: 12_000, retries: 1, retryDelayMs: 350 },
   roles: { timeoutMs: 10_000, retries: 0, retryDelayMs: 250 },
   audit: { timeoutMs: 10_000, retries: 0, retryDelayMs: 250 },
   "client-portal": { timeoutMs: 8_000, retries: 0, retryDelayMs: 200 },
@@ -139,10 +142,6 @@ const clearCancelKeyIfOwnsController = (config?: ApiRequestConfig) => {
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 })
-
-if (import.meta.env.VITE_USE_MOCKS === "true") {
-  api.defaults.adapter = mockAdapter
-}
 
 api.interceptors.request.use(
   (rawConfig) => {

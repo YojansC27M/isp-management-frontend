@@ -1,7 +1,10 @@
 import type { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from "axios"
 import type { ClientFormValues } from "@/modules/clients/types/client"
+import type { InvoiceCancelValues, InvoiceFormValues } from "@/modules/invoices/types/invoice"
+import type { InstallationFormValues } from "@/modules/installations/types/installation"
 import type { PlanFormValues } from "@/modules/plans/types/plan"
 import type { PaymentFormValues } from "@/modules/payments/types/payment"
+import type { ClientPortalCreateTicketPayload } from "@/modules/client-portal/types/clientPortal"
 import type { TicketFormValues } from "@/modules/tickets/types/ticket"
 import type { VisitFormValues } from "@/modules/visits/types/visit"
 import type { ClientMapFiltersValues } from "@/modules/clients-map/types/clientMap"
@@ -30,9 +33,12 @@ import {
   routerMetricsById,
   routers,
   statusDistribution,
+  documentTypes,
   systemSettings,
+  installationMovements,
   ticketComments,
   tickets,
+  installations,
   visits,
 } from "./data"
 
@@ -54,6 +60,9 @@ const notFound = (config: InternalAxiosRequestConfig): AxiosResponse<{ message: 
 
 const parseBody = <T>(config: InternalAxiosRequestConfig): T | null => {
   if (!config.data) return null
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    return Object.fromEntries(config.data.entries()) as T
+  }
   if (typeof config.data === "string") {
     try {
       return JSON.parse(config.data) as T
@@ -82,6 +91,48 @@ const getParam = (config: InternalAxiosRequestConfig, key: string): string => {
 }
 
 const matches = (value: string, query: string) => value.toLowerCase().includes(query.toLowerCase())
+const EARTH_RADIUS_KM = 6371
+
+const toRadians = (value: number) => (value * Math.PI) / 180
+
+const distanceKm = (latA: number, lngA: number, latB: number, lngB: number) => {
+  const dLat = toRadians(latB - latA)
+  const dLng = toRadians(lngB - lngA)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(latA)) * Math.cos(toRadians(latB)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a))
+}
+
+const parsePolygon = (raw: string) => {
+  if (!raw.trim()) return [] as Array<{ lat: number; lng: number }>
+  const points = raw
+    .split(";")
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => {
+      const [latRaw, lngRaw] = chunk.split(",").map((part) => part.trim())
+      const lat = Number(latRaw)
+      const lng = Number(lngRaw)
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+      return { lat, lng }
+    })
+    .filter((point): point is { lat: number; lng: number } => point !== null)
+  return points.length >= 3 ? points : []
+}
+
+const pointInPolygon = (lat: number, lng: number, polygon: Array<{ lat: number; lng: number }>) => {
+  let inside = false
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i]!.lng
+    const yi = polygon[i]!.lat
+    const xj = polygon[j]!.lng
+    const yj = polygon[j]!.lat
+    const intersects = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi || Number.EPSILON) + xi
+    if (intersects) inside = !inside
+  }
+  return inside
+}
 
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000)}`
 
@@ -93,7 +144,7 @@ const mockNavigationConfig = {
     { id: "commercial", items: ["plans", "payments", "invoices"] },
     { id: "support", items: ["tickets", "visits"] },
     { id: "operations", items: ["routers", "monitoring", "reports"] },
-    { id: "security", items: ["settings-system", "access-control", "security-audit"] },
+    { id: "security", items: ["settings-system", "settings-document-types", "access-control", "security-audit"] },
   ],
 }
 
@@ -113,6 +164,74 @@ const getAssignableTicketUser = (id: string) => {
 const getExistingClient = (id: string) => {
   return clients.find((client) => client.id === id)
 }
+
+const getExistingVisit = (id: string) => visits.find((visit) => visit.id === id)
+
+const getExistingRouter = (id: string) => managedRouters.find((router) => router.id === id)
+
+const getExistingInstallationByClient = (clientId: string) => installations.find((item) => item.clientId === clientId)
+
+const getExistingInstallationById = (id: string) => installations.find((item) => item.id === id)
+
+const buildInstallationRecord = (payload: InstallationFormValues, id = `inst-${generateId()}`) => {
+  const client = getExistingClient(payload.clientId)
+  const visit = payload.visitId ? getExistingVisit(payload.visitId) : null
+  const router = getExistingRouter(payload.routerId)
+  const now = new Date().toISOString()
+  const installedAt = payload.installedAt ? new Date(payload.installedAt).toISOString() : null
+
+  return {
+    id,
+    clientId: payload.clientId,
+    clientName: client?.name ?? "",
+    clientPhone: client?.phone ?? "",
+    clientAddress: client?.address ?? "",
+    clientStatus: client?.status ?? "active",
+    clientPlan: client?.plan ?? "",
+    visitId: payload.visitId || null,
+    visitType: visit?.type ?? "",
+    visitStatus: visit?.status ?? "",
+    visitScheduledAt: visit ? new Date(`${visit.scheduledDate}T${visit.scheduledTime}:00.000Z`).toISOString() : null,
+    routerId: payload.routerId || null,
+    routerName: router?.name ?? "",
+    routerIp: router?.ip ?? "",
+    routerZone: router?.zone ?? "",
+    routerLocation: router?.location ?? "",
+    routerStatus: router?.status ?? "",
+    operationType: payload.operationType,
+    status: payload.status,
+    installedAt,
+    notes: payload.notes || "",
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+const buildMovementRecord = (record: ReturnType<typeof buildInstallationRecord> & { installationId: string | null }) => ({
+  id: `mov-${generateId()}`,
+  clientId: record.clientId,
+  clientName: record.clientName,
+  clientPhone: record.clientPhone,
+  clientAddress: record.clientAddress,
+  clientStatus: record.clientStatus,
+  clientPlan: record.clientPlan,
+  installationId: record.installationId,
+  visitId: record.visitId,
+  visitType: record.visitType,
+  visitStatus: record.visitStatus,
+  visitScheduledAt: record.visitScheduledAt,
+  routerId: record.routerId,
+  routerName: record.routerName,
+  routerIp: record.routerIp,
+  routerZone: record.routerZone,
+  routerLocation: record.routerLocation,
+  routerStatus: record.routerStatus,
+  operationType: record.operationType,
+  status: record.status,
+  notes: record.notes,
+  happenedAt: record.updatedAt,
+  createdAt: record.updatedAt,
+})
 
 const normalizeRouterStatus = (ip: string): RouterStatus => (ip.endsWith(".1") ? "online" : "offline")
 
@@ -175,7 +294,8 @@ const mockAdapter: AxiosAdapter = async (config) => {
   if (method === "post" && path === "/clients") {
     const payload = parseBody<ClientFormValues>(config)
     if (!payload) return notFound(config)
-    const created = { id: generateId(), ...payload }
+    const selectedPlan = plans.find((plan) => plan.id === payload.planId)
+    const created = { id: generateId(), ...payload, plan: selectedPlan?.name ?? "Sin plan" }
     clients.push(created)
     return ok(config, created, 201)
   }
@@ -185,7 +305,8 @@ const mockAdapter: AxiosAdapter = async (config) => {
     const payload = parseBody<ClientFormValues>(config)
     const index = clients.findIndex((item) => item.id === id)
     if (index === -1 || !payload) return notFound(config)
-    clients[index] = { ...clients[index], ...payload }
+    const selectedPlan = plans.find((plan) => plan.id === payload.planId)
+    clients[index] = { ...clients[index], ...payload, plan: selectedPlan?.name ?? clients[index].plan }
     return ok(config, clients[index])
   }
 
@@ -267,7 +388,67 @@ const mockAdapter: AxiosAdapter = async (config) => {
   }
 
   if (method === "get" && path === "/internal-users") {
-    return ok(config, internalUsers)
+    const search = getParam(config, "search").trim().toLowerCase()
+    const role = getParam(config, "role").trim()
+    const status = getParam(config, "status").trim()
+    const cursor = getParam(config, "cursor").trim()
+    const limitRaw = Number.parseInt(getParam(config, "limit"), 10)
+    const pageRaw = Number.parseInt(getParam(config, "page"), 10)
+    const perPageRaw = Number.parseInt(getParam(config, "perPage"), 10)
+    const sortBy = getParam(config, "sortBy").trim() || "createdAt"
+    const sortDir = getParam(config, "sortDir").trim() === "asc" ? "asc" : "desc"
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 25
+    const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1
+    const perPage = Number.isFinite(perPageRaw) && perPageRaw > 0 ? Math.min(perPageRaw, 100) : 25
+
+    const filtered = internalUsers
+      .filter((user) => {
+        const matchesSearch =
+          !search || [user.name, user.email, user.phone, user.documentType, user.documentNumber].join(" ").toLowerCase().includes(search)
+        const matchesRole = !role || user.role === role
+        const matchesStatus = !status || user.status === status
+        return matchesSearch && matchesRole && matchesStatus
+      })
+      .sort((a, b) => {
+        const direction = sortDir === "asc" ? 1 : -1
+        if (sortBy === "name") return a.name.localeCompare(b.name) * direction
+        if (sortBy === "email") return a.email.localeCompare(b.email) * direction
+        if (sortBy === "role") return a.role.localeCompare(b.role) * direction
+        return 0
+      })
+
+    if (cursor || getParam(config, "limit")) {
+      const startIndex = cursor ? Math.max(filtered.findIndex((item) => item.id === cursor) + 1, 0) : 0
+      const slice = filtered.slice(startIndex, startIndex + limit + 1)
+      const hasNext = slice.length > limit
+      const items = hasNext ? slice.slice(0, limit) : slice
+      const nextCursor = hasNext && items.length > 0 ? items[items.length - 1]?.id ?? null : null
+      return ok(config, {
+        items,
+        meta: {
+          mode: "cursor",
+          limit,
+          hasNext,
+          nextCursor,
+        },
+      })
+    }
+
+    const total = filtered.length
+    const totalPages = Math.max(1, Math.ceil(total / perPage))
+    const boundedPage = Math.min(Math.max(1, page), totalPages)
+    const start = (boundedPage - 1) * perPage
+    const items = filtered.slice(start, start + perPage)
+
+    return ok(config, {
+      items,
+      meta: {
+        page: boundedPage,
+        perPage,
+        total,
+        totalPages,
+      },
+    })
   }
 
   if (method === "get" && path.startsWith("/internal-users/")) {
@@ -352,9 +533,20 @@ const mockAdapter: AxiosAdapter = async (config) => {
       }
     }
     const createdAt = new Date().toISOString()
+    const attachmentEntries =
+      typeof FormData !== "undefined" && config.data instanceof FormData ? config.data.getAll("attachment") : []
+    const attachmentFiles = attachmentEntries.filter((entry): entry is File => entry instanceof File)
+    const attachments = attachmentFiles.map((file) => ({
+      fileName: `mock-${generateId()}`,
+      originalName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+      url: typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : "",
+    }))
     const created = {
       id: generateId(),
       clientName: client.name,
+      clientPhone: client.phone ?? "",
       createdAt,
       ...payload,
       assignedUserName: assigneeUser?.name ?? "Sin asignar",
@@ -368,6 +560,8 @@ const mockAdapter: AxiosAdapter = async (config) => {
           createdAt,
         },
       ],
+      attachment: attachments[0] ?? null,
+      attachments,
     }
     created.history[0].ticketId = created.id
     tickets.push(created)
@@ -424,6 +618,7 @@ const mockAdapter: AxiosAdapter = async (config) => {
       ...tickets[index],
       ...payload,
       clientName: client.name,
+      clientPhone: client.phone ?? "",
       assignedUserName: assigneeUser?.name ?? "Sin asignar",
       assignedTechnicianId: isBilling ? "" : payload.assignedTechnicianId,
       assignedTechnicianName: technician?.name ?? "Sin asignar",
@@ -468,6 +663,127 @@ const mockAdapter: AxiosAdapter = async (config) => {
     const id = path.split("/")[2]
     const visit = visits.find((item) => item.id === id)
     return visit ? ok(config, visit) : notFound(config)
+  }
+
+  if (method === "get" && path === "/installations") {
+    return ok(config, installations)
+  }
+
+  if (method === "get" && path.startsWith("/installations/")) {
+    const segments = path.split("/")
+    if (segments[2] === "client") {
+      const clientId = segments[3]
+      if (segments[4] === "movements") {
+        const movements = installationMovements.filter((item) => item.clientId === clientId)
+        return ok(config, movements)
+      }
+      const installation = installations.find((item) => item.clientId === clientId) ?? null
+      return ok(config, installation)
+    }
+    if (segments[2] === "router") {
+      const routerId = segments[3]
+      const filtered = installations.filter((item) => item.routerId === routerId)
+      return ok(config, filtered)
+    }
+    const id = segments[2]
+    const installation = installations.find((item) => item.id === id)
+    return installation ? ok(config, installation) : notFound(config)
+  }
+
+  if (method === "post" && path === "/installations") {
+    const payload = parseBody<InstallationFormValues>(config)
+    if (!payload?.clientId || !payload?.routerId) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    const router = getExistingRouter(payload.routerId)
+    if (!client || !router) {
+      return {
+        data: { message: "Client or router is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    if (payload.visitId) {
+      const visit = getExistingVisit(payload.visitId)
+      if (!visit || visit.clientId !== client.id) {
+        return {
+          data: { message: "Visit does not belong to selected client." },
+          status: 400,
+          statusText: "Bad Request",
+          headers: {},
+          config,
+        }
+      }
+    }
+    if (getExistingInstallationByClient(client.id)) {
+      return {
+        data: { message: "Client already has an installation." },
+        status: 409,
+        statusText: "Conflict",
+        headers: {},
+        config,
+      }
+    }
+    const created = buildInstallationRecord(payload)
+    installations.unshift(created)
+    installationMovements.unshift(buildMovementRecord({ ...created, installationId: created.id }))
+    return ok(config, created, 201)
+  }
+
+  if (method === "put" && path.startsWith("/installations/")) {
+    const id = path.split("/")[2]
+    const payload = parseBody<InstallationFormValues>(config)
+    const index = installations.findIndex((item) => item.id === id)
+    if (index === -1 || !payload?.clientId || !payload?.routerId) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    const router = getExistingRouter(payload.routerId)
+    if (!client || !router) {
+      return {
+        data: { message: "Client or router is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    if (payload.visitId) {
+      const visit = getExistingVisit(payload.visitId)
+      if (!visit || visit.clientId !== client.id) {
+        return {
+          data: { message: "Visit does not belong to selected client." },
+          status: 400,
+          statusText: "Bad Request",
+          headers: {},
+          config,
+        }
+      }
+    }
+    const updated = buildInstallationRecord(payload, id)
+    installations[index] = updated
+    installationMovements.unshift(buildMovementRecord({ ...updated, installationId: updated.id }))
+    return ok(config, installations[index])
+  }
+
+  if (method === "delete" && path.startsWith("/installations/")) {
+    const id = path.split("/")[2]
+    const index = installations.findIndex((item) => item.id === id)
+    if (index === -1) return notFound(config)
+    const current = getExistingInstallationById(id)
+    if (current) {
+      installationMovements.unshift(
+        buildMovementRecord({
+          ...current,
+          status: "canceled",
+          operationType: "removal",
+          notes: current.notes || "Registro eliminado",
+          installationId: current.id,
+          updatedAt: new Date().toISOString(),
+        }),
+      )
+    }
+    installations.splice(index, 1)
+    return ok(config, { ok: true })
   }
 
   if (method === "post" && path === "/visits") {
@@ -552,6 +868,117 @@ const mockAdapter: AxiosAdapter = async (config) => {
     const fileLabel = payload?.fileName ? encodeURIComponent(payload.fileName) : "logo"
     systemSettings.logoUrl = `https://placehold.co/240x120/png?text=${fileLabel}`
     return ok(config, { logoUrl: systemSettings.logoUrl })
+  }
+
+  if (method === "get" && path === "/settings/system/document-types") {
+    const includeInactive = getParam(config, "includeInactive").trim() === "true"
+    const search = getParam(config, "search").trim().toLowerCase()
+    const status = getParam(config, "status").trim() as "all" | "active" | "inactive" | ""
+    const pageRaw = Number.parseInt(getParam(config, "page"), 10)
+    const perPageRaw = Number.parseInt(getParam(config, "perPage"), 10)
+    const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1
+    const perPage = Number.isFinite(perPageRaw) && perPageRaw > 0 ? Math.min(perPageRaw, 100) : 25
+
+    const filtered = documentTypes
+      .filter((item) => {
+        const matchesSearch = !search || item.code.toLowerCase().includes(search) || item.name.toLowerCase().includes(search)
+        if (status === "active") return matchesSearch && item.active
+        if (status === "inactive") return matchesSearch && !item.active
+        if (!includeInactive) return matchesSearch && item.active
+        return matchesSearch
+      })
+      .sort((a, b) => {
+        if (a.isSystem !== b.isSystem) return a.isSystem ? -1 : 1
+        return a.code.localeCompare(b.code)
+      })
+
+    const total = filtered.length
+    const totalPages = Math.max(1, Math.ceil(total / perPage))
+    const boundedPage = Math.min(Math.max(1, page), totalPages)
+    const start = (boundedPage - 1) * perPage
+    const items = filtered.slice(start, start + perPage)
+
+    return ok(config, {
+      items,
+      meta: {
+        page: boundedPage,
+        perPage,
+        total,
+        totalPages,
+      },
+    })
+  }
+
+  if (method === "post" && path === "/settings/system/document-types") {
+    const payload = parseBody<{ code: string; name: string }>(config)
+    if (!payload?.code || !payload?.name) return notFound(config)
+    const code = payload.code.trim().toUpperCase()
+    if (documentTypes.some((item) => item.code === code)) {
+      return {
+        data: { message: "Document type code already exists" },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const now = new Date().toISOString()
+    const created = {
+      id: `doc-${generateId()}`,
+      code,
+      name: payload.name.trim(),
+      active: true,
+      isSystem: false,
+      createdAt: now,
+      updatedAt: now,
+    }
+    documentTypes.unshift(created)
+    return ok(config, created, 201)
+  }
+
+  if (method === "put" && path.startsWith("/settings/system/document-types/")) {
+    const id = path.split("/")[4]
+    const payload = parseBody<{ name: string; active?: boolean }>(config)
+    const index = documentTypes.findIndex((item) => item.id === id)
+    if (index === -1 || !payload?.name) return notFound(config)
+    const active = typeof payload.active === "boolean" ? payload.active : documentTypes[index].active
+    if (documentTypes[index].isSystem && active === false) {
+      return {
+        data: { message: "System document type cannot be deactivated" },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    documentTypes[index] = {
+      ...documentTypes[index],
+      name: payload.name.trim(),
+      active,
+      updatedAt: new Date().toISOString(),
+    }
+    return ok(config, documentTypes[index])
+  }
+
+  if (method === "delete" && path.startsWith("/settings/system/document-types/")) {
+    const id = path.split("/")[4]
+    const index = documentTypes.findIndex((item) => item.id === id)
+    if (index === -1) return notFound(config)
+    if (documentTypes[index].isSystem) {
+      return {
+        data: { message: "System document type cannot be deactivated" },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    documentTypes[index] = {
+      ...documentTypes[index],
+      active: false,
+      updatedAt: new Date().toISOString(),
+    }
+    return ok(config, documentTypes[index])
   }
 
   if (method === "get" && path === "/routers") {
@@ -662,13 +1089,27 @@ const mockAdapter: AxiosAdapter = async (config) => {
       status: (getParam(config, "status") as ClientMapFiltersValues["status"]) || "",
       zone: getParam(config, "zone"),
       technicianName: getParam(config, "technicianName"),
+      geoMode: getParam(config, "polygon") ? "polygon" : getParam(config, "radiusKm") ? "radius" : "",
+      centerLat: getParam(config, "centerLat"),
+      centerLng: getParam(config, "centerLng"),
+      radiusKm: getParam(config, "radiusKm"),
+      polygon: getParam(config, "polygon"),
     }
+
+    const centerLat = Number(filters.centerLat)
+    const centerLng = Number(filters.centerLng)
+    const radiusKm = Number(filters.radiusKm)
+    const hasRadiusFilter =
+      filters.geoMode === "radius" && Number.isFinite(centerLat) && Number.isFinite(centerLng) && Number.isFinite(radiusKm) && radiusKm > 0
+    const polygonPoints = filters.geoMode === "polygon" ? parsePolygon(filters.polygon) : []
 
     const filtered = clientsMap.filter((item) => {
       const statusMatch = !filters.status || item.status === filters.status
       const zoneMatch = !filters.zone || matches(item.zone, filters.zone)
       const techMatch = !filters.technicianName || matches(item.technicianName, filters.technicianName)
-      return statusMatch && zoneMatch && techMatch
+      const radiusMatch = !hasRadiusFilter || distanceKm(centerLat, centerLng, item.latitude, item.longitude) <= radiusKm
+      const polygonMatch = polygonPoints.length < 3 || pointInPolygon(item.latitude, item.longitude, polygonPoints)
+      return statusMatch && zoneMatch && techMatch && radiusMatch && polygonMatch
     })
 
     return ok(config, filtered)
@@ -676,6 +1117,80 @@ const mockAdapter: AxiosAdapter = async (config) => {
 
   if (method === "get" && path === "/invoices") {
     return ok(config, invoices)
+  }
+
+  if (method === "post" && path === "/invoices") {
+    const payload = parseBody<InvoiceFormValues>(config)
+    if (!payload) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const created = {
+      id: `inv-${generateId()}`,
+      clientId: payload.clientId,
+      clientName: client.name,
+      invoiceNumber: payload.invoiceNumber.trim(),
+      amount: payload.amount,
+      issueDate: payload.issueDate,
+      dueDate: payload.dueDate,
+      status: payload.status,
+      cancelledAt: null,
+      cancellationReason: null,
+    }
+    invoices.unshift(created)
+    return ok(config, created, 201)
+  }
+
+  if (method === "put" && path.startsWith("/invoices/")) {
+    const id = path.split("/")[2]
+    const payload = parseBody<InvoiceFormValues>(config)
+    const index = invoices.findIndex((item) => item.id === id)
+    if (index === -1 || !payload) return notFound(config)
+    const client = getExistingClient(payload.clientId)
+    if (!client) {
+      return {
+        data: { message: "Client is not valid." },
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        config,
+      }
+    }
+    const current = invoices[index]
+    invoices[index] = {
+      ...current,
+      clientId: payload.clientId,
+      clientName: client.name,
+      invoiceNumber: payload.invoiceNumber.trim(),
+      amount: payload.amount,
+      issueDate: payload.issueDate,
+      dueDate: payload.dueDate,
+      status: payload.status,
+      cancelledAt: payload.status === "cancelled" ? current.cancelledAt ?? new Date().toISOString() : null,
+      cancellationReason: payload.status === "cancelled" ? current.cancellationReason : null,
+    }
+    return ok(config, invoices[index])
+  }
+
+  if (method === "post" && path.startsWith("/invoices/") && path.endsWith("/cancel")) {
+    const id = path.split("/")[2]
+    const payload = parseBody<InvoiceCancelValues>(config)
+    const index = invoices.findIndex((item) => item.id === id)
+    if (index === -1 || !payload?.reason?.trim()) return notFound(config)
+    invoices[index] = {
+      ...invoices[index],
+      status: "cancelled",
+      cancelledAt: new Date().toISOString(),
+      cancellationReason: payload.reason.trim(),
+    }
+    return ok(config, invoices[index])
   }
 
   if (method === "get" && path.startsWith("/invoices/") && path.endsWith("/pdf")) {
@@ -728,7 +1243,7 @@ const mockAdapter: AxiosAdapter = async (config) => {
         config,
       }
     }
-    return ok(config, { token: "mock-client-token" })
+    return ok(config, { token: "mock-client-token", clientId: "1", expiresInSeconds: 60 * 60 * 8 })
   }
 
   if (method === "get" && path === "/client-portal/profile") {
@@ -745,6 +1260,35 @@ const mockAdapter: AxiosAdapter = async (config) => {
 
   if (method === "get" && path === "/client-portal/tickets") {
     return ok(config, clientPortalTickets)
+  }
+
+  if (method === "post" && path === "/client-portal/tickets") {
+    const payload = parseBody<ClientPortalCreateTicketPayload>(config)
+    if (!payload) return notFound(config)
+    const attachmentEntries =
+      typeof FormData !== "undefined" && config.data instanceof FormData ? config.data.getAll("attachment") : []
+    const attachmentFiles = attachmentEntries.filter((entry): entry is File => entry instanceof File)
+    const attachments = attachmentFiles.map((file) => ({
+      fileName: `mock-${generateId()}`,
+      originalName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+      url: typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : "",
+    }))
+    const created = {
+      id: `pt-${generateId()}`,
+      title: payload.title,
+      status: "open" as const,
+      createdAt: new Date().toISOString().slice(0, 10),
+      priority: payload.priority,
+      updatedAt: new Date().toISOString().slice(0, 10),
+      channel: "web" as const,
+      messageCount: 1,
+      attachment: attachments[0] ?? null,
+      attachments,
+    }
+    clientPortalTickets.unshift(created)
+    return ok(config, created, 201)
   }
 
   return notFound(config)

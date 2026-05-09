@@ -28,6 +28,7 @@ const TicketsListPage = () => {
   const statusOptions: { label: string; value: TicketStatus }[] = [
     { label: t("tickets.status.open"), value: "open" },
     { label: t("tickets.status.in_progress"), value: "in_progress" },
+    { label: t("tickets.status.waiting"), value: "waiting" },
     { label: t("tickets.status.resolved"), value: "resolved" },
     { label: t("tickets.status.closed"), value: "closed" },
   ]
@@ -57,7 +58,7 @@ const TicketsListPage = () => {
   const filteredTickets = useMemo(() => {
     const term = search.trim().toLowerCase()
     return tickets.filter((ticket) => {
-      const matchesSearch = [ticket.title, ticket.clientName, ticket.assignedUserName, ticket.assignedTechnicianName]
+      const matchesSearch = [ticket.title, ticket.clientName, ticket.clientPhone, ticket.assignedUserName, ticket.assignedTechnicianName]
         .join(" ")
         .toLowerCase()
         .includes(term)
@@ -146,7 +147,7 @@ const TicketsListPage = () => {
         <TicketsTable
           tickets={filteredTickets}
           onView={(id) => navigate(`/tickets/${id}`)}
-          onEdit={(id) => navigate(`/tickets/${id}`)}
+          onEdit={(id) => navigate(`/tickets/${id}/edit`)}
           canManage={canManageTickets}
         />
       )}

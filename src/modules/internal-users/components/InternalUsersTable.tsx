@@ -27,11 +27,12 @@ const InternalUsersTable = ({ users, loadByTechnicianId, canManage, onEdit, onDe
 
   return (
     <DataTableShell>
-      <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
+      <table className="w-full min-w-[1240px] border-collapse text-left text-sm">
         <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-4 py-3 font-semibold">{t("internalUsers.table.name")}</th>
             <th className="px-4 py-3 font-semibold">{t("internalUsers.table.email")}</th>
+            <th className="px-4 py-3 font-semibold">{t("internalUsers.table.document")}</th>
             <th className="px-4 py-3 font-semibold">{t("internalUsers.table.phone")}</th>
             <th className="px-4 py-3 font-semibold">{t("internalUsers.table.role")}</th>
             <th className="px-4 py-3 font-semibold">{t("internalUsers.table.status")}</th>
@@ -45,10 +46,12 @@ const InternalUsersTable = ({ users, loadByTechnicianId, canManage, onEdit, onDe
           {users.map((user) => {
             const coverage = user.technicianProfile?.coverageZones.join(", ") || "-"
             const skills = user.technicianProfile?.skills.join(", ") || "-"
+            const documentLabel = user.documentNumber ? `${user.documentType} ${user.documentNumber}` : "-"
             return (
               <tr key={user.id} className="border-t border-border/60">
                 <td className="px-4 py-3 font-medium text-foreground">{user.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
+                <td className="px-4 py-3 text-muted-foreground">{documentLabel}</td>
                 <td className="px-4 py-3 text-muted-foreground">{user.phone}</td>
                 <td className="px-4 py-3 text-muted-foreground">{roleLabels[user.role]}</td>
                 <td className="px-4 py-3">

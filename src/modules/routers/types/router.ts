@@ -34,6 +34,13 @@ export interface RouterConnectionResult {
   checkedAt: string
 }
 
+export interface RouterConnectionPayload {
+  ip: string
+  port: number
+  username: string
+  password: string
+}
+
 export interface RouterHealth {
   cpuUsage: number
   ramUsage: number
@@ -43,3 +50,11 @@ export interface RouterHealth {
   throughput: string
 }
 
+export interface RouterBackup {
+  id: string
+  fileName: string
+  createdAt: string
+  sizeBytes: number
+  checksum: string
+  source: "mikrotik" | "manual"
+}

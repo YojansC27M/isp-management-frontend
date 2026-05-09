@@ -28,3 +28,13 @@ export interface ReportsFiltersValues {
   zone: string
   plan: string
 }
+
+export interface OperationsMetrics {
+  openTickets: number
+  inProgressTickets: number
+  resolvedTickets: number
+  scheduledVisits: number
+  completedVisits: number
+  pendingInstallations: number
+  completedInstallations: number
+}

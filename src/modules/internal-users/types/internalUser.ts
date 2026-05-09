@@ -2,6 +2,7 @@ import type { Role } from "@/auth/types"
 
 export type InternalUserStatus = "active" | "inactive"
 export type InternalUserRole = Extract<Role, "admin" | "staff" | "technician" | "support">
+export type InternalUserDocumentType = string
 
 export interface TechnicianAvailabilitySlot {
   id: string
@@ -21,6 +22,8 @@ export interface InternalUser {
   id: string
   name: string
   email: string
+  documentType: InternalUserDocumentType
+  documentNumber: string
   phone: string
   role: InternalUserRole
   status: InternalUserStatus
@@ -30,6 +33,8 @@ export interface InternalUser {
 export interface InternalUserFormValues {
   name: string
   email: string
+  documentType: InternalUserDocumentType
+  documentNumber: string
   phone: string
   role: InternalUserRole
   status: InternalUserStatus
@@ -59,6 +64,14 @@ export const INTERNAL_USER_ROLE_OPTIONS: { value: InternalUserRole; label: strin
   { value: "admin", label: "Administrador" },
   { value: "technician", label: "Tecnico" },
   { value: "support", label: "Soporte" },
+]
+
+export const INTERNAL_USER_DOCUMENT_TYPE_OPTIONS: { value: InternalUserDocumentType; label: string }[] = [
+  { value: "CC", label: "CC" },
+  { value: "CE", label: "CE" },
+  { value: "TI", label: "TI" },
+  { value: "NIT", label: "NIT" },
+  { value: "PASSPORT", label: "Pasaporte" },
 ]
 
 export const TECHNICIAN_AVAILABILITY_PRESETS: TechnicianAvailabilitySlot[] = [

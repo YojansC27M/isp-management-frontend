@@ -13,8 +13,9 @@ export const normalizePermissions = (value: unknown): Permission[] => {
   const unique = new Set<Permission>()
   for (const item of value) {
     if (typeof item !== "string") continue
-    if (!permissionSet.has(item as Permission)) continue
-    unique.add(item as Permission)
+    const normalized = item === "payments.write" ? "payments.manual.write" : item
+    if (!permissionSet.has(normalized as Permission)) continue
+    unique.add(normalized as Permission)
   }
   return Array.from(unique)
 }

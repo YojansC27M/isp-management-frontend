@@ -8,6 +8,12 @@ interface ClientMapPopupProps {
   client: ClientMapItem
 }
 
+const zoneSourceLabel: Record<ClientMapItem["zoneSource"], string> = {
+  visit: "Ultima visita",
+  address: "Direccion del cliente",
+  fallback: "Zona general",
+}
+
 const ClientMapPopup = ({ client }: ClientMapPopupProps) => {
   const navigate = useNavigate()
   const canManageClients = useCan("clients.write")
@@ -45,6 +51,7 @@ const ClientMapPopup = ({ client }: ClientMapPopupProps) => {
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.zone")}</dt>
           <dd>{client.zone}</dd>
+          <p className="text-xs text-muted-foreground">Fuente: {zoneSourceLabel[client.zoneSource]}</p>
         </div>
         <div className="sm:col-span-2">
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t("clientsMap.popup.assignedTechnician")}</dt>

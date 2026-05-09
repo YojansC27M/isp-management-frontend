@@ -15,9 +15,11 @@ export const appNavItems: AppNavItem[] = [
   { label: "Facturas", href: "/invoices", requiredPermissions: ["invoices.read"] },
   { label: "Tickets", href: "/tickets", requiredPermissions: ["tickets.read"] },
   { label: "Visitas", href: "/visits", requiredPermissions: ["visits.read"] },
-  { label: "Monitoreo", href: "/monitoring", requiredPermissions: ["monitoring.read"] },
+  { label: "Instalaciones", href: "/installations", requiredPermissions: ["visits.read"] },
+  { label: "NOC", href: "/operations/noc", requiredPermissions: ["routers.read", "monitoring.read"] },
   { label: "Mapa de clientes", href: "/clients-map", requiredPermissions: ["clients_map.read"] },
   { label: "Reportes", href: "/reports", requiredPermissions: ["reports.read"] },
+  { label: "Configuracion ISP", href: "/settings/system", requiredPermissions: ["system_settings.read"] },
   { label: "Perfiles y permisos", href: "/access-control", requiredPermissions: ["roles.read"] },
   { label: "Auditoria de seguridad", href: "/security-audit", requiredPermissions: ["audit.read"] },
 ]

@@ -7,6 +7,7 @@ export interface Client {
   address: string
   phone: string
   email: string
+  planId: string | null
   plan: string
   ipAddress: string
   status: ClientStatus
@@ -20,7 +21,7 @@ export interface ClientFormValues {
   address: string
   phone: string
   email: string
-  plan: string
+  planId: string
   ipAddress: string
   status: ClientStatus
   latitude: number | null

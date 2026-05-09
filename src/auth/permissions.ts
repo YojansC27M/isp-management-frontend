@@ -6,9 +6,10 @@ const ROLE_STATUS_KEY = "auth_role_status"
 
 export const allPermissions: Permission[] = permissionCatalog.map((item) => item.permission)
 
-export const appRoles: Role[] = ["admin", "staff", "support", "billing", "technician", "client"]
+export const appRoles: Role[] = ["super_admin", "admin", "staff", "support", "billing", "technician", "client"]
 
 export const roleLabels: Record<Role, string> = {
+  super_admin: "Super Admin",
   admin: "Administrador",
   staff: "Staff",
   support: "Soporte",
@@ -18,9 +19,13 @@ export const roleLabels: Record<Role, string> = {
 }
 
 export const rolePermissions: Record<Role, Permission[]> = {
+  super_admin: allPermissions,
   admin: [
+    "dashboard.read",
     "system_settings.read",
     "system_settings.write",
+    "document_types.read",
+    "document_types.write",
     "routers.read",
     "routers.write",
     "internal_users.read",
@@ -30,7 +35,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "plans.read",
     "plans.write",
     "payments.read",
-    "payments.write",
+    "payments.manual.write",
     "invoices.read",
     "invoices.write",
     "tickets.read",
@@ -47,7 +52,9 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "client_portal.write",
   ],
   staff: [
+    "dashboard.read",
     "system_settings.read",
+    "document_types.read",
     "routers.read",
     "internal_users.read",
     "internal_users.write",
@@ -63,20 +70,36 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "roles.read",
     "audit.read",
   ],
-  support: ["routers.read", "internal_users.read", "clients.read", "tickets.read", "tickets.write", "visits.read", "visits.write"],
-  billing: ["clients.read", "payments.read", "payments.write", "invoices.read", "invoices.write", "reports.read"],
-  technician: ["routers.read", "clients.read", "tickets.read", "visits.read", "visits.write"],
+  support: [
+    "dashboard.read",
+    "routers.read",
+    "internal_users.read",
+    "clients.read",
+    "tickets.read",
+    "tickets.write",
+    "visits.read",
+    "visits.write",
+    "document_types.read",
+  ],
+  billing: ["dashboard.read", "clients.read", "payments.read", "payments.manual.write", "invoices.read", "invoices.write", "reports.read"],
+  technician: ["dashboard.read", "routers.read", "clients.read", "tickets.read", "visits.read", "visits.write"],
   client: ["client_portal.read", "client_portal.write"],
 }
 
 const isBrowser = () => typeof window !== "undefined" && typeof localStorage !== "undefined"
 
 const normalizePermissions = (permissions: Permission[]) => {
-  const unique = new Set(permissions)
+  const unique = new Set(
+    permissions.map((permission) => {
+      const legacySafe = String(permission)
+      return legacySafe === "payments.write" ? "payments.manual.write" : permission
+    }),
+  )
   return allPermissions.filter((permission) => unique.has(permission))
 }
 
 const defaultRoleStatus: Record<Role, boolean> = {
+  super_admin: true,
   admin: true,
   staff: true,
   support: true,

@@ -1,14 +1,21 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
+import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useI18n } from "@/i18n/i18nContext"
 import type { ClientFormValues, ClientStatus } from "../types/client"
 
+interface ClientPlanOption {
+  id: string
+  name: string
+}
+
 interface ClientFormProps {
   initialValues: ClientFormValues
   onSubmit: (values: ClientFormValues) => void
+  planOptions: ClientPlanOption[]
   submitLabel?: string
 }
 
@@ -27,15 +34,35 @@ const fieldClass =
 const errorId = (field: string) => `client-form-${field}-error`
 const inputId = (field: string) => `client-form-${field}`
 
-const ClientForm = ({ initialValues, onSubmit, submitLabel }: ClientFormProps) => {
+const ClientForm = ({ initialValues, onSubmit, planOptions, submitLabel }: ClientFormProps) => {
   const { t } = useI18n()
   const [values, setValues] = useState<ClientFormValues>(initialValues)
+  const [planQuery, setPlanQuery] = useState("")
+  const [planOpen, setPlanOpen] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
+  const planContainerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setValues(initialValues)
   }, [initialValues])
+
+  useEffect(() => {
+    const selected = planOptions.find((plan) => plan.id === values.planId)
+    setPlanQuery(selected?.name ?? "")
+  }, [planOptions, values.planId])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!planContainerRef.current) return
+      if (event.target instanceof Node && !planContainerRef.current.contains(event.target)) {
+        setPlanOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   function setFieldValue<K extends keyof ClientFormValues>(field: K, value: ClientFormValues[K]) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -47,6 +74,32 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel }: ClientFormProps) =
 
   const handleSelectChange = (field: "status") => (event: ChangeEvent<HTMLSelectElement>) => {
     setFieldValue(field, event.target.value as ClientStatus)
+  }
+
+  const resolvePlanIdByName = (name: string) => {
+    const normalized = name.trim().toLowerCase()
+    if (!normalized) return ""
+    const selected = planOptions.find((plan) => plan.name.trim().toLowerCase() === normalized)
+    return selected?.id ?? ""
+  }
+
+  const handlePlanChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextQuery = event.target.value
+    setPlanQuery(nextQuery)
+    setPlanOpen(true)
+    setFieldValue("planId", resolvePlanIdByName(nextQuery))
+  }
+
+  const filteredPlanOptions = useMemo(() => {
+    const normalized = planQuery.trim().toLowerCase()
+    if (!normalized) return planOptions
+    return planOptions.filter((plan) => plan.name.toLowerCase().includes(normalized))
+  }, [planOptions, planQuery])
+
+  const handleSelectPlan = (plan: ClientPlanOption) => {
+    setFieldValue("planId", plan.id)
+    setPlanQuery(plan.name)
+    setPlanOpen(false)
   }
 
   const handleNumberChange = (field: "latitude" | "longitude") => (event: ChangeEvent<HTMLInputElement>) => {
@@ -65,13 +118,14 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel }: ClientFormProps) =
       nextErrors.email = t("clients.form.error.emailInvalid")
     }
     if (!values.ipAddress.trim()) nextErrors.ipAddress = t("clients.form.error.ipRequired")
+    if (!values.planId.trim()) nextErrors.planId = "Debes seleccionar un plan"
     if (!values.status) nextErrors.status = t("clients.form.error.statusRequired")
     setErrors(nextErrors)
     return nextErrors
   }
 
   const focusFirstError = (nextErrors: FormErrors) => {
-    const order: FocusableField[] = ["name", "document", "phone", "email", "ipAddress", "status"]
+    const order: FocusableField[] = ["name", "document", "phone", "email", "planId", "ipAddress", "status"]
     const first = order.find((field) => nextErrors[field])
     if (!first) return
     fieldRefs.current[first]?.focus()
@@ -151,7 +205,47 @@ const ClientForm = ({ initialValues, onSubmit, submitLabel }: ClientFormProps) =
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("plan")}>{t("clients.table.plan")}</Label>
-          <Input id={inputId("plan")} name="plan" value={values.plan} onChange={handleTextChange("plan")} />
+          <div ref={planContainerRef} className="relative">
+            <Input
+              id={inputId("plan")}
+              name="planSearch"
+              value={planQuery}
+              onChange={handlePlanChange}
+              onFocus={() => setPlanOpen(true)}
+              placeholder="Selecciona o escribe para filtrar..."
+              ref={(node) => (fieldRefs.current.planId = node)}
+              aria-invalid={Boolean(errors.planId)}
+              aria-describedby={describedBy("planId")}
+              autoComplete="off"
+              className="pr-8"
+            />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {planOpen ? (
+              <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-border bg-card shadow-lg">
+                {filteredPlanOptions.length > 0 ? (
+                  <ul className="py-1">
+                    {filteredPlanOptions.map((plan) => (
+                      <li key={plan.id}>
+                        <button
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                          onMouseDown={(event) => {
+                            event.preventDefault()
+                            handleSelectPlan(plan)
+                          }}
+                        >
+                          {plan.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">Sin resultados</p>
+                )}
+              </div>
+            ) : null}
+          </div>
+          {errors.planId && <span id={errorId("planId")} className="text-xs text-rose-600" role="alert">{errors.planId}</span>}
         </label>
         <label className="grid gap-1.5">
           <Label htmlFor={inputId("ipAddress")}>{t("clients.table.ip")}</Label>

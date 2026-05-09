@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useUI } from "@/ui/uiContext"
 import { useI18n } from "@/i18n/i18nContext"
-import type { SecurityAuditEntry } from "@/auth/auditLog"
-import { readSecurityAudit, writeSecurityAudit } from "@/auth/auditLog"
-import { useAuthStore } from "@/store/authStore"
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorDescription } from "@/lib/errors"
 import InternalUserForm from "../components/InternalUserForm"
 import { createInternalUser } from "../services/internalUsersApi"
 import type { InternalUserFormValues } from "../types/internalUser"
@@ -13,39 +11,25 @@ import type { InternalUserFormValues } from "../types/internalUser"
 const initialValues: InternalUserFormValues = {
   name: "",
   email: "",
+  documentType: "CC",
+  documentNumber: "",
   phone: "",
   role: "staff",
   status: "active",
   technicianProfile: null,
 }
 
-const createAuditId = () => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID()
-  }
-  return `${Date.now()}-${Math.floor(Math.random() * 1000)}`
-}
-
 const InternalUserCreatePage = () => {
   const navigate = useNavigate()
   const { notify } = useUI()
   const { t } = useI18n()
-  const actor = useAuthStore((state) => state.user)
+  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (values: InternalUserFormValues) => {
+    if (submitting) return
+    setSubmitting(true)
     try {
-      const created = await createInternalUser(values)
-      const entry: SecurityAuditEntry = {
-        id: createAuditId(),
-        createdAt: new Date().toISOString(),
-        actorName: actor?.name ?? t("internalUsers.localUser"),
-        actorRole: actor?.role ?? "admin",
-        targetRole: "all",
-        action: "internal_user_create",
-        details: t("internalUsers.create.auditDetails", { name: created.name, role: created.role }),
-      }
-      const nextAudit = [entry, ...readSecurityAudit()].slice(0, 50)
-      writeSecurityAudit(nextAudit)
+      await createInternalUser(values)
 
       notify({
         title: t("internalUsers.create.successTitle"),
@@ -56,9 +40,11 @@ const InternalUserCreatePage = () => {
     } catch (err) {
       notify({
         title: t("internalUsers.create.errorTitle"),
-        description: getErrorMessage(err, t("internalUsers.create.errorDesc")),
+        description: getErrorDescription(err, t("internalUsers.create.errorDesc")),
         type: "error",
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -74,7 +60,12 @@ const InternalUserCreatePage = () => {
         </Button>
       </header>
 
-      <InternalUserForm initialValues={initialValues} onSubmit={handleSubmit} submitLabel={t("internalUsers.create.submit")} />
+      <InternalUserForm
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        submitLabel={t("internalUsers.create.submit")}
+        isSubmitting={submitting}
+      />
     </div>
   )
 }

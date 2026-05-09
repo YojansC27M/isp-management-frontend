@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { appRoles, getRolePermissions, getRoleStatusMap, isRoleEnabled, roleLabels } from "@/auth/permissions"
-import type { Role } from "@/auth/types"
+import { normalizeApiError } from "@/api/apiError"
+import { getNavigationConfig } from "@/auth/services/navigationApi"
+import { login as loginRequest } from "@/auth/services/authApi"
+import { clearAuthToken } from "@/auth/session"
 import { useAuthStore } from "@/store/authStore"
 import { useUI } from "@/ui/uiContext"
 import { useTheme } from "@/ui/themeContext"
@@ -15,60 +17,54 @@ import { useI18n } from "@/i18n/i18nContext"
 const LoginPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const [selectedRole, setSelectedRole] = useState<Role>("admin")
+  const [loading, setLoading] = useState(false)
   const { t } = useI18n()
   const { notify } = useUI()
   const { setThemeMode } = useTheme()
   const setToken = useAuthStore((state) => state.setToken)
   const setUser = useAuthStore((state) => state.setUser)
   const setPermissions = useAuthStore((state) => state.setPermissions)
+  const setNavigation = useAuthStore((state) => state.setNavigation)
   const message = (location.state as { message?: string } | null)?.message
-  const roleStatusMap = getRoleStatusMap()
 
   useLayoutEffect(() => {
     setThemeMode("system")
   }, [setThemeMode])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (loading) return
 
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get("email") ?? "").trim()
     const password = String(formData.get("password") ?? "").trim()
+    setLoading(true)
 
-    if (import.meta.env.VITE_USE_MOCKS === "true") {
-      if (email === "admin@isp.com" && password === "123456") {
-        if (!isRoleEnabled(selectedRole)) {
-          notify({
-            title: t("login.inactiveProfileTitle"),
-            description: t("login.inactiveProfileDescription", { role: roleLabels[selectedRole] }),
-            type: "error",
-          })
-          return
-        }
+    try {
+      const response = await loginRequest({ email, password })
+      setToken(response.accessToken)
+      setUser(response.user)
+      setPermissions(response.user.permissions)
 
-        const user = {
-          id: "admin-1",
-          name: `Usuario ${selectedRole}`,
-          email,
-          role: selectedRole,
-          permissions: getRolePermissions(selectedRole),
-        }
-        setToken("mock-admin-token")
-        setUser(user)
-        setPermissions(user.permissions)
-        navigate("/dashboard", { replace: true })
-        return
+      try {
+        const navigation = await getNavigationConfig()
+        setNavigation(navigation.modules)
+      } catch {
+        setNavigation(null)
       }
-      notify({ title: t("login.invalidCredentials"), type: "error" })
-      return
-    }
 
-    notify({
-      title: t("login.backendNotConfigured"),
-      description: t("login.backendNotConfiguredDesc"),
-      type: "info",
-    })
+      navigate("/dashboard", { replace: true })
+    } catch (error) {
+      clearAuthToken()
+      const apiError = normalizeApiError(error)
+      notify({
+        title: apiError.code === "network" ? t("login.backendNotConfigured") : t("login.invalidCredentials"),
+        description: apiError.code === "network" ? t("login.backendNotConfiguredDesc") : apiError.message,
+        type: "error",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -84,7 +80,7 @@ const LoginPage = () => {
             </p>
           </div>
           <Card className="border-border bg-card/95 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
-            <CardHeader>
+              <CardHeader>
               <CardTitle>{t("login.title")}</CardTitle>
               <CardDescription>{t("login.description")}</CardDescription>
             </CardHeader>
@@ -103,32 +99,8 @@ const LoginPage = () => {
                   <Label htmlFor="password">{t("login.password")}</Label>
                   <Input id="password" name="password" type="password" placeholder={t("login.placeholderPassword")} required />
                 </div>
-                {import.meta.env.VITE_USE_MOCKS === "true" && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">{t("login.role")}</Label>
-                    <select
-                      id="role"
-                      value={selectedRole}
-                      onChange={(event) => setSelectedRole(event.target.value as Role)}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                      {appRoles
-                        .filter((role) => role !== "client")
-                        .map((role) => (
-                          <option key={role} value={role} disabled={!roleStatusMap[role]}>
-                            {roleLabels[role]} {!roleStatusMap[role] ? `(${t("login.roleInactive")})` : ""}
-                          </option>
-                        ))}
-                    </select>
-                    {!roleStatusMap[selectedRole] && (
-                      <p className="text-xs text-rose-600">
-                        {t("login.inactiveRoleHint")}
-                      </p>
-                    )}
-                  </div>
-                )}
                 <Button type="submit" className="mt-2 w-full">
-                  {t("login.submit")}
+                  {loading ? t("clientPortal.login.signingIn") : t("login.submit")}
                 </Button>
               </form>
             </CardContent>

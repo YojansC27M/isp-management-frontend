@@ -7,7 +7,7 @@ import globals from "globals"
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**"],
+    ignores: ["dist/**", "backend/**", "node_modules/**", "coverage/**"],
   },
   {
     files: ["*.config.{js,ts}", "vite.config.{js,ts}", "eslint.config.js"],

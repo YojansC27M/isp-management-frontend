@@ -1,1 +1,0 @@
-import{v as n,e as o,r as t,n as i}from"./index-CTMnMdSq.js";const u=()=>{const e=o(r=>r.user),s=o(r=>r.permissions);return t.useMemo(()=>s.length>0?s:i(e),[s,e])},a=e=>{const s=u();return n(s,e)};export{a as u};

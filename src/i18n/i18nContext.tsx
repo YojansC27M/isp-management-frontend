@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { LOCALE_STORAGE_KEY, getCurrentLocale, type Locale } from "@/i18n/locale"
 import { translateWithLocale, translations } from "@/i18n/translations"
 
@@ -19,26 +19,29 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
     document.documentElement.lang = locale
   }, [locale])
 
-  const setLocale = (nextLocale: Locale) => {
+  const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale)
     if (typeof window !== "undefined") {
       window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale)
     }
-  }
+  }, [])
 
-  const toggleLocale = () => {
+  const toggleLocale = useCallback(() => {
     setLocale(locale === "es" ? "en" : "es")
-  }
+  }, [locale, setLocale])
 
-  const t = (key: string, params?: Record<string, string | number>) => {
-    if (!translations[locale][key] && !translations.es[key] && !missingKeysRef.current.has(key)) {
-      missingKeysRef.current.add(key)
-      console.warn(`[i18n] Missing translation key: ${key}`)
-    }
-    return translateWithLocale(locale, key, params)
-  }
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>) => {
+      if (!translations[locale][key] && !translations.es[key] && !missingKeysRef.current.has(key)) {
+        missingKeysRef.current.add(key)
+        console.warn(`[i18n] Missing translation key: ${key}`)
+      }
+      return translateWithLocale(locale, key, params)
+    },
+    [locale]
+  )
 
-  const value = useMemo(() => ({ locale, setLocale, toggleLocale, t }), [locale])
+  const value = useMemo(() => ({ locale, setLocale, toggleLocale, t }), [locale, setLocale, toggleLocale, t])
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }

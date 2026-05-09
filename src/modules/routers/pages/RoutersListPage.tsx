@@ -166,6 +166,7 @@ const RoutersListPage = () => {
         <RoutersTable
           routers={routers}
           canManage={canManage}
+          onView={(id) => navigate(`/routers/${id}`)}
           onEdit={(id) => navigate(`/routers/${id}`)}
           onDelete={handleDelete}
           onTestConnection={handleConnectionTest}
@@ -176,4 +177,3 @@ const RoutersListPage = () => {
 }
 
 export default RoutersListPage
-

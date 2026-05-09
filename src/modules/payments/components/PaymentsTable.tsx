@@ -4,16 +4,21 @@ import type { Payment, PaymentStatus } from "../types/payment"
 
 interface PaymentsTableProps {
   payments: Payment[]
+  formatAmount: (value: number) => string
+  formatDate: (value: string) => string
+  onViewDetail: (id: string) => void
   onViewStatus: (clientId: string, clientName: string) => void
+  onViewInvoice?: (invoiceNumber: string) => void
 }
 
 const statusClasses: Record<PaymentStatus, string> = {
   pending: "bg-amber-100 text-amber-800",
   paid: "bg-emerald-100 text-emerald-800",
   overdue: "bg-rose-100 text-rose-800",
+  refunded: "bg-slate-200 text-slate-700",
 }
 
-const PaymentsTable = ({ payments, onViewStatus }: PaymentsTableProps) => {
+const PaymentsTable = ({ payments, formatAmount, formatDate, onViewDetail, onViewStatus, onViewInvoice }: PaymentsTableProps) => {
   const { t } = useI18n()
 
   return (
@@ -35,22 +40,40 @@ const PaymentsTable = ({ payments, onViewStatus }: PaymentsTableProps) => {
             <tr key={payment.id} className="border-t border-border/60">
               <td className="px-4 py-3 font-medium text-foreground">{payment.clientName}</td>
               <td className="px-4 py-3 text-muted-foreground">{payment.invoiceNumber}</td>
-              <td className="px-4 py-3 font-semibold text-foreground">${payment.amount.toFixed(2)}</td>
-              <td className="px-4 py-3 capitalize text-muted-foreground">{payment.paymentMethod}</td>
-              <td className="px-4 py-3 text-muted-foreground">{payment.paymentDate}</td>
+              <td className="px-4 py-3 font-semibold text-foreground">{formatAmount(payment.amount)}</td>
+              <td className="px-4 py-3 text-muted-foreground">{t(`payments.form.method.${payment.paymentMethod}`)}</td>
+              <td className="px-4 py-3 text-muted-foreground">{formatDate(payment.paymentDate)}</td>
               <td className="px-4 py-3">
                 <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClasses[payment.status]}`}>
                   {t(`payments.status.${payment.status}`)}
                 </span>
               </td>
               <td className="px-4 py-3">
-                <button
-                  type="button"
-                  className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
-                  onClick={() => onViewStatus(payment.clientId, payment.clientName)}
-                >
-                  {t("payments.table.viewAccountStatus")}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
+                    onClick={() => onViewDetail(payment.id)}
+                  >
+                    {t("payments.table.view")}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
+                    onClick={() => onViewStatus(payment.clientId, payment.clientName)}
+                  >
+                    {t("payments.table.viewAccountStatus")}
+                  </button>
+                  {onViewInvoice ? (
+                    <button
+                      type="button"
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
+                      onClick={() => onViewInvoice(payment.invoiceNumber)}
+                    >
+                      {t("payments.table.viewInvoice")}
+                    </button>
+                  ) : null}
+                </div>
               </td>
             </tr>
           ))}

@@ -12,12 +12,20 @@ import {
   suggestTechnicianAssignment,
 } from "@/modules/internal-users/services/technicianAssignment"
 import type { TechnicianAssignmentOption } from "@/modules/internal-users/types/internalUser"
+import {
+  formatTicketAttachmentSize,
+  isAllowedTicketAttachment,
+  MAX_TICKET_ATTACHMENT_BYTES,
+  MAX_TICKET_ATTACHMENT_COUNT,
+  TICKET_ATTACHMENT_ACCEPT,
+} from "../lib/attachment"
 import type { TicketCategory, TicketFormValues, TicketPriority, TicketStatus } from "../types/ticket"
 
 interface TicketFormProps {
   initialValues: TicketFormValues
-  onSubmit: (values: TicketFormValues) => void
+  onSubmit: (values: TicketFormValues, attachments?: File[] | null) => void
   submitLabel?: string
+  allowAttachment?: boolean
 }
 
 type TicketFormState = {
@@ -55,6 +63,7 @@ const priorityOptions: { key: string; value: TicketPriority }[] = [
 const statusOptions: { key: string; value: TicketStatus }[] = [
   { key: "tickets.status.open", value: "open" },
   { key: "tickets.status.in_progress", value: "in_progress" },
+  { key: "tickets.status.waiting", value: "waiting" },
   { key: "tickets.status.resolved", value: "resolved" },
   { key: "tickets.status.closed", value: "closed" },
 ]
@@ -67,10 +76,11 @@ const textareaClass =
 
 const inputId = (field: string) => `ticket-form-${field}`
 const errorId = (field: string) => `ticket-form-${field}-error`
+const attachmentInputId = "ticket-form-attachment"
 
 const isTechnicalCategory = (category: TicketCategory | "") => category === "technical" || category === "installation"
 
-const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: TicketFormProps) => {
+const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar", allowAttachment = true }: TicketFormProps) => {
   const { t } = useI18n()
   const [values, setValues] = useState<TicketFormState>({
     clientId: initialValues.clientId,
@@ -88,6 +98,8 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
   const [zone, setZone] = useState("")
   const [loadingResponsible, setLoadingResponsible] = useState(false)
   const [autoAssigningResponsible, setAutoAssigningResponsible] = useState(false)
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachmentError, setAttachmentError] = useState("")
   const fieldRefs = useRef<Partial<Record<FocusableField, HTMLElement | null>>>({})
 
   useEffect(() => {
@@ -101,6 +113,8 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
       priority: initialValues.priority,
       status: initialValues.status,
     })
+    setAttachments([])
+    setAttachmentError("")
   }, [initialValues])
 
   useEffect(() => {
@@ -216,8 +230,17 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
     if (!values.category) nextErrors.category = t("tickets.form.error.categoryRequired")
     if (!values.priority) nextErrors.priority = t("tickets.form.error.priorityRequired")
     if (!values.status) nextErrors.status = t("tickets.form.error.statusRequired")
+    const nextAttachmentError =
+      attachments.length > MAX_TICKET_ATTACHMENT_COUNT
+        ? t("tickets.form.error.attachmentCount", { count: MAX_TICKET_ATTACHMENT_COUNT })
+        : attachments.some((attachment) => !isAllowedTicketAttachment(attachment))
+          ? t("tickets.form.error.attachmentType")
+          : attachments.some((attachment) => attachment.size > MAX_TICKET_ATTACHMENT_BYTES)
+            ? t("tickets.form.error.attachmentSize")
+            : ""
+    setAttachmentError(nextAttachmentError)
     setErrors(nextErrors)
-    return nextErrors
+    return { nextErrors, nextAttachmentError }
   }
 
   const handleAutoAssignResponsible = async () => {
@@ -239,7 +262,7 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const nextErrors = validate()
+    const { nextErrors, nextAttachmentError } = validate()
     if (Object.keys(nextErrors).length > 0) {
       const order: FocusableField[] = ["clientId", "category", "title", "description", "priority", "status"]
       const first = order.find((field) => nextErrors[field])
@@ -247,20 +270,25 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
       return
     }
 
+    if (nextAttachmentError) return
+
     const technical = isTechnicalCategory(values.category)
 
-    onSubmit({
-      clientId: values.clientId.trim(),
-      assignedUserId: technical ? "" : values.assignedUserId.trim(),
-      assignedUserName: technical ? t("tickets.unassigned") : selectedResponsibleName,
-      assignedTechnicianId: technical ? values.assignedTechnicianId.trim() : "",
-      assignedTechnicianName: technical ? selectedResponsibleName : t("tickets.unassigned"),
-      title: values.title.trim(),
-      description: values.description.trim(),
-      category: values.category as TicketCategory,
-      priority: values.priority as TicketPriority,
-      status: values.status as TicketStatus,
-    })
+    onSubmit(
+      {
+        clientId: values.clientId.trim(),
+        assignedUserId: technical ? "" : values.assignedUserId.trim(),
+        assignedUserName: technical ? t("tickets.unassigned") : selectedResponsibleName,
+        assignedTechnicianId: technical ? values.assignedTechnicianId.trim() : "",
+        assignedTechnicianName: technical ? selectedResponsibleName : t("tickets.unassigned"),
+        title: values.title.trim(),
+        description: values.description.trim(),
+        category: values.category as TicketCategory,
+        priority: values.priority as TicketPriority,
+        status: values.status as TicketStatus,
+      },
+      attachments,
+    )
   }
 
   const describedBy = (field: keyof TicketFormState) => (errors[field] ? errorId(field) : undefined)
@@ -419,6 +447,58 @@ const TicketForm = ({ initialValues, onSubmit, submitLabel = "Guardar" }: Ticket
           {errors.status && <span id={errorId("status")} className="text-xs text-rose-600" role="alert">{errors.status}</span>}
         </label>
       </div>
+
+      {allowAttachment && (
+        <div className="grid gap-2 rounded-xl border border-border/70 bg-muted/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label htmlFor={attachmentInputId}>{t("tickets.form.attachment")}</Label>
+            <span className="text-xs text-muted-foreground">{t("tickets.form.attachmentHint")}</span>
+          </div>
+          <Input
+            id={attachmentInputId}
+            type="file"
+            accept={TICKET_ATTACHMENT_ACCEPT}
+            multiple
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? [])
+              setAttachments(files)
+              if (files.length === 0) {
+                setAttachmentError("")
+                return
+              }
+              if (files.length > MAX_TICKET_ATTACHMENT_COUNT) {
+                setAttachmentError(t("tickets.form.error.attachmentCount", { count: MAX_TICKET_ATTACHMENT_COUNT }))
+                return
+              }
+              if (files.some((file) => !isAllowedTicketAttachment(file))) {
+                setAttachmentError(t("tickets.form.error.attachmentType"))
+                return
+              }
+              if (files.some((file) => file.size > MAX_TICKET_ATTACHMENT_BYTES)) {
+                setAttachmentError(t("tickets.form.error.attachmentSize"))
+                return
+              }
+              setAttachmentError("")
+            }}
+          />
+          {attachments.length > 0 ? (
+            <ul className="grid gap-1 text-xs text-muted-foreground">
+              {attachments.map((file) => (
+                <li key={`${file.name}-${file.size}`} className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-foreground">{file.name}</span>
+                  <span>·</span>
+                  <span>{formatTicketAttachmentSize(file.size)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {attachmentError ? (
+            <p className="text-xs font-medium text-rose-600" role="alert">
+              {attachmentError}
+            </p>
+          ) : null}
+        </div>
+      )}
 
       <div className="flex items-center gap-2 pt-2">
         <Button type="submit">{submitLabel === "Guardar" ? t("common.save") : submitLabel}</Button>

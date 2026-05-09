@@ -1,5 +1,13 @@
 import api from "@/api/axios"
-import type { ManagedRouter, RouterConnectionResult, RouterFormValues, RouterHealth, RouterStatus } from "../types/router"
+import type {
+  ManagedRouter,
+  RouterBackup,
+  RouterConnectionPayload,
+  RouterConnectionResult,
+  RouterFormValues,
+  RouterHealth,
+  RouterStatus,
+} from "../types/router"
 
 interface RouterFilters {
   search?: string
@@ -38,7 +46,7 @@ export const deleteRouter = async (id: string) => {
   await api.delete(`/routers/${id}`)
 }
 
-export const testRouterConnection = async (payload: RouterFormValues) => {
+export const testRouterConnection = async (payload: RouterConnectionPayload) => {
   const { data } = await api.post<RouterConnectionResult>("/routers/test-connection", payload)
   return data
 }
@@ -53,3 +61,24 @@ export const getRouterHealth = async (id: string) => {
   return data
 }
 
+export const getRouterBackups = async (id: string) => {
+  const { data } = await api.get<RouterBackup[]>(`/routers/${id}/backups`, { cancelKey: `router-backups:${id}` })
+  return data
+}
+
+export const createRouterBackup = async (id: string) => {
+  const { data } = await api.post<RouterBackup>(`/routers/${id}/backups`)
+  return data
+}
+
+export const downloadRouterBackup = async (routerId: string, backupId: string, fileName: string) => {
+  const { data } = await api.get<Blob>(`/routers/${routerId}/backups/${backupId}/download`, {
+    responseType: "blob",
+  })
+  const url = URL.createObjectURL(data)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}

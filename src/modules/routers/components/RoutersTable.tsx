@@ -4,6 +4,7 @@ import type { ManagedRouter } from "../types/router"
 interface RoutersTableProps {
   routers: ManagedRouter[]
   canManage: boolean
+  onView: (id: string) => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
   onTestConnection: (id: string) => void
@@ -14,7 +15,7 @@ const statusClasses = {
   offline: "bg-rose-100 text-rose-700",
 }
 
-const RoutersTable = ({ routers, canManage, onEdit, onDelete, onTestConnection }: RoutersTableProps) => {
+const RoutersTable = ({ routers, canManage, onView, onEdit, onDelete, onTestConnection }: RoutersTableProps) => {
   return (
     <DataTableShell>
       <table className="w-full min-w-[920px] border-collapse text-left text-sm">
@@ -52,9 +53,18 @@ const RoutersTable = ({ routers, canManage, onEdit, onDelete, onTestConnection }
                   <button
                     type="button"
                     className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40"
-                    onClick={() => onEdit(router.id)}
+                    onClick={() => onView(router.id)}
                   >
-                    Ver/Editar
+                    Ver detalle
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => onEdit(router.id)}
+                    disabled={!canManage}
+                    title={!canManage ? "Tu perfil no tiene permiso para editar routers." : undefined}
+                  >
+                    Editar
                   </button>
                   <button
                     type="button"
@@ -85,4 +95,3 @@ const RoutersTable = ({ routers, canManage, onEdit, onDelete, onTestConnection }
 }
 
 export default RoutersTable
-

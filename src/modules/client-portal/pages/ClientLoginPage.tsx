@@ -1,5 +1,5 @@
 ﻿import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,10 +13,12 @@ const COMPLIANCE_BADGES = ["ISO 27001", "SOC 2", "PCI DSS"]
 const ClientLoginPage = () => {
   const { t } = useI18n()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const passwordChanged = searchParams.get("passwordChanged") === "1"
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -41,7 +43,7 @@ const ClientLoginPage = () => {
     try {
       const response = await login(email.trim(), password)
       setClientToken(response.token)
-      navigate("/client/dashboard")
+      navigate(response.mustChangePassword ? "/client/change-password" : "/client/dashboard")
     } catch {
       setError(t("clientPortal.login.error.failed"))
     } finally {
@@ -122,6 +124,11 @@ const ClientLoginPage = () => {
               <CardDescription className="text-muted-foreground">{t("clientPortal.login.cardDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
+              {passwordChanged ? (
+                <div className="mb-4 rounded-xl border border-emerald-300/60 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                  {t("clientPortal.login.passwordChangedNotice")}
+                </div>
+              ) : null}
               <form onSubmit={handleSubmit} className="grid gap-5">
                 <div className="grid gap-2">
                   <Label htmlFor="client-email" className="text-foreground dark:text-slate-300">

@@ -1,11 +1,11 @@
 const AUTH_TOKEN_KEY = "auth_token"
 const CLIENT_TOKEN_KEY = "client_token"
 
-const isBrowser = () => typeof window !== "undefined" && typeof localStorage !== "undefined"
+const isBrowser = () => typeof window !== "undefined" && typeof sessionStorage !== "undefined"
 
 const readToken = (key: string) => {
   if (!isBrowser()) return null
-  const token = localStorage.getItem(key)
+  const token = sessionStorage.getItem(key)
   if (!token) return null
   const normalized = token.trim()
   return normalized.length > 0 ? normalized : null
@@ -15,12 +15,12 @@ const writeToken = (key: string, token: string) => {
   if (!isBrowser()) return
   const normalized = token.trim()
   if (!normalized) return
-  localStorage.setItem(key, normalized)
+  sessionStorage.setItem(key, normalized)
 }
 
 const clearToken = (key: string) => {
   if (!isBrowser()) return
-  localStorage.removeItem(key)
+  sessionStorage.removeItem(key)
 }
 
 export const getAuthToken = () => readToken(AUTH_TOKEN_KEY)

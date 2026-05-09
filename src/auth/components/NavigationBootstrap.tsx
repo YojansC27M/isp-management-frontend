@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/authStore"
 
 const NavigationBootstrap = () => {
   const token = useAuthStore((state) => state.token) ?? getAuthToken()
+  const navigation = useAuthStore((state) => state.navigation)
   const setNavigation = useAuthStore((state) => state.setNavigation)
 
   useEffect(() => {
@@ -13,6 +14,10 @@ const NavigationBootstrap = () => {
     const loadNavigation = async () => {
       if (!token) {
         setNavigation(null)
+        return
+      }
+
+      if (navigation && navigation.length > 0) {
         return
       }
 
@@ -32,10 +37,9 @@ const NavigationBootstrap = () => {
     return () => {
       cancelled = true
     }
-  }, [setNavigation, token])
+  }, [navigation, setNavigation, token])
 
   return null
 }
 
 export default NavigationBootstrap
-

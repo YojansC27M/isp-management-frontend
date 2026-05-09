@@ -53,7 +53,7 @@ const hasVisitConflict = (
       visit.technicianId === technicianId &&
       visit.scheduledDate === scheduledDate &&
       visit.scheduledTime === scheduledTime &&
-      visit.status !== "canceled",
+      (visit.status === "scheduled" || visit.status === "in_progress"),
   )
 }
 

@@ -7,9 +7,11 @@ import StateMessage from "@/components/feedback/StateMessage"
 import FilterPanel from "@/components/shared/FilterPanel"
 import PageHeader from "@/components/shared/PageHeader"
 import { useCan } from "@/auth/usePermission"
+import { normalizeApiError } from "@/api/apiError"
 import { getErrorMessage } from "@/lib/errors"
 import { useUI } from "@/ui/uiContext"
 import { useI18n } from "@/i18n/i18nContext"
+import { getPlans } from "@/modules/plans/services/plansApi"
 import ClientsTable from "../components/ClientsTable"
 import { createClient, deleteClient, getClients } from "../services/clientsApi"
 import type { Client, ClientFormValues, ClientStatus } from "../types/client"
@@ -41,6 +43,8 @@ const ClientsListPage = () => {
       const data = await getClients()
       setClients(data)
     } catch (err) {
+      const apiError = normalizeApiError(err)
+      if (apiError.code === "canceled") return
       setError(getErrorMessage(err, t("clients.loadErrorTitle")))
     } finally {
       setLoading(false)
@@ -59,7 +63,7 @@ const ClientsListPage = () => {
   const filteredClients = useMemo(() => {
     const term = search.toLowerCase()
     return clients.filter((client) => {
-      const matchesSearch = [client.name, client.document, client.ipAddress].join(" ").toLowerCase().includes(term)
+      const matchesSearch = [client.name, client.document, client.phone, client.ipAddress].join(" ").toLowerCase().includes(term)
       const matchesStatus = statusFilter ? client.status === statusFilter : true
       const matchesPlan = planFilter ? client.plan === planFilter : true
       return matchesSearch && matchesStatus && matchesPlan
@@ -124,21 +128,36 @@ const ClientsListPage = () => {
         return index >= 0 ? row[index] ?? "" : ""
       }
 
+      const plans = await getPlans()
+      const planIdByName = new Map(plans.map((plan) => [plan.name.trim().toLowerCase(), plan.id]))
+
       const records: ClientFormValues[] = lines.slice(1).map((line) => {
         const row = parseCsvLine(line)
+        const rawPlanName = getValue(row, "plan").trim()
+        const resolvedPlanId = planIdByName.get(rawPlanName.toLowerCase()) ?? ""
         return {
           name: getValue(row, "name"),
           document: getValue(row, "document"),
           address: getValue(row, "address"),
           phone: getValue(row, "phone"),
           email: getValue(row, "email"),
-          plan: getValue(row, "plan"),
+          planId: resolvedPlanId,
           ipAddress: getValue(row, "ipaddress"),
           status: (getValue(row, "status") || "active") as ClientStatus,
           latitude: Number(getValue(row, "latitude")) || null,
           longitude: Number(getValue(row, "longitude")) || null,
         }
       })
+
+      const recordsWithoutPlan = records.filter((record) => !record.planId).length
+      if (recordsWithoutPlan > 0) {
+        notify({
+          title: t("clients.importInvalid"),
+          description: `Hay ${recordsWithoutPlan} fila(s) con plan no existente. Verifica la columna plan contra el catalogo de planes.`,
+          type: "error",
+        })
+        return
+      }
 
       try {
         await Promise.all(records.map((record) => createClient(record)))
@@ -266,6 +285,7 @@ const ClientsListPage = () => {
       ) : (
         <ClientsTable
           clients={filteredClients}
+          onView={(id) => navigate(`/clients/${id}`)}
           onEdit={(id) => navigate(`/clients/${id}/edit`)}
           onDelete={handleDelete}
           canManage={canManageClients}

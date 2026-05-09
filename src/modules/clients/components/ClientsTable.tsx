@@ -4,6 +4,7 @@ import type { Client, ClientStatus } from "../types/client"
 
 interface ClientsTableProps {
   clients: Client[]
+  onView: (id: string) => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
   canManage: boolean
@@ -15,7 +16,7 @@ const statusClasses: Record<ClientStatus, string> = {
   inactive: "bg-muted text-muted-foreground",
 }
 
-const ClientsTable = ({ clients, onEdit, onDelete, canManage }: ClientsTableProps) => {
+const ClientsTable = ({ clients, onView, onEdit, onDelete, canManage }: ClientsTableProps) => {
   const { t } = useI18n()
 
   return (
@@ -51,6 +52,13 @@ const ClientsTable = ({ clients, onEdit, onDelete, canManage }: ClientsTableProp
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md border border-sky-200 px-2.5 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-50"
+                    onClick={() => onView(client.id)}
+                  >
+                    {t("clients.table.view")}
+                  </button>
                   <button
                     type="button"
                     className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"

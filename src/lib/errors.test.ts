@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { getErrorMessage } from "./errors"
+import { getErrorDescription, getErrorDetails, getErrorMessage } from "./errors"
 
 describe("getErrorMessage", () => {
   it("returns message from standard Error", () => {
@@ -25,5 +25,40 @@ describe("getErrorMessage", () => {
   it("returns fallback for unknown input", () => {
     const result = getErrorMessage(null, "fallback")
     expect(result).toBe("fallback")
+  })
+
+  it("returns details list for backend details array", () => {
+    const axiosLikeError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          message: "Validation failed",
+          details: ["email should not be empty", "phone should not be empty"],
+        },
+      },
+      message: "generic",
+    }
+
+    const details = getErrorDetails(axiosLikeError)
+    expect(details).toEqual(["email should not be empty", "phone should not be empty"])
+  })
+
+  it("combines message and details in description", () => {
+    const axiosLikeError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          message: "Validation failed",
+          details: ["email should not be empty"],
+        },
+      },
+      message: "generic",
+    }
+
+    const description = getErrorDescription(axiosLikeError, "fallback")
+    expect(description).toContain("Validation failed")
+    expect(description).toContain("Detalles: email should not be empty")
   })
 })

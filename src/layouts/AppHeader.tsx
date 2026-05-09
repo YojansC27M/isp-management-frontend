@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { IdCard, KeyRound, Languages, LogOut, Menu, Moon, Sun, UserRound } from "lucide-react"
+import { Bell, IdCard, KeyRound, Languages, LogOut, Menu, Moon, Search, Sun, UserRound } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { useI18n } from "@/i18n/i18nContext"
@@ -7,10 +7,14 @@ import { useTheme } from "@/ui/themeContext"
 import { useAuthStore } from "@/store/authStore"
 
 interface AppHeaderProps {
-  onOpenSidebar: () => void
+  isSidebarOpen: boolean
+  onToggleSidebar: () => void
+  onOpenSearch: () => void
+  onOpenNotifications: () => void
+  notificationCount: number
 }
 
-const AppHeader = ({ onOpenSidebar }: AppHeaderProps) => {
+const AppHeader = ({ isSidebarOpen, onToggleSidebar, onOpenSearch, onOpenNotifications, notificationCount }: AppHeaderProps) => {
   const navigate = useNavigate()
   const { locale, toggleLocale, t } = useI18n()
   const { resolvedTheme, cycleThemeMode } = useTheme()
@@ -18,17 +22,18 @@ const AppHeader = ({ onOpenSidebar }: AppHeaderProps) => {
   const logout = useAuthStore((state) => state.logout)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const userName = user?.name ?? ""
 
   const themeLabel = resolvedTheme === "light" ? t("header.theme.light") : t("header.theme.dark")
   const ThemeIcon = resolvedTheme === "light" ? Sun : Moon
   const userInitials = useMemo(() => {
-    if (!user?.name) return "US"
-    const parts = user.name.trim().split(/\s+/).filter(Boolean)
+    if (!userName) return "US"
+    const parts = userName.trim().split(/\s+/).filter(Boolean)
     return parts
       .slice(0, 2)
       .map((part) => part.charAt(0).toUpperCase())
       .join("")
-  }, [user?.name])
+  }, [userName])
 
   useEffect(() => {
     if (!isProfileMenuOpen) return
@@ -83,7 +88,7 @@ const AppHeader = ({ onOpenSidebar }: AppHeaderProps) => {
     <header className="sticky top-0 z-20 border-b border-border/80 bg-background/90 px-4 py-4 backdrop-blur sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon-sm" className="lg:hidden" onClick={onOpenSidebar} aria-label={t("header.openMenu")}>
+          <Button variant="outline" size="icon-sm" onClick={onToggleSidebar} aria-label={t("header.openMenu")} aria-pressed={isSidebarOpen}>
             <Menu />
           </Button>
           <div>
@@ -96,6 +101,32 @@ const AppHeader = ({ onOpenSidebar }: AppHeaderProps) => {
           </div>
         </div>
         <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+          <Button
+            variant="outline"
+            className="hidden shrink-0 gap-2 sm:inline-flex"
+            onClick={onOpenSearch}
+            aria-label={t("header.openSearch")}
+            title={t("header.openSearch")}
+          >
+            <Search className="h-4 w-4" />
+            <span className="text-xs font-semibold">{t("header.openSearch")}</span>
+            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">Ctrl K</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="relative shrink-0"
+            onClick={onOpenNotifications}
+            aria-label={t("header.openNotifications")}
+            title={t("header.openNotifications")}
+          >
+            <Bell />
+            {notificationCount > 0 ? (
+              <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+                {notificationCount > 9 ? "9+" : notificationCount}
+              </span>
+            ) : null}
+          </Button>
           <Button
             variant="outline"
             size="icon-sm"
